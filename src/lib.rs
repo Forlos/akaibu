@@ -9,6 +9,7 @@
 pub mod archive;
 pub mod error;
 pub mod magic;
+pub mod resource;
 pub mod scheme;
 pub mod util;
 

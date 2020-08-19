@@ -1,8 +1,13 @@
-use akaibu::{error::AkaibuError, magic::Archive, scheme::Scheme};
+use akaibu::{
+    error::AkaibuError,
+    magic::Archive,
+    resource::{ResourceMagic, ResourceType},
+    scheme::Scheme,
+};
 use anyhow::Context;
+use image::ImageBuffer;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use scroll::Pread;
 use std::io::{Read, Write};
 use std::{fs::File, path::PathBuf};
 use structopt::StructOpt;
@@ -13,18 +18,18 @@ struct Opt {
     /// Files to process
     #[structopt(required = true, name = "ARCHIVES", parse(from_os_str))]
     files: Vec<PathBuf>,
+
+    /// Directory to output extracted files
     #[structopt(
         short = "o",
         long = "output",
         parse(from_os_str),
         default_value = "ext/"
     )]
-
-    /// Directory to output extracted files
     output_dir: PathBuf,
 
-    /// Convert image files to commonly used format(PNG)
-    #[structopt(long)]
+    /// Convert resource files to commonly used formats
+    #[structopt(short, long)]
     convert: bool,
 }
 
@@ -43,17 +48,26 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
         .iter()
         .filter(|file| file.is_file())
         .try_for_each(|file| {
-            let mut contents = vec![0; 8];
-            File::open(&file)?.read_exact(&mut contents)?;
-            contents.pread::<u32>(0)?;
+            let mut magic = vec![0; 32];
+            File::open(&file)?.read_exact(&mut magic)?;
 
-            let archive_magic = Archive::parse(&contents);
+            let archive_magic = Archive::parse(&magic);
             if let Archive::NotRecognized = archive_magic {
-                return Err(AkaibuError::UnrecognizedFormat(
-                    file.clone(),
-                    contents,
-                )
-                .into());
+                if opt.convert {
+                    let resource_magic = ResourceMagic::parse_magic(&magic);
+                    let mut contents = Vec::with_capacity(1 << 20);
+                    File::open(&file)?.read_to_end(&mut contents)?;
+                    return write_resource(
+                        resource_magic.parse(contents)?,
+                        file,
+                    );
+                } else {
+                    return Err(AkaibuError::UnrecognizedFormat(
+                        file.clone(),
+                        magic,
+                    )
+                    .into());
+                }
             }
 
             log::debug!("Archive: {:?}", archive_magic);
@@ -129,4 +143,31 @@ fn init_progressbar(prefix: &str, size: u64) -> ProgressBar {
     );
     progress_bar.set_prefix(prefix);
     progress_bar
+}
+
+fn write_resource(
+    resource: ResourceType,
+    file_name: &PathBuf,
+) -> anyhow::Result<()> {
+    match resource {
+        ResourceType::Image {
+            pixels,
+            width,
+            height,
+        } => {
+            let mut new_file_name = file_name.clone();
+            new_file_name.set_extension("png");
+            let image: ImageBuffer<image::Rgba<u8>, Vec<u8>> =
+                ImageBuffer::from_raw(width, height, pixels)
+                    .context("Could not create image")?;
+            image.save(new_file_name)?;
+            Ok(())
+        }
+        ResourceType::Text(s) => {
+            let mut new_file_name = file_name.clone();
+            new_file_name.set_extension("png");
+            File::create(new_file_name)?.write_all(s.as_bytes())?;
+            Ok(())
+        }
+    }
 }
