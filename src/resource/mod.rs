@@ -1,3 +1,5 @@
+mod pb3b;
+
 use crate::error::AkaibuError;
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
 
@@ -6,6 +8,7 @@ pub enum ResourceMagic {
     TLG0,
     TLG5,
     TLG6,
+    PB3B,
     Unrecognized,
 }
 
@@ -18,6 +21,7 @@ impl ResourceMagic {
             [84, 76, 71, 53, 46, 48, 0, 114, 97, 119, 26, ..] => Self::TLG5,
             // TLG6.0\x00raw\x1a
             [84, 76, 71, 54, 46, 48, 0, 114, 97, 119, 26, ..] => Self::TLG6,
+            [80, 66, 51, 66, ..] => Self::PB3B,
             _ => Self::Unrecognized,
         }
     }
@@ -25,7 +29,7 @@ impl ResourceMagic {
         match self {
             Self::TLG0 => {
                 let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::Image {
+                Ok(ResourceType::RgbaImage {
                     width: image.width(),
                     height: image.height(),
                     pixels: image.into_vec(),
@@ -34,10 +38,18 @@ impl ResourceMagic {
             Self::TLG5 => Err(AkaibuError::Unimplemented.into()),
             Self::TLG6 => {
                 let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::Image {
+                Ok(ResourceType::RgbaImage {
                     width: image.width(),
                     height: image.height(),
                     pixels: image.into_vec(),
+                })
+            }
+            Self::PB3B => {
+                let pb3b = pb3b::Pb3b::from_bytes(buf)?;
+                Ok(ResourceType::RgbaImage {
+                    width: pb3b.image.width(),
+                    height: pb3b.image.height(),
+                    pixels: pb3b.image.into_vec(),
                 })
             }
             Self::Unrecognized => Err(AkaibuError::Unimplemented.into()),
@@ -47,7 +59,7 @@ impl ResourceMagic {
 
 #[derive(Debug)]
 pub enum ResourceType {
-    Image {
+    RgbaImage {
         pixels: Vec<u8>,
         width: u32,
         height: u32,

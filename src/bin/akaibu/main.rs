@@ -57,16 +57,18 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                     let resource_magic = ResourceMagic::parse_magic(&magic);
                     let mut contents = Vec::with_capacity(1 << 20);
                     File::open(&file)?.read_to_end(&mut contents)?;
-                    return write_resource(
-                        resource_magic.parse(contents)?,
-                        file,
-                    );
+                    match resource_magic.parse(contents) {
+                        Ok(r) => return write_resource(r, file),
+                        Err(err) => {
+                            log::error!("{:?}: {}", file, err);
+                            return Ok(());
+                        }
+                    }
                 } else {
-                    return Err(AkaibuError::UnrecognizedFormat(
-                        file.clone(),
-                        magic,
-                    )
-                    .into());
+                    let err =
+                        AkaibuError::UnrecognizedFormat(file.clone(), magic);
+                    log::error!("{}", err);
+                    return Ok(());
                 }
             }
 
@@ -81,7 +83,13 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
             };
             log::debug!("Scheme {:?}", scheme);
 
-            let a = scheme.extract(&file)?;
+            let a = match scheme.extract(&file) {
+                Ok(archive) => archive,
+                Err(err) => {
+                    log::error!("{:?}: {}", file, err);
+                    return Ok(());
+                }
+            };
             let progress_bar = init_progressbar(
                 &format!("Extracting: {:?}", file),
                 a.get_files().len() as u64,
@@ -150,7 +158,7 @@ fn write_resource(
     file_name: &PathBuf,
 ) -> anyhow::Result<()> {
     match resource {
-        ResourceType::Image {
+        ResourceType::RgbaImage {
             pixels,
             width,
             height,
