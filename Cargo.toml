@@ -3,6 +3,7 @@ name = "akaibu"
 version = "0.1.0"
 authors = ["forlos <forlos@disroot.org>"]
 edition = "2018"
+default-run = "akaibu"
 
 [dependencies]
 bytes = { version = "0.5", default_features = false }
@@ -35,6 +36,10 @@ indicatif = { version = "0.15.0" , features = ["with_rayon"]}
 read_input = "0.8"
 colored = "2"
 structopt = { version = "0.3", default_features = false }
+
+# GUI
+iced = { version = "0.1.1", features = ["image"] }
+bytesize = "1.0.1"
 
 [profile.dev.package.image]
 opt-level = 1
