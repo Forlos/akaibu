@@ -65,4 +65,5 @@ pub enum ResourceType {
         height: u32,
     },
     Text(String),
+    Other,
 }

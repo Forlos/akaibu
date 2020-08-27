@@ -177,5 +177,6 @@ fn write_resource(
             File::create(new_file_name)?.write_all(s.as_bytes())?;
             Ok(())
         }
+        ResourceType::Other => Ok(()),
     }
 }
