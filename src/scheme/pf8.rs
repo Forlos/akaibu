@@ -61,22 +61,25 @@ struct Pf8Archive {
 }
 
 impl archive::Archive for Pf8Archive {
-    fn get_files(&self) -> Vec<archive::FileEntry<'_>> {
+    fn get_files(&self) -> Vec<archive::FileEntry> {
         self.archive
             .file_entries
             .iter()
             .map(|e| archive::FileEntry {
-                file_name: &e.file_name,
+                file_name: e.file_name.clone(),
                 file_offset: e.file_offset as usize,
                 file_size: e.file_size as usize,
             })
             .collect()
     }
-    fn extract(&self, file_name: &str) -> anyhow::Result<bytes::Bytes> {
+    fn extract(
+        &self,
+        entry: &archive::FileEntry,
+    ) -> anyhow::Result<bytes::Bytes> {
         self.archive
             .file_entries
             .iter()
-            .find(|e| e.file_name == file_name)
+            .find(|e| e.file_name == entry.file_name)
             .map(|e| self.extract(e))
             .context("File not found")?
     }

@@ -83,7 +83,7 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
             };
             log::debug!("Scheme {:?}", scheme);
 
-            let a = match scheme.extract(&file) {
+            let archive = match scheme.extract(&file) {
                 Ok(archive) => archive,
                 Err(err) => {
                     log::error!("{:?}: {}", file, err);
@@ -92,16 +92,17 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
             };
             let progress_bar = init_progressbar(
                 &format!("Extracting: {:?}", file),
-                a.get_files().len() as u64,
+                archive.get_files().len() as u64,
             );
 
-            a.get_files()
+            archive
+                .get_files()
                 .par_iter()
                 .progress_with(progress_bar)
-                .try_for_each(|f| {
-                    let buf = a.extract(f.file_name)?;
+                .try_for_each(|entry| {
+                    let buf = archive.extract(entry)?;
                     let mut output_file_name = PathBuf::from(&opt.output_dir);
-                    output_file_name.push(&f.file_name);
+                    output_file_name.push(&entry.file_name);
                     std::fs::create_dir_all(
                         &output_file_name
                             .parent()
@@ -110,7 +111,7 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                     log::debug!(
                         "Extracting resource: {:?} {:X?}",
                         output_file_name,
-                        f
+                        entry
                     );
                     File::create(output_file_name)?.write_all(&buf)?;
                     Ok(())
