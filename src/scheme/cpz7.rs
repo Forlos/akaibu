@@ -1,12 +1,13 @@
-use bytes::{Buf, BufMut, Bytes, BytesMut};
-use scroll::{ctx, Pread, LE};
-
 use super::Scheme;
 use crate::{archive, util::md5};
 use anyhow::Context;
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use encoding_rs::SHIFT_JIS;
-use std::io::{Read, Seek};
-use std::{collections::HashMap, convert::TryInto, fs::File, path::PathBuf};
+use positioned_io::{RandomAccessFile, ReadAt};
+use scroll::{ctx, Pread, LE};
+use std::{
+    collections::HashMap, convert::TryInto, fs::File, io::Write, path::PathBuf,
+};
 
 /// Used to decrypt header fields
 const HEADER_KEYS: [u32; 12] = [
@@ -37,9 +38,8 @@ impl Scheme for Cpz7Scheme {
         file_path: &PathBuf,
     ) -> anyhow::Result<Box<dyn archive::Archive + Sync>> {
         let mut buf = vec![0; 68];
-        let mut file = File::open(file_path)?;
-        file.seek(std::io::SeekFrom::Start(4))?;
-        file.read_exact(&mut buf)?;
+        let file = RandomAccessFile::open(file_path)?;
+        file.read_exact_at(4, &mut buf)?;
         let cpz_header = buf.pread::<Cpz7Header>(0)?;
 
         let mut buf = vec![
@@ -48,8 +48,7 @@ impl Scheme for Cpz7Scheme {
                 + cpz_header.file_data_size as usize
                 + cpz_header.encryption_data_size as usize
         ];
-        file.seek(std::io::SeekFrom::Start(72))?;
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(72, &mut buf)?;
         let all_game_keys = self.get_game_keys()?;
         let game_keys = *all_game_keys
             .get(
@@ -60,13 +59,38 @@ impl Scheme for Cpz7Scheme {
                     .context("Could not parse OsStr to str")?,
             )
             .unwrap_or(&[0, 0, 0, 0]);
-        let cpz = buf.pread_with::<Cpz7>(0, (cpz_header, &game_keys))?;
-        log::debug!("Archive: {:#?}", cpz.file_data.values());
+        let archive = buf.pread_with::<Cpz7>(0, (cpz_header, &game_keys))?;
+        log::debug!("Archive: {:#?}", archive.file_data.values());
 
+        let root_dir = archive::Directory::new(
+            archive
+                .file_data
+                .values()
+                .flatten()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        );
         Ok(Box::new(Cpz7Archive {
-            file_path: file_path.clone(),
+            file,
             game_keys,
-            archive: cpz,
+            archive,
+            root_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -101,47 +125,67 @@ impl Cpz7Scheme {
 }
 
 struct Cpz7Archive {
-    file_path: PathBuf,
+    file: RandomAccessFile,
     game_keys: [u32; 4],
     archive: Cpz7,
+    root_dir: archive::Directory,
 }
 
 impl archive::Archive for Cpz7Archive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.archive
-            .file_data
-            .values()
-            .flatten()
-            .map(|e| archive::FileEntry {
-                file_name: e.file_name.clone(),
-                file_offset: e.file_offset as usize,
-                file_size: e.file_size as usize,
-            })
-            .collect()
+        self.root_dir.get_all_files().cloned().collect()
     }
     fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
         self.archive
             .file_data
             .values()
             .flatten()
-            .find(|e| e.file_name == entry.file_name)
+            .find(|e| e.full_path == entry.full_path)
             .map(|e| self.extract(e))
             .context("File not found")?
+    }
+
+    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+        // TODO parallelize that
+        self.archive
+            .file_data
+            .values()
+            .flatten()
+            .try_for_each(|entry| {
+                let buf = self.extract(entry)?;
+                let mut output_file_name = PathBuf::from(output_path);
+                output_file_name.push(&entry.full_path);
+                std::fs::create_dir_all(
+                    &output_file_name
+                        .parent()
+                        .context("Could not get parent directory")?,
+                )?;
+                log::debug!(
+                    "Extracting resource: {:?} {:X?}",
+                    output_file_name,
+                    entry
+                );
+                File::create(output_file_name)?.write_all(&buf)?;
+                Ok(())
+            })
+    }
+
+    fn get_root_dir(&self) -> &archive::Directory {
+        &self.root_dir
     }
 }
 
 impl Cpz7Archive {
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes> {
-        let mut file = File::open(&self.file_path)?;
         let mut contents = vec![0; entry.file_size as usize];
         let raw_file_data_off = self.archive.header.archive_data_size
             + self.archive.header.file_data_size
             + self.archive.header.encryption_data_size
             + 0x48;
-        file.seek(std::io::SeekFrom::Start(
+        self.file.read_exact_at(
             raw_file_data_off as u64 + entry.file_offset as u64,
-        ))?;
-        file.read_exact(&mut contents)?;
+            &mut contents,
+        )?;
         let file_key = get_file_key(
             &entry,
             entry.archive_file_decrypt_key,
@@ -344,7 +388,7 @@ impl<'a> ctx::TryFromCtx<'a, scroll::Endian> for ArchiveDataEntry {
             .0
             .to_string()
             .trim_matches('\0')
-            .into();
+            .to_string();
         Ok((
             ArchiveDataEntry {
                 entry_size,
@@ -368,7 +412,7 @@ struct FileEntry {
     unk3: u32,
     file_decrypt_key: u32,
     archive_file_decrypt_key: u32,
-    file_name: String,
+    full_path: PathBuf,
 }
 
 impl<'a> ctx::TryFromCtx<'a, &ArchiveDataEntry> for FileEntry {
@@ -386,7 +430,7 @@ impl<'a> ctx::TryFromCtx<'a, &ArchiveDataEntry> for FileEntry {
         let unk3 = buf.gread_with(off, LE)?;
         let file_decrypt_key = buf.gread_with(off, LE)?;
         let archive_file_decrypt_key = archive.file_decrypt_key;
-        let file_name = format!(
+        let full_path = PathBuf::from(format!(
             "{}/{}",
             archive.name,
             SHIFT_JIS
@@ -394,7 +438,7 @@ impl<'a> ctx::TryFromCtx<'a, &ArchiveDataEntry> for FileEntry {
                 .0
                 .to_string()
                 .trim_matches('\0')
-        );
+        ));
         Ok((
             FileEntry {
                 entry_size,
@@ -405,7 +449,7 @@ impl<'a> ctx::TryFromCtx<'a, &ArchiveDataEntry> for FileEntry {
                 unk3,
                 file_decrypt_key,
                 archive_file_decrypt_key,
-                file_name,
+                full_path,
             },
             entry_size as usize,
         ))

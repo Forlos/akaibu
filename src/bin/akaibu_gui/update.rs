@@ -9,7 +9,7 @@ pub(crate) fn handle_message(
     match message {
         Message::ExtractFile(file_name) => (),
         Message::PreviewFile(file_name) => {
-            let contents = app.archive.extract(&file_name);
+            // let contents = app.archive.extract(&file_name);
         }
         Message::Empty => (),
         Message::Error(_) => (),
@@ -20,7 +20,7 @@ pub(crate) fn handle_message(
                 .iter()
                 .enumerate()
                 .for_each(|(i, e)| {
-                    let buf = app.archive.extract(e.file_name).unwrap();
+                    let buf = app.archive.extract(e).unwrap();
                     let mut output_file_name = PathBuf::from("ext/");
                     output_file_name.push(&e.file_name);
                     std::fs::create_dir_all(

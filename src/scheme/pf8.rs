@@ -2,12 +2,10 @@ use super::Scheme;
 use crate::archive;
 use anyhow::Context;
 use bytes::BytesMut;
+use positioned_io::{RandomAccessFile, ReadAt};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
-use std::{
-    fs::File,
-    io::{Read, Seek},
-    path::PathBuf,
-};
+use std::{fs::File, io::Write, path::PathBuf};
 
 #[derive(Debug)]
 pub enum Pf8Scheme {
@@ -17,29 +15,52 @@ pub enum Pf8Scheme {
 impl Scheme for Pf8Scheme {
     fn extract(
         &self,
-        file_path: &std::path::PathBuf,
+        file_path: &PathBuf,
     ) -> anyhow::Result<Box<dyn crate::archive::Archive + Sync>> {
         let mut buf = vec![0; 11];
-        let mut file = File::open(file_path)?;
-        file.read_exact(&mut buf)?;
+        let file = RandomAccessFile::open(file_path)?;
+        file.read_exact_at(0, &mut buf)?;
 
         let header = buf.pread::<Pf8Header>(0)?;
         log::debug!("Header: {:#?}", header);
 
         let mut buf = vec![0; header.archive_data_size as usize - 4];
-        file.read_exact(&mut buf)?;
-        let pf8 = buf.pread_with(0, header)?;
-        log::debug!("Archive: {:#?}", pf8);
+        file.read_exact_at(11, &mut buf)?;
+        let archive = buf.pread_with::<Pf8>(0, header)?;
+        log::debug!("Archive: {:#?}", archive);
 
         let mut buf = vec![0; header.archive_data_size as usize];
-        file.seek(std::io::SeekFrom::Start(7))?;
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(7, &mut buf)?;
         let sha1 = sha1::Sha1::from(&buf).digest().bytes();
 
+        let root_dir = archive::Directory::new(
+            archive
+                .file_entries
+                .iter()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        );
         Ok(Box::new(Pf8Archive {
-            file_path: file_path.clone(),
+            file,
             sha1,
-            archive: pf8,
+            archive,
+            root_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -55,22 +76,15 @@ impl Scheme for Pf8Scheme {
 
 #[derive(Debug)]
 struct Pf8Archive {
-    file_path: PathBuf,
+    file: RandomAccessFile,
     sha1: [u8; 20],
     archive: Pf8,
+    root_dir: archive::Directory,
 }
 
 impl archive::Archive for Pf8Archive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.archive
-            .file_entries
-            .iter()
-            .map(|e| archive::FileEntry {
-                file_name: e.file_name.clone(),
-                file_offset: e.file_offset as usize,
-                file_size: e.file_size as usize,
-            })
-            .collect()
+        self.root_dir.get_all_files().cloned().collect()
     }
     fn extract(
         &self,
@@ -79,20 +93,43 @@ impl archive::Archive for Pf8Archive {
         self.archive
             .file_entries
             .iter()
-            .find(|e| e.file_name == entry.file_name)
+            .find(|e| e.full_path == entry.full_path)
             .map(|e| self.extract(e))
             .context("File not found")?
+    }
+
+    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+        self.archive.file_entries.par_iter().try_for_each(|entry| {
+            let buf = self.extract(entry)?;
+            let mut output_file_name = PathBuf::from(output_path);
+            output_file_name.push(&entry.full_path);
+            std::fs::create_dir_all(
+                &output_file_name
+                    .parent()
+                    .context("Could not get parent directory")?,
+            )?;
+            log::debug!(
+                "Extracting resource: {:?} {:X?}",
+                output_file_name,
+                entry
+            );
+            File::create(output_file_name)?.write_all(&buf)?;
+            Ok(())
+        })
+    }
+
+    fn get_root_dir(&self) -> &archive::Directory {
+        &self.root_dir
     }
 }
 
 impl Pf8Archive {
     fn extract(&self, entry: &Pf8FileEntry) -> anyhow::Result<bytes::Bytes> {
-        let mut file = File::open(&self.file_path)?;
-        file.seek(std::io::SeekFrom::Start(entry.file_offset as u64))?;
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
 
-        file.read_exact(&mut buf)?;
+        self.file
+            .read_exact_at(entry.file_offset as u64, &mut buf)?;
         self.decrypt_file(&mut buf);
         Ok(buf.freeze())
     }
@@ -142,7 +179,7 @@ struct Pf8Header {
 #[derive(Debug)]
 struct Pf8FileEntry {
     file_name_size: u32,
-    file_name: String,
+    full_path: PathBuf,
     unk: u32,
     file_offset: u32,
     file_size: u32,
@@ -156,10 +193,12 @@ impl<'a> ctx::TryFromCtx<'a, ()> for Pf8FileEntry {
     ) -> Result<(Self, usize), Self::Error> {
         let off = &mut 0;
         let file_name_size = buf.gread_with::<u32>(off, LE)?;
-        let file_name = String::from_utf8(
-            buf[*off..*off + file_name_size as usize].to_vec(),
-        )?
-        .replace("\\", "/");
+        let full_path = PathBuf::from(
+            String::from_utf8(
+                buf[*off..*off + file_name_size as usize].to_vec(),
+            )?
+            .replace("\\", "/"),
+        );
         *off += file_name_size as usize;
         let unk = buf.gread_with::<u32>(off, LE)?;
         let file_offset = buf.gread_with::<u32>(off, LE)?;
@@ -167,7 +206,7 @@ impl<'a> ctx::TryFromCtx<'a, ()> for Pf8FileEntry {
         Ok((
             Pf8FileEntry {
                 file_name_size,
-                file_name,
+                full_path,
                 unk,
                 file_offset,
                 file_size,

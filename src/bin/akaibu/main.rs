@@ -102,7 +102,7 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                 .try_for_each(|entry| {
                     let buf = archive.extract(entry)?;
                     let mut output_file_name = PathBuf::from(&opt.output_dir);
-                    output_file_name.push(&entry.file_name);
+                    output_file_name.push(&entry.full_path);
                     std::fs::create_dir_all(
                         &output_file_name
                             .parent()

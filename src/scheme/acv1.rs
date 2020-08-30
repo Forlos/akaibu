@@ -1,6 +1,3 @@
-use encoding_rs::SHIFT_JIS;
-use scroll::{ctx, IOread, Pread, LE};
-
 use super::Scheme;
 use crate::{
     archive,
@@ -8,8 +5,11 @@ use crate::{
 };
 use anyhow::Context;
 use bytes::{Bytes, BytesMut};
-use std::io::{Read, Seek};
-use std::{collections::HashMap, fs::File, path::PathBuf};
+use encoding_rs::SHIFT_JIS;
+use positioned_io::{RandomAccessFile, ReadAt};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use scroll::{ctx, Pread, LE};
+use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 const MASTER_KEY: u32 = 0x8B6A4E5F;
 
@@ -35,19 +35,44 @@ impl Scheme for Acv1Scheme {
         sjis_file_names.lines().for_each(|l| {
             hashes.insert(crc64(&SHIFT_JIS.encode(&l).0), l);
         });
-        let mut file = File::open(file_path)?;
-        file.seek(std::io::SeekFrom::Start(4))?;
-        let entries_count = file.ioread_with::<u32>(LE)? ^ MASTER_KEY;
+        let mut buf = vec![0; 4];
+        let file = RandomAccessFile::open(file_path)?;
+        file.read_exact_at(4, &mut buf)?;
+        let entries_count = buf.pread_with::<u32>(0, LE)? ^ MASTER_KEY;
         let mut buf = vec![0; 4 + entries_count as usize * 21];
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(8, &mut buf)?;
 
-        let acv = buf.pread_with::<Acv1>(0, (entries_count, &hashes))?;
-        log::debug!("Archive: {:?}", acv);
+        let archive = buf.pread_with::<Acv1>(0, (entries_count, &hashes))?;
+        log::debug!("Archive: {:?}", archive);
 
+        let root_dir = archive::Directory::new(
+            archive
+                .file_entries
+                .iter()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        );
         Ok(Box::new(Acv1Archive {
-            file_path: file_path.clone(),
-            archive: acv,
+            file,
+            archive,
             script_key: self.get_script_key(),
+            root_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -90,23 +115,15 @@ impl Acv1Scheme {
 
 #[derive(Debug)]
 struct Acv1Archive {
-    file_path: PathBuf,
+    file: RandomAccessFile,
     script_key: u32,
     archive: Acv1,
+    root_dir: archive::Directory,
 }
 
 impl archive::Archive for Acv1Archive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.archive
-            .file_entries
-            .iter()
-            .filter(|e| e.extractable)
-            .map(|e| archive::FileEntry {
-                file_name: e.file_name.clone(),
-                file_offset: e.file_offset as usize,
-                file_size: e.file_size as usize,
-            })
-            .collect()
+        self.root_dir.get_all_files().cloned().collect()
     }
     fn extract(
         &self,
@@ -116,9 +133,33 @@ impl archive::Archive for Acv1Archive {
             .file_entries
             .iter()
             .filter(|e| e.extractable)
-            .find(|e| e.file_name == entry.file_name)
+            .find(|e| e.full_path == entry.full_path)
             .map(|e| self.extract(e))
             .context("File not found")?
+    }
+
+    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+        self.archive.file_entries.par_iter().try_for_each(|entry| {
+            let buf = self.extract(entry)?;
+            let mut output_file_name = PathBuf::from(output_path);
+            output_file_name.push(&entry.full_path);
+            std::fs::create_dir_all(
+                &output_file_name
+                    .parent()
+                    .context("Could not get parent directory")?,
+            )?;
+            log::debug!(
+                "Extracting resource: {:?} {:X?}",
+                output_file_name,
+                entry
+            );
+            File::create(output_file_name)?.write_all(&buf)?;
+            Ok(())
+        })
+    }
+
+    fn get_root_dir(&self) -> &archive::Directory {
+        &self.root_dir
     }
 }
 
@@ -126,10 +167,10 @@ impl Acv1Archive {
     fn extract(&self, entry: &Acv1Entry) -> anyhow::Result<Bytes> {
         if entry.flags == 6 {
             log::debug!("Extracting script: {:X?}", entry);
-            Ok(entry.dump_script(&self.file_path, self.script_key)?)
+            Ok(entry.dump_script(&self.file, self.script_key)?)
         } else {
             log::debug!("Extracting resource: {:X?}", entry);
-            Ok(entry.dump_entry(&self.file_path)?)
+            Ok(entry.dump_entry(&self.file)?)
         }
     }
 }
@@ -162,7 +203,7 @@ struct Acv1Entry {
     file_offset: u32,
     file_size: u32,
     uncompressed_file_size: u32,
-    file_name: String,
+    full_path: PathBuf,
     /// File is not extractable when:
     /// - its is not a script file
     /// - there is no file name for its crc64 in acv1/all_file_names.txt file
@@ -188,7 +229,7 @@ impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
             buf.gread_with::<u32>(off, LE)? ^ xor_key;
         let mut extractable = true;
 
-        let file_name = if let Some(v) = hashes.get(&crc64) {
+        let full_path = PathBuf::from(if let Some(v) = hashes.get(&crc64) {
             let file_name = v.to_string();
             let name = SHIFT_JIS.encode(&file_name).0;
             if flags & 2 == 0 {
@@ -202,7 +243,7 @@ impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
         } else {
             extractable = false;
             "".to_string()
-        };
+        });
         Ok((
             Acv1Entry {
                 crc64,
@@ -210,7 +251,7 @@ impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
                 file_offset,
                 file_size,
                 uncompressed_file_size,
-                file_name,
+                full_path,
                 extractable,
             },
             21,
@@ -219,19 +260,18 @@ impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
 }
 
 impl Acv1Entry {
-    fn dump_entry(&self, file_path: &PathBuf) -> anyhow::Result<Bytes> {
+    fn dump_entry(&self, file: &RandomAccessFile) -> anyhow::Result<Bytes> {
         let mut buf = BytesMut::new();
         buf.resize(self.file_size as usize, 0);
-        // let mut buf = vec![0; self.file_size as usize];
-        let mut file = File::open(&file_path)?;
-        file.seek(std::io::SeekFrom::Start(self.file_offset as u64))?;
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(self.file_offset as u64, &mut buf)?;
 
         if self.flags == 0 {
             return Ok(buf.freeze());
         }
         if self.flags & 2 == 0 {
-            let name = SHIFT_JIS.encode(&self.file_name).0;
+            let name = SHIFT_JIS
+                .encode(&self.full_path.to_str().context("Not valid UTF-8")?)
+                .0;
             let result = self.file_size as usize / name.len();
             let mut index = 0_usize;
             let mut name_index = 0_usize;
@@ -257,15 +297,12 @@ impl Acv1Entry {
     }
     fn dump_script(
         &self,
-        file_path: &PathBuf,
+        file: &RandomAccessFile,
         script_key: u32,
     ) -> anyhow::Result<Bytes> {
         let mut buf = BytesMut::new();
         buf.resize(self.file_size as usize, 0);
-        // let mut buf = vec![0; self.file_size as usize];
-        let mut file = File::open(&file_path)?;
-        file.seek(std::io::SeekFrom::Start(self.file_offset as u64))?;
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(self.file_offset as u64, &mut buf)?;
 
         let xor_key = self.crc64 as u32 ^ script_key;
         buf.chunks_exact_mut(4).for_each(|c| {

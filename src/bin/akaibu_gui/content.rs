@@ -104,7 +104,7 @@ impl Content {
 
 pub(crate) struct FileEntry {
     pub(crate) file_name: String,
-    pub(crate) file_size: usize,
+    pub(crate) file_size: u64,
     pub(crate) extract_button_state: button::State,
     pub(crate) preview_button_state: button::State,
 }
@@ -178,10 +178,10 @@ impl FileEntry {
     }
 }
 
-impl From<akaibu::archive::FileEntry<'_>> for FileEntry {
+impl From<akaibu::archive::FileEntry> for FileEntry {
     fn from(entry: akaibu::archive::FileEntry) -> Self {
         Self {
-            file_name: entry.file_name.to_string(),
+            file_name: entry.file_name,
             file_size: entry.file_size,
             extract_button_state: iced::button::State::new(),
             preview_button_state: iced::button::State::new(),

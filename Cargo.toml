@@ -12,6 +12,7 @@ encoding_rs = { version = "0.8", default_features = false, features = ["fast-kan
 scroll = { version = "0.10", features = ["derive"] }
 serde = { version = "1.0", default_features = false, features = ["derive"] }
 serde_json = { version = "1.0", default_features = false, features = ["std"] }
+positioned-io-preview = "0.3.3"
 
 # Error handling
 anyhow = "1.0"
