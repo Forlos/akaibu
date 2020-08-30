@@ -1,4 +1,8 @@
-use crate::{content::Content, message::Message, update, Opt};
+use crate::{
+    content::{Content, Entry},
+    message::Message,
+    update, Opt,
+};
 use akaibu::{archive, magic};
 use iced::{executor, Application, Command};
 use std::{fs::File, io::Read};
@@ -36,7 +40,7 @@ impl Application for App {
         (
             Self {
                 content: Content::new(
-                    archive.get_files().into_iter().map(|e| e.into()).collect(),
+                    archive.get_files().into_iter().map(Entry::new).collect(),
                 ),
                 archive,
             },

@@ -5,7 +5,7 @@ use iced::{
 };
 
 pub(crate) struct Content {
-    pub(crate) entries: Vec<FileEntry>,
+    pub(crate) entries: Vec<Entry>,
     entries_scrollable_state: scrollable::State,
     extract_all_button_state: button::State,
     pub(crate) preview: Preview,
@@ -13,7 +13,7 @@ pub(crate) struct Content {
 }
 
 impl Content {
-    pub(crate) fn new(entries: Vec<FileEntry>) -> Self {
+    pub(crate) fn new(entries: Vec<Entry>) -> Self {
         Self {
             entries,
             entries_scrollable_state: scrollable::State::new(),
@@ -102,19 +102,25 @@ impl Content {
     }
 }
 
-pub(crate) struct FileEntry {
-    pub(crate) file_name: String,
-    pub(crate) file_size: u64,
+pub(crate) struct Entry {
+    pub(crate) file_entry: akaibu::archive::FileEntry,
     pub(crate) extract_button_state: button::State,
     pub(crate) preview_button_state: button::State,
 }
 
-impl FileEntry {
+impl Entry {
+    pub fn new(file_entry: akaibu::archive::FileEntry) -> Self {
+        Self {
+            file_entry,
+            extract_button_state: button::State::new(),
+            preview_button_state: button::State::new(),
+        }
+    }
     fn view(&mut self) -> Element<Message> {
         let content = Row::new()
             .push(Space::new(Length::Units(5), Length::Units(0)))
             .push(
-                Container::new(Text::new(&self.file_name))
+                Container::new(Text::new(&self.file_entry.file_name))
                     .width(Length::FillPortion(1))
                     .height(Length::Fill)
                     .center_y()
@@ -123,7 +129,7 @@ impl FileEntry {
             )
             .push(
                 Container::new(Text::new(bytesize::to_string(
-                    self.file_size as u64,
+                    self.file_entry.file_size,
                     false,
                 )))
                 .width(Length::Units(100))
@@ -140,7 +146,7 @@ impl FileEntry {
                             .center_y()
                             .center_x(),
                     )
-                    .on_press(Message::ExtractFile(self.file_name.clone()))
+                    .on_press(Message::ExtractFile(self.file_entry.clone()))
                     .padding(5)
                     .width(Length::Units(80))
                     .height(Length::Units(30))
@@ -160,7 +166,7 @@ impl FileEntry {
                             .center_y()
                             .center_x(),
                     )
-                    .on_press(Message::PreviewFile(self.file_name.clone()))
+                    .on_press(Message::PreviewFile(self.file_entry.clone()))
                     .padding(5)
                     .width(Length::Units(80))
                     .height(Length::Units(30))
@@ -175,16 +181,5 @@ impl FileEntry {
             .push(Space::new(Length::Units(5), Length::Units(0)))
             .height(Length::Units(40));
         Container::new(content).into()
-    }
-}
-
-impl From<akaibu::archive::FileEntry> for FileEntry {
-    fn from(entry: akaibu::archive::FileEntry) -> Self {
-        Self {
-            file_name: entry.file_name,
-            file_size: entry.file_size,
-            extract_button_state: iced::button::State::new(),
-            preview_button_state: iced::button::State::new(),
-        }
     }
 }
