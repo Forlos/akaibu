@@ -25,7 +25,7 @@ fn main() {
         // TODO this is workaround until iced supports fallback fonts
         // See: https://github.com/hecrj/iced/issues/33
         default_font: Some(include_bytes!(
-            "./fonts/RictyDiminished-with-FiraCode-Regular.ttf"
+            "../fonts/RictyDiminished-with-FiraCode-Regular.ttf"
         )),
         antialiasing: true,
         ..Default::default()

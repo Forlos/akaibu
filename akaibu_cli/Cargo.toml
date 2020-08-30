@@ -1,0 +1,21 @@
+[package]
+name = "akaibu_cli"
+version = "0.1.0"
+authors = ["forlos <forlos@disroot.org>"]
+edition = "2018"
+default-run = "akaibu_cli"
+
+[dependencies.akaibu]
+path = "../akaibu"
+
+[dependencies]
+rayon = { version = "1.3", default_features = false}
+indicatif = { version = "0.15.0" , features = ["with_rayon"]}
+read_input = "0.8"
+colored = "2"
+structopt = { version = "0.3", default_features = false }
+log = "0.4"
+env_logger = "0.7"
+anyhow = "1.0"
+thiserror = "1.0"
+image = { version = "0.23", default-features = false, features = ["png"] }
