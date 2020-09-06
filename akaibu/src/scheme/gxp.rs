@@ -52,6 +52,7 @@ impl Scheme for GxpScheme {
     }
 }
 
+#[derive(Debug)]
 struct GxpArchive {
     file: RandomAccessFile,
     archive: Gxp,

@@ -102,6 +102,7 @@ impl Cpz7Scheme {
     }
 }
 
+#[derive(Debug)]
 struct Cpz7Archive {
     file: RandomAccessFile,
     game_keys: [u32; 4],

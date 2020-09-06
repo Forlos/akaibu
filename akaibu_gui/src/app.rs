@@ -1,5 +1,10 @@
-use crate::{content::Content, message::Message, update, Opt};
-use iced::{button, executor, Application, Command};
+use crate::{
+    archive::ArchiveContent, content::Content, message::Message,
+    scheme::SchemeContent, update, Opt,
+};
+use akaibu::magic;
+use iced::{executor, Application, Command};
+use std::{fs::File, io::Read};
 use structopt::StructOpt;
 
 pub(crate) struct App {
@@ -14,11 +19,35 @@ impl Application for App {
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let opt = Opt::from_args();
-        let app = Self {
-            opt,
-            content: Content::Empty(button::State::new()),
-        };
-        (app, Command::none())
+
+        let mut magic = vec![0; 32];
+        File::open(&opt.file)
+            .expect("Could not open file")
+            .read_exact(&mut magic)
+            .expect("Could not read file");
+        let archive_magic = magic::Archive::parse(&magic);
+
+        let schemes = archive_magic.get_schemes();
+
+        if archive_magic.is_universal() {
+            let scheme = schemes.get(0).expect("Expected universal scheme");
+            let archive = scheme.extract(&opt.file).unwrap();
+            (
+                Self {
+                    opt,
+                    content: Content::ArchiveView(ArchiveContent::new(archive)),
+                },
+                Command::none(),
+            )
+        } else {
+            (
+                Self {
+                    opt,
+                    content: Content::SchemeView(SchemeContent::new(schemes)),
+                },
+                Command::none(),
+            )
+        }
     }
     fn title(&self) -> String {
         "Akaibu".to_owned()

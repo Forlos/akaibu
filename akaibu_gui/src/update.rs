@@ -57,24 +57,8 @@ pub(crate) fn handle_message(
         }
         Message::MoveScene(scene) => match scene {
             Scene::ArchiveView => {
-                // let file = app.opt.file;
-
-                let mut magic = vec![0; 32];
-                File::open(&app.opt.file)
-                    .expect("Could not open file")
-                    .read_exact(&mut magic)
-                    .expect("Could not read file");
-                let archive_magic = magic::Archive::parse(&magic);
-
-                let schemes = archive_magic.get_schemes();
-                let scheme = if archive_magic.is_universal() {
-                    schemes.get(0).unwrap()
-                } else {
-                    todo!()
-                };
-                let archive = scheme.extract(&app.opt.file).unwrap();
-                app.content =
-                    Content::ArchiveView(ArchiveContent::new(archive));
+                // app.content =
+                //     Content::ArchiveView(ArchiveContent::new(archive));
             }
         },
     };
