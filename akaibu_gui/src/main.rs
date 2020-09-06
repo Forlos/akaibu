@@ -1,7 +1,9 @@
 mod app;
+mod archive;
 mod content;
 mod message;
 mod preview;
+mod scheme;
 mod style;
 mod update;
 

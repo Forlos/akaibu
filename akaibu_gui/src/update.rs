@@ -1,6 +1,7 @@
 use crate::{
     app::App,
-    content::{Con, Content},
+    archive::ArchiveContent,
+    content::Content,
     message::{Message, Scene},
 };
 use akaibu::magic;
@@ -14,16 +15,16 @@ pub(crate) fn handle_message(
     log::info!("{:?}", message);
     match message {
         Message::OpenDirectory(dir_name) => match app.content {
-            Con::Empty(_) => {}
-            Con::VnView(ref mut content) => {
+            Content::ArchiveView(ref mut content) => {
                 content.move_dir(dir_name);
             }
+            _ => {}
         },
         Message::BackDirectory => match app.content {
-            Con::Empty(_) => {}
-            Con::VnView(ref mut content) => {
+            Content::ArchiveView(ref mut content) => {
                 content.back_dir();
             }
+            _ => {}
         },
         Message::ExtractFile(file) => {}
         Message::PreviewFile(file) => {}
@@ -72,7 +73,8 @@ pub(crate) fn handle_message(
                     todo!()
                 };
                 let archive = scheme.extract(&app.opt.file).unwrap();
-                app.content = Con::VnView(Content::new(archive));
+                app.content =
+                    Content::ArchiveView(ArchiveContent::new(archive));
             }
         },
     };

@@ -1,10 +1,10 @@
-use crate::{content::Con, message::Message, update, Opt};
+use crate::{content::Content, message::Message, update, Opt};
 use iced::{button, executor, Application, Command};
 use structopt::StructOpt;
 
 pub(crate) struct App {
     pub(crate) opt: Opt,
-    pub(crate) content: Con,
+    pub(crate) content: Content,
 }
 
 impl Application for App {
@@ -16,7 +16,7 @@ impl Application for App {
         let opt = Opt::from_args();
         let app = Self {
             opt,
-            content: Con::Empty(button::State::new()),
+            content: Content::Empty(button::State::new()),
         };
         (app, Command::none())
     }
