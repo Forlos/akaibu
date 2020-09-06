@@ -25,10 +25,9 @@ pub(crate) fn handle_message(
                 content.back_dir();
             }
         },
-        Message::ExtractFile(file_name) => (),
-        Message::PreviewFile(file_name) => {
-            // let contents = app.archive.extract(&file_name);
-        }
+        Message::ExtractFile(file) => {}
+        Message::PreviewFile(file) => {}
+        Message::ConvertFile(file) => {}
         Message::Empty => (),
         Message::Error(_) => (),
         Message::ExtractAll => {

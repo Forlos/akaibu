@@ -122,7 +122,7 @@ impl Content {
                             )
                             .push(
                                 Container::new(Text::new("Actions"))
-                                    .width(Length::Units(200)),
+                                    .width(Length::Units(240)),
                             ),
                     )
                     .push(
@@ -228,7 +228,7 @@ impl Entry {
                         Container::new(
                             Button::new(
                                 open_button_state,
-                                Container::new(Text::new("Open"))
+                                Container::new(Text::new("Open").size(18))
                                     .center_y()
                                     .center_x(),
                             )
@@ -240,7 +240,7 @@ impl Entry {
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(200))
+                        .width(Length::Units(240))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
@@ -286,20 +286,40 @@ impl Entry {
                     .push(
                         Container::new(
                             Button::new(
-                                extract_button_state,
-                                Container::new(Text::new("Extract"))
+                                convert_button_state,
+                                Container::new(Text::new("Convert").size(18))
                                     .center_y()
                                     .center_x(),
                             )
-                            .on_press(Message::ExtractFile(file.clone()))
+                            .on_press(Message::ConvertFile(file.clone()))
                             .padding(5)
-                            .width(Length::Units(80))
+                            .width(Length::Units(70))
                             .height(Length::Units(30))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(100))
+                        .width(Length::Units(80))
+                        .height(Length::Fill)
+                        .style(style::Dark),
+                    )
+                    .push(
+                        Container::new(
+                            Button::new(
+                                extract_button_state,
+                                Container::new(Text::new("Extract").size(18))
+                                    .center_y()
+                                    .center_x(),
+                            )
+                            .on_press(Message::ExtractFile(file.clone()))
+                            .padding(5)
+                            .width(Length::Units(70))
+                            .height(Length::Units(30))
+                            .style(style::Dark),
+                        )
+                        .center_y()
+                        .center_x()
+                        .width(Length::Units(80))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
@@ -307,19 +327,19 @@ impl Entry {
                         Container::new(
                             Button::new(
                                 preview_button_state,
-                                Container::new(Text::new("Preview"))
+                                Container::new(Text::new("Preview").size(18))
                                     .center_y()
                                     .center_x(),
                             )
                             .on_press(Message::PreviewFile(file.clone()))
                             .padding(5)
-                            .width(Length::Units(80))
+                            .width(Length::Units(70))
                             .height(Length::Units(30))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(100))
+                        .width(Length::Units(80))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )

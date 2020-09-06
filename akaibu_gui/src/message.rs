@@ -7,6 +7,7 @@ pub enum Message {
     UpdateScrollbar(f32),
     OpenDirectory(String),
     BackDirectory,
+    ConvertFile(FileEntry),
     ExtractFile(FileEntry),
     PreviewFile(FileEntry),
     Error(String),
