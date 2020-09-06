@@ -70,7 +70,6 @@ impl Directory {
         )
     }
     pub fn find_dir(&self, dir_names: &[String]) -> Option<&Directory> {
-        println!("{:?}", dir_names);
         if dir_names.is_empty() {
             Some(&self)
         } else {
@@ -106,5 +105,16 @@ impl NavigableDirectory {
     pub fn back_dir(&mut self) -> Option<&Directory> {
         self.current.pop()?;
         self.root_dir.find_dir(&self.current)
+    }
+    pub fn get_current_full_path(&self) -> String {
+        self.current
+            .iter()
+            .fold(String::from("/"), |mut path, dir| {
+                path.push_str(&format!("{}/", dir));
+                path
+            })
+    }
+    pub fn has_parent(&self) -> bool {
+        !self.current.is_empty()
     }
 }

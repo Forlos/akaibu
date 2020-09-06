@@ -56,6 +56,12 @@ impl Content {
         }
     }
     pub fn view(&mut self) -> Element<Message> {
+        let mut back_button =
+            Button::new(&mut self.back_dir_button_state, Text::new("Back dir"))
+                .style(style::Dark);
+        if self.archive.get_navigable_dir().has_parent() {
+            back_button = back_button.on_press(Message::BackDirectory);
+        }
         let content = Row::new()
             .push(
                 Column::new()
@@ -79,14 +85,7 @@ impl Content {
                                 Length::Units(5),
                                 Length::Units(0),
                             ))
-                            .push(
-                                Button::new(
-                                    &mut self.back_dir_button_state,
-                                    Text::new("Back dir"),
-                                )
-                                .on_press(Message::BackDirectory)
-                                .style(style::Dark),
-                            )
+                            .push(back_button)
                             .push(Space::new(
                                 Length::Units(5),
                                 Length::Units(0),
