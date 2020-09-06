@@ -6,7 +6,6 @@ pub trait Archive {
     fn get_files(&self) -> Vec<FileEntry>;
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes>;
     fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()>;
-    fn get_root_dir(&self) -> &Directory;
     fn get_navigable_dir(&mut self) -> &mut NavigableDirectory;
 }
 

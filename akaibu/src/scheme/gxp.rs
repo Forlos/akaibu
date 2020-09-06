@@ -93,9 +93,6 @@ impl archive::Archive for GxpArchive {
             Ok(())
         })
     }
-    fn get_root_dir(&self) -> &archive::Directory {
-        &self.navigable_dir.get_root_dir()
-    }
 
     fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
         &mut self.navigable_dir

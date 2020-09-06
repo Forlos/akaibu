@@ -62,35 +62,13 @@ impl Scheme for Cpz7Scheme {
         let archive = buf.pread_with::<Cpz7>(0, (cpz_header, &game_keys))?;
         log::debug!("Archive: {:#?}", archive.file_data.values());
 
-        let root_dir = archive::Directory::new(
-            archive
-                .file_data
-                .values()
-                .flatten()
-                .map(|entry| {
-                    let file_offset = entry.file_offset as u64;
-                    let file_size = entry.file_size as u64;
-                    archive::FileEntry {
-                        file_name: String::from(
-                            entry
-                                .full_path
-                                .file_name()
-                                .expect("No file name")
-                                .to_str()
-                                .expect("Not valid UTF-8"),
-                        ),
-                        full_path: entry.full_path.clone(),
-                        file_offset,
-                        file_size,
-                    }
-                })
-                .collect(),
-        );
+        let root_dir = Cpz7Archive::new_root_dir(&archive);
+        let navigable_dir = archive::NavigableDirectory::new(root_dir);
         Ok(Box::new(Cpz7Archive {
             file,
             game_keys,
             archive,
-            root_dir,
+            navigable_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -128,12 +106,16 @@ struct Cpz7Archive {
     file: RandomAccessFile,
     game_keys: [u32; 4],
     archive: Cpz7,
-    root_dir: archive::Directory,
+    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for Cpz7Archive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.root_dir.get_all_files().cloned().collect()
+        self.navigable_dir
+            .get_root_dir()
+            .get_all_files()
+            .cloned()
+            .collect()
     }
     fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
         self.archive
@@ -170,16 +152,38 @@ impl archive::Archive for Cpz7Archive {
             })
     }
 
-    fn get_root_dir(&self) -> &archive::Directory {
-        &self.root_dir
-    }
-
     fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        todo!()
+        &mut self.navigable_dir
     }
 }
 
 impl Cpz7Archive {
+    fn new_root_dir(archive: &Cpz7) -> archive::Directory {
+        archive::Directory::new(
+            archive
+                .file_data
+                .values()
+                .flatten()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        )
+    }
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes> {
         let mut contents = vec![0; entry.file_size as usize];
         let raw_file_data_off = self.archive.header.archive_data_size

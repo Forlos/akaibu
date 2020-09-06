@@ -56,11 +56,12 @@ impl Scheme for Pf8Scheme {
                 })
                 .collect(),
         );
+        let navigable_dir = archive::NavigableDirectory::new(root_dir);
         Ok(Box::new(Pf8Archive {
             file,
             sha1,
             archive,
-            root_dir,
+            navigable_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -79,12 +80,16 @@ struct Pf8Archive {
     file: RandomAccessFile,
     sha1: [u8; 20],
     archive: Pf8,
-    root_dir: archive::Directory,
+    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for Pf8Archive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.root_dir.get_all_files().cloned().collect()
+        self.navigable_dir
+            .get_root_dir()
+            .get_all_files()
+            .cloned()
+            .collect()
     }
     fn extract(
         &self,
@@ -118,16 +123,36 @@ impl archive::Archive for Pf8Archive {
         })
     }
 
-    fn get_root_dir(&self) -> &archive::Directory {
-        &self.root_dir
-    }
-
     fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        todo!()
+        &mut self.navigable_dir
     }
 }
 
 impl Pf8Archive {
+    fn new_root_dir(entries: &[Pf8FileEntry]) -> archive::Directory {
+        archive::Directory::new(
+            entries
+                .iter()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        )
+    }
     fn extract(&self, entry: &Pf8FileEntry) -> anyhow::Result<bytes::Bytes> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
