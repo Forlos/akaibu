@@ -56,7 +56,7 @@ impl Jbp1 {
         let x_block_count = blocks_width >> 4;
         let y_block_count = blocks_height >> 4;
 
-        Self {
+        Ok(Self {
             data_offset,
             flags,
             width,
@@ -71,7 +71,7 @@ impl Jbp1 {
             y_block_count,
             x_block_size,
             y_block_size,
-        }
+        })
     }
 }
 
@@ -79,11 +79,11 @@ fn jbp1_decompress(buf: &[u8]) -> anyhow::Result<Bytes> {
     let off = &mut 0;
     let jbp1 = Jbp1::new(buf)?;
     *off = jbp1.data_offset as usize;
-    let freq_dc = vec![0; 128];
+    let mut freq_dc = vec![0; 128];
     for i in 0..16 {
         freq_dc[i] = buf.gread_with::<u32>(off, LE)?;
     }
-    let freq_ac = vec![0; 128];
+    let mut freq_ac = vec![0; 128];
     for i in 0..16 {
         freq_ac[i] = buf.gread_with::<u32>(off, LE)?;
     }

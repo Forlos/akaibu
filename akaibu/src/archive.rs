@@ -7,6 +7,7 @@ pub trait Archive {
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes>;
     fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()>;
     fn get_root_dir(&self) -> &Directory;
+    fn get_navigable_dir(&mut self) -> &mut NavigableDirectory;
 }
 
 // pub trait FileEntry: Debug {
@@ -23,7 +24,7 @@ pub struct FileEntry {
     pub file_size: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Directory {
     pub files: Vec<FileEntry>,
     pub directories: HashMap<String, Directory>,
@@ -68,5 +69,43 @@ impl Directory {
                     .flatten(),
             ),
         )
+    }
+    pub fn find_dir(&self, dir_names: &[String]) -> Option<&Directory> {
+        println!("{:?}", dir_names);
+        if dir_names.is_empty() {
+            Some(&self)
+        } else {
+            self.directories
+                .get(&dir_names[0])?
+                .find_dir(&dir_names[1..])
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct NavigableDirectory {
+    root_dir: Directory,
+    current: Vec<String>,
+}
+impl NavigableDirectory {
+    pub fn new(root_dir: Directory) -> Self {
+        Self {
+            root_dir,
+            current: Vec::new(),
+        }
+    }
+    pub fn get_root_dir(&self) -> &Directory {
+        &self.root_dir
+    }
+    pub fn get_current(&self) -> &Directory {
+        self.root_dir.find_dir(&self.current).unwrap()
+    }
+    pub fn move_dir(&mut self, dir: &str) -> Option<&Directory> {
+        self.current.push(dir.to_string());
+        self.root_dir.find_dir(&self.current.as_slice())
+    }
+    pub fn back_dir(&mut self) -> Option<&Directory> {
+        self.current.pop()?;
+        self.root_dir.find_dir(&self.current)
     }
 }

@@ -173,6 +173,10 @@ impl archive::Archive for Cpz7Archive {
     fn get_root_dir(&self) -> &archive::Directory {
         &self.root_dir
     }
+
+    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
+        todo!()
+    }
 }
 
 impl Cpz7Archive {

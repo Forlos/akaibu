@@ -121,6 +121,10 @@ impl archive::Archive for Pf8Archive {
     fn get_root_dir(&self) -> &archive::Directory {
         &self.root_dir
     }
+
+    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
+        todo!()
+    }
 }
 
 impl Pf8Archive {

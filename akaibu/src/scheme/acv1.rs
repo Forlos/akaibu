@@ -161,6 +161,10 @@ impl archive::Archive for Acv1Archive {
     fn get_root_dir(&self) -> &archive::Directory {
         &self.root_dir
     }
+
+    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
+        todo!()
+    }
 }
 
 impl Acv1Archive {

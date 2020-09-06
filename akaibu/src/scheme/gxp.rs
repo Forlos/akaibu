@@ -33,33 +33,12 @@ impl Scheme for GxpScheme {
         let archive = buf.pread_with::<Gxp>(0, header)?;
         log::debug!("Archive: {:?}", archive);
 
-        let root_dir = archive::Directory::new(
-            archive
-                .file_entries
-                .iter()
-                .map(|entry| {
-                    let file_offset = entry.file_offset as u64;
-                    let file_size = entry.file_size as u64;
-                    archive::FileEntry {
-                        file_name: String::from(
-                            entry
-                                .full_path
-                                .file_name()
-                                .expect("No file name")
-                                .to_str()
-                                .expect("Not valid UTF-8"),
-                        ),
-                        full_path: entry.full_path.clone(),
-                        file_offset,
-                        file_size,
-                    }
-                })
-                .collect(),
-        );
+        let root_dir = GxpArchive::new_root_dir(&archive.file_entries);
+        let navigable_dir = archive::NavigableDirectory::new(root_dir);
         Ok(Box::new(GxpArchive {
             file,
             archive,
-            root_dir,
+            navigable_dir,
         }))
     }
     fn get_name(&self) -> &str {
@@ -76,12 +55,13 @@ impl Scheme for GxpScheme {
 struct GxpArchive {
     file: RandomAccessFile,
     archive: Gxp,
-    root_dir: archive::Directory,
+    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for GxpArchive {
     fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.root_dir
+        self.navigable_dir
+            .get_root_dir()
             .get_all_files()
             .cloned()
             .collect::<Vec<archive::FileEntry>>()
@@ -114,11 +94,39 @@ impl archive::Archive for GxpArchive {
         })
     }
     fn get_root_dir(&self) -> &archive::Directory {
-        &self.root_dir
+        &self.navigable_dir.get_root_dir()
+    }
+
+    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
+        &mut self.navigable_dir
     }
 }
 
 impl GxpArchive {
+    fn new_root_dir(entries: &[GxpFileEntry]) -> archive::Directory {
+        archive::Directory::new(
+            entries
+                .iter()
+                .map(|entry| {
+                    let file_offset = entry.file_offset as u64;
+                    let file_size = entry.file_size as u64;
+                    archive::FileEntry {
+                        file_name: String::from(
+                            entry
+                                .full_path
+                                .file_name()
+                                .expect("No file name")
+                                .to_str()
+                                .expect("Not valid UTF-8"),
+                        ),
+                        full_path: entry.full_path.clone(),
+                        file_offset,
+                        file_size,
+                    }
+                })
+                .collect(),
+        )
+    }
     fn extract(&self, entry: &GxpFileEntry) -> anyhow::Result<Bytes> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
