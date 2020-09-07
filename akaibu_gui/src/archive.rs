@@ -1,8 +1,8 @@
 use crate::{message::Message, preview::Preview, style};
 use akaibu::archive;
 use iced::{
-    button, image, scrollable, Button, Column, Container, Element, Image,
-    Length, ProgressBar, Row, Scrollable, Space, Text,
+    button, image, scrollable, Align, Button, Column, Container, Element,
+    Image, Length, ProgressBar, Row, Scrollable, Space, Text,
 };
 use itertools::Itertools;
 
@@ -14,12 +14,14 @@ pub struct ArchiveContent {
     back_dir_button_state: button::State,
     pub(crate) preview: Preview,
     pub(crate) extract_all_progress: f32,
+    footer: Footer,
 }
 
 impl ArchiveContent {
     pub fn new(mut archive: Box<dyn archive::Archive>) -> Self {
         let current = archive.get_navigable_dir().get_current();
         let entries = Self::new_entries(current);
+        let footer = Footer::new();
         Self {
             entries,
             archive,
@@ -28,6 +30,7 @@ impl ArchiveContent {
             back_dir_button_state: button::State::new(),
             preview: Preview::new(),
             extract_all_progress: 0.0,
+            footer,
         }
     }
     pub fn view(&mut self) -> Element<Message> {
@@ -37,77 +40,93 @@ impl ArchiveContent {
         if self.archive.get_navigable_dir().has_parent() {
             back_button = back_button.on_press(Message::BackDirectory);
         }
-        let content = Row::new()
+        let content = Column::new()
             .push(
-                Column::new()
-                    .width(Length::FillPortion(3))
-                    .push(Space::new(Length::Units(0), Length::Units(5)))
+                Row::new()
                     .push(
-                        Row::new()
+                        Column::new()
+                            .width(Length::FillPortion(3))
                             .push(Space::new(
-                                Length::Units(5),
                                 Length::Units(0),
+                                Length::Units(5),
                             ))
                             .push(
-                                Button::new(
-                                    &mut self.extract_all_button_state,
-                                    Text::new("Extract all"),
+                                Row::new()
+                                    .push(Space::new(
+                                        Length::Units(5),
+                                        Length::Units(0),
+                                    ))
+                                    .push(
+                                        Button::new(
+                                            &mut self.extract_all_button_state,
+                                            Text::new("Extract all"),
+                                        )
+                                        .on_press(Message::ExtractAll)
+                                        .style(style::Dark),
+                                    )
+                                    .push(Space::new(
+                                        Length::Units(5),
+                                        Length::Units(0),
+                                    ))
+                                    .push(back_button)
+                                    .push(Space::new(
+                                        Length::Units(5),
+                                        Length::Units(0),
+                                    ))
+                                    .push(
+                                        ProgressBar::new(
+                                            0.0..=100.0,
+                                            self.extract_all_progress,
+                                        )
+                                        .style(style::Dark),
+                                    )
+                                    .push(Space::new(
+                                        Length::Units(5),
+                                        Length::Units(0),
+                                    )),
+                            )
+                            .push(
+                                Row::new()
+                                    .push(Space::new(
+                                        Length::Units(5),
+                                        Length::Units(0),
+                                    ))
+                                    .push(
+                                        Container::new(
+                                            Text::new("Name").size(18),
+                                        )
+                                        .width(Length::FillPortion(1)),
+                                    )
+                                    .push(
+                                        Container::new(
+                                            Text::new("Size").size(18),
+                                        )
+                                        .width(Length::Units(80)),
+                                    )
+                                    .push(
+                                        Container::new(
+                                            Text::new("Actions").size(18),
+                                        )
+                                        .width(Length::Units(210)),
+                                    ),
+                            )
+                            .push(
+                                Scrollable::new(
+                                    &mut self.entries_scrollable_state,
                                 )
-                                .on_press(Message::ExtractAll)
-                                .style(style::Dark),
-                            )
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
-                            .push(back_button)
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
-                            .push(
-                                ProgressBar::new(
-                                    0.0..=100.0,
-                                    self.extract_all_progress,
-                                )
-                                .style(style::Dark),
-                            )
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            )),
-                    )
-                    .push(
-                        Row::new()
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
-                            .push(
-                                Container::new(Text::new("Name").size(18))
-                                    .width(Length::FillPortion(1)),
-                            )
-                            .push(
-                                Container::new(Text::new("Size").size(18))
-                                    .width(Length::Units(80)),
-                            )
-                            .push(
-                                Container::new(Text::new("Actions").size(18))
-                                    .width(Length::Units(210)),
+                                .push(
+                                    self.entries
+                                        .iter_mut()
+                                        .fold(Column::new(), |col, entry| {
+                                            col.push(entry.view())
+                                        }),
+                                ),
                             ),
                     )
-                    .push(
-                        Scrollable::new(&mut self.entries_scrollable_state)
-                            .push(
-                                self.entries
-                                    .iter_mut()
-                                    .fold(Column::new(), |col, entry| {
-                                        col.push(entry.view())
-                                    }),
-                            ),
-                    ),
+                    .push(self.preview.view())
+                    .height(Length::Fill),
             )
-            .push(self.preview.view());
+            .push(self.footer.view());
         Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)
@@ -122,11 +141,15 @@ impl ArchiveContent {
                 .move_dir(&dir_name)
                 .unwrap(),
         );
+        self.footer.current_dir =
+            self.archive.get_navigable_dir().get_current_full_path();
     }
     pub fn back_dir(&mut self) {
         self.entries = Self::new_entries(
             self.archive.get_navigable_dir().back_dir().unwrap(),
         );
+        self.footer.current_dir =
+            self.archive.get_navigable_dir().get_current_full_path();
     }
     fn new_entries(current: &archive::Directory) -> Vec<Entry> {
         current
@@ -335,5 +358,34 @@ impl Entry {
                 Container::new(content).into()
             }
         }
+    }
+}
+
+struct Footer {
+    current_dir: String,
+}
+
+impl Footer {
+    fn new() -> Self {
+        Self {
+            current_dir: String::from("/"),
+        }
+    }
+    fn view(&mut self) -> Element<Message> {
+        let content = Row::new()
+            .push(Space::new(Length::Units(5), Length::Units(0)))
+            .push(Text::new(&self.current_dir).size(16))
+            .push(Space::new(Length::Units(15), Length::Units(0)))
+            .push(
+                ProgressBar::new(0.0..=100.0, 20.0)
+                    .height(Length::Units(10))
+                    .style(style::Dark),
+            );
+        Container::new(content)
+            .center_y()
+            .height(Length::Units(20))
+            .width(Length::Fill)
+            .style(style::Dark)
+            .into()
     }
 }
