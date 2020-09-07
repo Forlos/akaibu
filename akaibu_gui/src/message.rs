@@ -1,4 +1,4 @@
-use akaibu::archive::FileEntry;
+use akaibu::{archive::FileEntry, scheme::Scheme};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -16,5 +16,5 @@ pub enum Message {
 
 #[derive(Debug, Clone)]
 pub enum Scene {
-    ArchiveView,
+    ArchiveView(Box<dyn Scheme>),
 }

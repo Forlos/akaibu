@@ -4,9 +4,7 @@ use crate::{
     content::Content,
     message::{Message, Scene},
 };
-use akaibu::magic;
 use iced::Command;
-use std::{fs::File, io::Read};
 
 pub(crate) fn handle_message(
     app: &mut App,
@@ -52,13 +50,13 @@ pub(crate) fn handle_message(
             //     });
         }
         Message::UpdateScrollbar(i) => {
-            println!("{}", i);
             // app.content.extract_all_progress = i;
         }
         Message::MoveScene(scene) => match scene {
-            Scene::ArchiveView => {
-                // app.content =
-                //     Content::ArchiveView(ArchiveContent::new(archive));
+            Scene::ArchiveView(scheme) => {
+                app.content = Content::ArchiveView(ArchiveContent::new(
+                    scheme.extract(&app.opt.file)?,
+                ));
             }
         },
     };

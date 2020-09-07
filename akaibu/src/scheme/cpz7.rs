@@ -26,7 +26,7 @@ const PASSWORD: &[u8] = &[
     130, 181, 130, 189, 129, 244,
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Cpz7Scheme {
     AoiTori,
     Realive,

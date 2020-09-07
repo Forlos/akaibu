@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
 use std::{fs::File, io::Write, path::PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Pf8Scheme {
     Universal,
 }
@@ -33,29 +33,7 @@ impl Scheme for Pf8Scheme {
         file.read_exact_at(7, &mut buf)?;
         let sha1 = sha1::Sha1::from(&buf).digest().bytes();
 
-        let root_dir = archive::Directory::new(
-            archive
-                .file_entries
-                .iter()
-                .map(|entry| {
-                    let file_offset = entry.file_offset as u64;
-                    let file_size = entry.file_size as u64;
-                    archive::FileEntry {
-                        file_name: String::from(
-                            entry
-                                .full_path
-                                .file_name()
-                                .expect("No file name")
-                                .to_str()
-                                .expect("Not valid UTF-8"),
-                        ),
-                        full_path: entry.full_path.clone(),
-                        file_offset,
-                        file_size,
-                    }
-                })
-                .collect(),
-        );
+        let root_dir = Pf8Archive::new_root_dir(&archive.file_entries);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
         Ok(Box::new(Pf8Archive {
             file,

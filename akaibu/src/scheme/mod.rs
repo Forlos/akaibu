@@ -1,4 +1,5 @@
 use crate::archive;
+use dyn_clone::DynClone;
 use std::{fmt::Debug, path::PathBuf};
 
 pub mod acv1;
@@ -6,7 +7,7 @@ pub mod cpz7;
 pub mod gxp;
 pub mod pf8;
 
-pub trait Scheme: Debug {
+pub trait Scheme: Debug + Send + DynClone {
     fn extract(
         &self,
         file_path: &PathBuf,
@@ -16,3 +17,5 @@ pub trait Scheme: Debug {
     where
         Self: Sized;
 }
+
+dyn_clone::clone_trait_object!(Scheme);

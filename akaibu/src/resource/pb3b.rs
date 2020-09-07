@@ -18,7 +18,6 @@ impl Pb3b {
         // {
         //     return Err(AkaibuError::Unimplemented.into());
         // }
-        // println!("{:#?}", header);
         let image = match header.main_type {
             1 => Self::decode_v1(&mut buf, &header),
             // 3 => Self::decode_v3(&mut buf, &header),

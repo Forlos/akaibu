@@ -1,4 +1,7 @@
-use crate::{message::Message, style};
+use crate::{
+    message::{Message, Scene},
+    style,
+};
 use akaibu::scheme::Scheme;
 use iced::{button, Button, Column, Container, Element, Length, Row, Text};
 
@@ -16,14 +19,19 @@ impl SchemeContent {
     }
     pub fn view(&mut self) -> Element<Message> {
         Container::new(self.schemes.iter_mut().fold(
-            Column::new(),
+            Column::new().push(Text::new("Select extract scheme").size(30)),
             |col, (scheme, button_state)| {
                 col.push(
                     Row::new()
-                        .push(Text::new(scheme.get_name()))
                         .push(
-                            Button::new(button_state, Text::new("Select"))
-                                .style(style::Dark),
+                            Button::new(
+                                button_state,
+                                Text::new(scheme.get_name()),
+                            )
+                            .on_press(Message::MoveScene(Scene::ArchiveView(
+                                scheme.clone(),
+                            )))
+                            .style(style::Dark),
                         )
                         .height(Length::Units(50))
                         .spacing(5)

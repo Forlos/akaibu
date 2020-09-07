@@ -33,3 +33,9 @@ fn main() {
         ..Default::default()
     })
 }
+
+use rust_embed::RustEmbed;
+
+#[derive(Debug, RustEmbed)]
+#[folder = "resources/"]
+pub struct Resources;

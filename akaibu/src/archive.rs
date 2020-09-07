@@ -1,4 +1,5 @@
 use bytes::Bytes;
+use itertools::Itertools;
 use std::{collections::HashMap, ffi::OsStr, fmt::Debug, path::PathBuf};
 
 // Workaround until it is possible to return impl Trait in traits
@@ -35,7 +36,10 @@ impl Directory {
             files: Vec::new(),
             directories: HashMap::new(),
         };
-        for entry in files {
+        for entry in files
+            .into_iter()
+            .sorted_by(|a, b| a.full_path.cmp(&b.full_path))
+        {
             let dirs = entry.full_path.iter().collect::<Vec<&OsStr>>();
             let mut current = &mut root_dir;
             if dirs.len() == 1 {

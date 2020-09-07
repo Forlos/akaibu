@@ -1,9 +1,10 @@
 use crate::{message::Message, preview::Preview, style};
 use akaibu::archive;
 use iced::{
-    button, scrollable, Button, Column, Container, Element, Length,
-    ProgressBar, Row, Scrollable, Space, Text,
+    button, image, scrollable, Button, Column, Container, Element, Image,
+    Length, ProgressBar, Row, Scrollable, Space, Text,
 };
+use itertools::Itertools;
 
 pub struct ArchiveContent {
     entries: Vec<Entry>,
@@ -83,20 +84,16 @@ impl ArchiveContent {
                                 Length::Units(0),
                             ))
                             .push(
-                                Container::new(Text::new("Name"))
+                                Container::new(Text::new("Name").size(18))
                                     .width(Length::FillPortion(1)),
                             )
                             .push(
-                                Container::new(Text::new("Type"))
-                                    .width(Length::Units(50)),
+                                Container::new(Text::new("Size").size(18))
+                                    .width(Length::Units(80)),
                             )
                             .push(
-                                Container::new(Text::new("Size"))
-                                    .width(Length::Units(100)),
-                            )
-                            .push(
-                                Container::new(Text::new("Actions"))
-                                    .width(Length::Units(240)),
+                                Container::new(Text::new("Actions").size(18))
+                                    .width(Length::Units(210)),
                             ),
                     )
                     .push(
@@ -135,6 +132,7 @@ impl ArchiveContent {
         current
             .directories
             .iter()
+            .sorted_by(|(a, _), (b, _)| a.cmp(b))
             .map(|(name, dir)| Entry::Directory {
                 dir_name: name.clone(),
                 file_count: dir.files.len() + dir.directories.len(),
@@ -172,54 +170,61 @@ impl Entry {
                 file_count,
                 open_button_state,
             } => {
+                let image_handle = image::Handle::from_memory(
+                    crate::Resources::get("icons/folder.png")
+                        .expect("Could not embedded resource")
+                        .into(),
+                );
                 let content = Row::new()
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .push(
-                        Container::new(Text::new(&*dir_name))
-                            .width(Length::FillPortion(1))
-                            .height(Length::Fill)
-                            .center_y()
-                            .padding(5)
-                            .style(style::Dark),
+                        Container::new(
+                            Row::new()
+                                .push(Image::new(image_handle))
+                                .push(Space::new(
+                                    Length::Units(5),
+                                    Length::Units(0),
+                                ))
+                                .push(Text::new(&*dir_name).size(16)),
+                        )
+                        .width(Length::FillPortion(1))
+                        .height(Length::Fill)
+                        .center_y()
+                        .padding(5)
+                        .style(style::Dark),
                     )
                     .push(
-                        Container::new(Text::new("DIR"))
-                            .width(Length::Units(50))
-                            .height(Length::Fill)
-                            .center_y()
-                            .padding(5)
-                            .style(style::Dark),
-                    )
-                    .push(
-                        Container::new(Text::new(format!("{}", file_count)))
-                            .width(Length::Units(100))
-                            .height(Length::Fill)
-                            .center_y()
-                            .padding(5)
-                            .style(style::Dark),
+                        Container::new(
+                            Text::new(format!("{}", file_count)).size(16),
+                        )
+                        .width(Length::Units(80))
+                        .height(Length::Fill)
+                        .center_y()
+                        .padding(5)
+                        .style(style::Dark),
                     )
                     .push(
                         Container::new(
                             Button::new(
                                 open_button_state,
-                                Container::new(Text::new("Open").size(18))
+                                Container::new(Text::new("Open").size(16))
                                     .center_y()
                                     .center_x(),
                             )
                             .on_press(Message::OpenDirectory(dir_name.clone()))
                             .padding(5)
-                            .width(Length::Units(80))
-                            .height(Length::Units(30))
+                            .width(Length::Units(65))
+                            .height(Length::Units(25))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(240))
+                        .width(Length::Units(210))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
                     .push(Space::new(Length::Units(5), Length::Units(0)))
-                    .height(Length::Units(40));
+                    .height(Length::Units(30));
                 Container::new(content).into()
             }
             Entry::File {
@@ -228,30 +233,38 @@ impl Entry {
                 extract_button_state,
                 preview_button_state,
             } => {
+                let image_handle = image::Handle::from_memory(
+                    crate::Resources::get("icons/file.png")
+                        .expect("Could not get embedded resource")
+                        .into(),
+                );
                 let content = Row::new()
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .push(
-                        Container::new(Text::new(&*file.file_name))
-                            .width(Length::FillPortion(1))
-                            .height(Length::Fill)
-                            .center_y()
-                            .padding(5)
-                            .style(style::Dark),
+                        Container::new(
+                            Row::new()
+                                .push(Image::new(image_handle))
+                                .push(Space::new(
+                                    Length::Units(5),
+                                    Length::Units(0),
+                                ))
+                                .push(Text::new(&*file.file_name).size(16)),
+                        )
+                        .width(Length::FillPortion(1))
+                        .height(Length::Fill)
+                        .center_y()
+                        .padding(5)
+                        .style(style::Dark),
                     )
                     .push(
-                        Container::new(Text::new("FILE"))
-                            .width(Length::Units(50))
-                            .height(Length::Fill)
-                            .center_y()
-                            .padding(5)
-                            .style(style::Dark),
-                    )
-                    .push(
-                        Container::new(Text::new(bytesize::to_string(
-                            file.file_size,
-                            false,
-                        )))
-                        .width(Length::Units(100))
+                        Container::new(
+                            Text::new(bytesize::to_string(
+                                file.file_size,
+                                false,
+                            ))
+                            .size(16),
+                        )
+                        .width(Length::Units(80))
                         .height(Length::Fill)
                         .center_y()
                         .padding(5)
@@ -261,19 +274,19 @@ impl Entry {
                         Container::new(
                             Button::new(
                                 convert_button_state,
-                                Container::new(Text::new("Convert").size(18))
+                                Container::new(Text::new("Convert").size(16))
                                     .center_y()
                                     .center_x(),
                             )
                             .on_press(Message::ConvertFile(file.clone()))
                             .padding(5)
-                            .width(Length::Units(70))
-                            .height(Length::Units(30))
+                            .width(Length::Units(65))
+                            .height(Length::Units(25))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(80))
+                        .width(Length::Units(70))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
@@ -281,19 +294,19 @@ impl Entry {
                         Container::new(
                             Button::new(
                                 extract_button_state,
-                                Container::new(Text::new("Extract").size(18))
+                                Container::new(Text::new("Extract").size(16))
                                     .center_y()
                                     .center_x(),
                             )
                             .on_press(Message::ExtractFile(file.clone()))
                             .padding(5)
-                            .width(Length::Units(70))
-                            .height(Length::Units(30))
+                            .width(Length::Units(65))
+                            .height(Length::Units(25))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(80))
+                        .width(Length::Units(70))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
@@ -301,24 +314,24 @@ impl Entry {
                         Container::new(
                             Button::new(
                                 preview_button_state,
-                                Container::new(Text::new("Preview").size(18))
+                                Container::new(Text::new("Preview").size(16))
                                     .center_y()
                                     .center_x(),
                             )
                             .on_press(Message::PreviewFile(file.clone()))
                             .padding(5)
-                            .width(Length::Units(70))
-                            .height(Length::Units(30))
+                            .width(Length::Units(65))
+                            .height(Length::Units(25))
                             .style(style::Dark),
                         )
                         .center_y()
                         .center_x()
-                        .width(Length::Units(80))
+                        .width(Length::Units(70))
                         .height(Length::Fill)
                         .style(style::Dark),
                     )
                     .push(Space::new(Length::Units(5), Length::Units(0)))
-                    .height(Length::Units(40));
+                    .height(Length::Units(30));
                 Container::new(content).into()
             }
         }

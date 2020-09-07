@@ -36,3 +36,7 @@ flate2 = { version = "1.0", default-features = false, features = ["zlib"] }
 tlg_rs = { git = "https://github.com/Forlos/tlg_rs", branch = "master" }
 image = { version = "0.23", default-features = false, features = ["png"] }
 rust-embed= { version = "5.6", default_features = false, features = ["compression"] }
+
+# Other
+dyn-clone = "1.0.2"
+itertools = "0.9"

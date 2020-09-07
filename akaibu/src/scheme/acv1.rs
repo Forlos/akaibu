@@ -13,7 +13,7 @@ use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 const MASTER_KEY: u32 = 0x8B6A4E5F;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Acv1Scheme {
     Shukugar1,
     Shukugar2,
@@ -151,6 +151,7 @@ impl Acv1Archive {
         archive::Directory::new(
             entries
                 .iter()
+                .filter(|entry| entry.extractable)
                 .map(|entry| {
                     let file_offset = entry.file_offset as u64;
                     let file_size = entry.file_size as u64;
