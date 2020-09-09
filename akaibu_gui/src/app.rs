@@ -32,7 +32,7 @@ impl Application for App {
 
         if archive_magic.is_universal() {
             let scheme = schemes.get(0).expect("Expected universal scheme");
-            let archive = scheme.extract(&opt.file).unwrap();
+            let archive = scheme.extract(&opt.file).expect("Could not extract");
             (
                 Self {
                     opt,

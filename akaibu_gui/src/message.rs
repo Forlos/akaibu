@@ -12,7 +12,6 @@ pub enum Message {
     PreviewFile(FileEntry),
     SetStatus(Status),
     Error(String),
-    Empty,
 }
 
 #[derive(Debug, Clone)]
