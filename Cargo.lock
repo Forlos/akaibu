@@ -73,6 +73,7 @@ dependencies = [
  "iced",
  "itertools",
  "log",
+ "rayon",
  "rust-embed",
  "structopt",
  "thiserror",

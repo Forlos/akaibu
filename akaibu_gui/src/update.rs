@@ -1,10 +1,12 @@
 use crate::{
     app::App,
-    archive::ArchiveContent,
-    content::Content,
+    logic::extract,
+    message::Status,
     message::{Message, Scene},
+    ui::archive::ArchiveContent,
+    ui::content::Content,
 };
-use iced::Command;
+use iced::{futures, Command};
 
 pub(crate) fn handle_message(
     app: &mut App,
@@ -12,45 +14,54 @@ pub(crate) fn handle_message(
 ) -> anyhow::Result<Command<Message>> {
     log::info!("{:?}", message);
     match message {
-        Message::OpenDirectory(dir_name) => match app.content {
-            Content::ArchiveView(ref mut content) => {
+        Message::OpenDirectory(dir_name) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
                 content.move_dir(dir_name);
             }
-            _ => {}
-        },
-        Message::BackDirectory => match app.content {
-            Content::ArchiveView(ref mut content) => {
+        }
+        Message::BackDirectory => {
+            if let Content::ArchiveView(ref mut content) = app.content {
                 content.back_dir();
             }
-            _ => {}
-        },
-        Message::ExtractFile(file) => {}
-        Message::PreviewFile(file) => {}
-        Message::ConvertFile(file) => {}
-        Message::Empty => (),
-        Message::Error(_) => (),
-        Message::ExtractAll => {
-            // TODO show progress to user and move logic to different file
-            // app.archive
-            //     .get_files()
-            //     .iter()
-            //     .enumerate()
-            //     .for_each(|(i, e)| {
-            //         let buf = app.archive.extract(e).unwrap();
-            //         let mut output_file_name = PathBuf::from("ext/");
-            //         output_file_name.push(&e.file_name);
-            //         std::fs::create_dir_all(
-            //             &output_file_name.parent().unwrap(),
-            //         )
-            //         .unwrap();
-            //         File::create(output_file_name)
-            //             .unwrap()
-            //             .write_all(&buf)
-            //             .unwrap();
-            //     });
         }
-        Message::UpdateScrollbar(i) => {
-            // app.content.extract_all_progress = i;
+        Message::ConvertFile(file_entry) => {}
+        Message::ExtractFile(file_entry) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                extract::extract_single_file(
+                    &content.archive,
+                    &file_entry,
+                    &app.opt.file,
+                )?
+            };
+            return Ok(Command::perform(
+                futures::future::ready(Status::Success(format!(
+                    "Extracted: {}",
+                    file_entry.file_name
+                ))),
+                Message::SetStatus,
+            ));
+        }
+        Message::PreviewFile(file_entry) => {}
+        Message::ExtractAll => {
+            // TODO make extracting async
+            if let Content::ArchiveView(ref mut content) = app.content {
+                return Ok(Command::perform(
+                    futures::future::ready(extract::extract_all(
+                        &content.archive,
+                        &app.opt.file,
+                    )?),
+                    |_| {
+                        Message::SetStatus(Status::Success(String::from(
+                            "Extracted all!",
+                        )))
+                    },
+                ));
+            };
+        }
+        Message::UpdateScrollbar(progress) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.set_progress(progress);
+            }
         }
         Message::MoveScene(scene) => match scene {
             Scene::ArchiveView(scheme) => {
@@ -59,6 +70,17 @@ pub(crate) fn handle_message(
                 ));
             }
         },
+        Message::SetStatus(status) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.set_status(status);
+            }
+        }
+        Message::Empty => (),
+        Message::Error(err) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.set_status(Status::Error(err));
+            }
+        }
     };
     Ok(Command::none())
 }

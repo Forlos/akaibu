@@ -34,7 +34,7 @@ impl Preview {
                     .center_y()
                     .width(Length::Fill)
                     .height(Length::Fill)
-                    .style(style::Dark),
+                    .style(style::Dark::default()),
                 )
             }
             resource::ResourceType::Text(text) => {
@@ -48,7 +48,7 @@ impl Preview {
                     )
                     .width(Length::Fill)
                     .height(Length::Fill)
-                    .style(style::Dark),
+                    .style(style::Dark::default()),
                 )
             }
             resource::ResourceType::Other => {
@@ -62,7 +62,7 @@ impl Preview {
                     )
                     .width(Length::Fill)
                     .height(Length::Fill)
-                    .style(style::Dark),
+                    .style(style::Dark::default()),
                 )
             }
         };

@@ -1,10 +1,8 @@
 mod app;
-mod archive;
-mod content;
+mod logic;
 mod message;
-mod preview;
-mod scheme;
 mod style;
+mod ui;
 mod update;
 
 use app::App;

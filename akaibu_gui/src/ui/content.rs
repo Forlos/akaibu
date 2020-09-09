@@ -1,4 +1,7 @@
-use crate::{archive::ArchiveContent, message::Message, scheme::SchemeContent};
+use crate::{
+    message::Message,
+    ui::{archive::ArchiveContent, scheme::SchemeContent},
+};
 use iced::Element;
 
 pub enum Content {

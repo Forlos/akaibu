@@ -10,6 +10,7 @@ pub enum Message {
     ConvertFile(FileEntry),
     ExtractFile(FileEntry),
     PreviewFile(FileEntry),
+    SetStatus(Status),
     Error(String),
     Empty,
 }
@@ -17,4 +18,11 @@ pub enum Message {
 #[derive(Debug, Clone)]
 pub enum Scene {
     ArchiveView(Box<dyn Scheme>),
+}
+
+#[derive(Debug, Clone)]
+pub enum Status {
+    Normal(String),
+    Success(String),
+    Error(String),
 }

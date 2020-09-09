@@ -1,8 +1,9 @@
-use crate::{message::Message, preview::Preview, style};
+use crate::{message::Message, message::Status, style, ui::preview::Preview};
 use akaibu::archive;
 use iced::{
-    button, image, scrollable, Align, Button, Column, Container, Element,
+    button, image, scrollable, Background, Button, Column, Container, Element,
     Image, Length, ProgressBar, Row, Scrollable, Space, Text,
+    VerticalAlignment,
 };
 use itertools::Itertools;
 
@@ -36,7 +37,7 @@ impl ArchiveContent {
     pub fn view(&mut self) -> Element<Message> {
         let mut back_button =
             Button::new(&mut self.back_dir_button_state, Text::new("Back dir"))
-                .style(style::Dark);
+                .style(style::Dark::default());
         if self.archive.get_navigable_dir().has_parent() {
             back_button = back_button.on_press(Message::BackDirectory);
         }
@@ -62,7 +63,7 @@ impl ArchiveContent {
                                             Text::new("Extract all"),
                                         )
                                         .on_press(Message::ExtractAll)
-                                        .style(style::Dark),
+                                        .style(style::Dark::default()),
                                     )
                                     .push(Space::new(
                                         Length::Units(5),
@@ -78,7 +79,7 @@ impl ArchiveContent {
                                             0.0..=100.0,
                                             self.extract_all_progress,
                                         )
-                                        .style(style::Dark),
+                                        .style(style::Dark::default()),
                                     )
                                     .push(Space::new(
                                         Length::Units(5),
@@ -130,8 +131,7 @@ impl ArchiveContent {
         Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)
-            .padding(3)
-            .style(style::Dark)
+            .style(style::Dark::default())
             .into()
     }
     pub fn move_dir(&mut self, dir_name: String) {
@@ -150,6 +150,12 @@ impl ArchiveContent {
         );
         self.footer.current_dir =
             self.archive.get_navigable_dir().get_current_full_path();
+    }
+    pub fn set_status(&mut self, status: Status) {
+        self.footer.status = status;
+    }
+    pub fn set_progress(&mut self, progress: f32) {
+        self.footer.progress = progress;
     }
     fn new_entries(current: &archive::Directory) -> Vec<Entry> {
         current
@@ -203,6 +209,10 @@ impl Entry {
                     .push(
                         Container::new(
                             Row::new()
+                                .push(Space::new(
+                                    Length::Units(5),
+                                    Length::Units(0),
+                                ))
                                 .push(Image::new(image_handle))
                                 .push(Space::new(
                                     Length::Units(5),
@@ -213,8 +223,7 @@ impl Entry {
                         .width(Length::FillPortion(1))
                         .height(Length::Fill)
                         .center_y()
-                        .padding(5)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -224,7 +233,7 @@ impl Entry {
                         .height(Length::Fill)
                         .center_y()
                         .padding(5)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -235,16 +244,15 @@ impl Entry {
                                     .center_x(),
                             )
                             .on_press(Message::OpenDirectory(dir_name.clone()))
-                            .padding(5)
                             .width(Length::Units(65))
                             .height(Length::Units(25))
-                            .style(style::Dark),
+                            .style(style::Dark::default()),
                         )
                         .center_y()
                         .center_x()
                         .width(Length::Units(210))
                         .height(Length::Fill)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .height(Length::Units(30));
@@ -266,6 +274,10 @@ impl Entry {
                     .push(
                         Container::new(
                             Row::new()
+                                .push(Space::new(
+                                    Length::Units(5),
+                                    Length::Units(0),
+                                ))
                                 .push(Image::new(image_handle))
                                 .push(Space::new(
                                     Length::Units(5),
@@ -276,8 +288,7 @@ impl Entry {
                         .width(Length::FillPortion(1))
                         .height(Length::Fill)
                         .center_y()
-                        .padding(5)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -291,7 +302,7 @@ impl Entry {
                         .height(Length::Fill)
                         .center_y()
                         .padding(5)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -302,16 +313,15 @@ impl Entry {
                                     .center_x(),
                             )
                             .on_press(Message::ConvertFile(file.clone()))
-                            .padding(5)
                             .width(Length::Units(65))
                             .height(Length::Units(25))
-                            .style(style::Dark),
+                            .style(style::Dark::default()),
                         )
                         .center_y()
                         .center_x()
                         .width(Length::Units(70))
                         .height(Length::Fill)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -322,16 +332,15 @@ impl Entry {
                                     .center_x(),
                             )
                             .on_press(Message::ExtractFile(file.clone()))
-                            .padding(5)
                             .width(Length::Units(65))
                             .height(Length::Units(25))
-                            .style(style::Dark),
+                            .style(style::Dark::default()),
                         )
                         .center_y()
                         .center_x()
                         .width(Length::Units(70))
                         .height(Length::Fill)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(
                         Container::new(
@@ -342,16 +351,15 @@ impl Entry {
                                     .center_x(),
                             )
                             .on_press(Message::PreviewFile(file.clone()))
-                            .padding(5)
                             .width(Length::Units(65))
                             .height(Length::Units(25))
-                            .style(style::Dark),
+                            .style(style::Dark::default()),
                         )
                         .center_y()
                         .center_x()
                         .width(Length::Units(70))
                         .height(Length::Fill)
-                        .style(style::Dark),
+                        .style(style::Dark::default()),
                     )
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .height(Length::Units(30));
@@ -363,29 +371,68 @@ impl Entry {
 
 struct Footer {
     current_dir: String,
+    progress: f32,
+    status: Status,
 }
 
 impl Footer {
     fn new() -> Self {
         Self {
             current_dir: String::from("/"),
+            progress: 0.0,
+            status: Status::Normal(String::new()),
         }
     }
     fn view(&mut self) -> Element<Message> {
         let content = Row::new()
             .push(Space::new(Length::Units(5), Length::Units(0)))
-            .push(Text::new(&self.current_dir).size(16))
+            .push(
+                Text::new(&self.current_dir)
+                    .size(16)
+                    .height(Length::Fill)
+                    .vertical_alignment(VerticalAlignment::Center),
+            )
             .push(Space::new(Length::Units(15), Length::Units(0)))
             .push(
-                ProgressBar::new(0.0..=100.0, 20.0)
-                    .height(Length::Units(10))
-                    .style(style::Dark),
-            );
+                Container::new(
+                    ProgressBar::new(0.0..=100.0, self.progress)
+                        .height(Length::Units(10))
+                        .style(style::Dark {
+                            background: Background::Color(
+                                style::DARK_BUTTON_FOCUSED,
+                            ),
+                            ..Default::default()
+                        }),
+                )
+                .center_y()
+                .height(Length::Fill)
+                .width(Length::Fill),
+            )
+            .push(Space::new(Length::Units(15), Length::Units(0)))
+            .push(match &self.status {
+                Status::Normal(status) => Text::new(status)
+                    .size(16)
+                    .height(Length::Fill)
+                    .vertical_alignment(VerticalAlignment::Center),
+                Status::Error(status) => Text::new(status)
+                    .color(style::ERROR_TEXT_COLOR)
+                    .size(16)
+                    .height(Length::Fill)
+                    .vertical_alignment(VerticalAlignment::Center),
+                Status::Success(status) => Text::new(status)
+                    .color(style::SUCCESS_TEXT_COLOR)
+                    .size(16)
+                    .height(Length::Fill)
+                    .vertical_alignment(VerticalAlignment::Center),
+            })
+            .push(Space::new(Length::Units(5), Length::Units(0)));
         Container::new(content)
-            .center_y()
             .height(Length::Units(20))
             .width(Length::Fill)
-            .style(style::Dark)
+            .style(style::Dark {
+                border_width: 0,
+                background: Background::Color(style::DARK_BUTTON_FOCUSED),
+            })
             .into()
     }
 }

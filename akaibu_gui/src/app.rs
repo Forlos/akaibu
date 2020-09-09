@@ -1,6 +1,7 @@
 use crate::{
-    archive::ArchiveContent, content::Content, message::Message,
-    scheme::SchemeContent, update, Opt,
+    message::Message,
+    ui::{archive::ArchiveContent, content::Content, scheme::SchemeContent},
+    update, Opt,
 };
 use akaibu::magic;
 use iced::{executor, Application, Command};

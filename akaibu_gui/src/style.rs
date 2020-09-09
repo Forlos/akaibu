@@ -2,48 +2,61 @@ use iced::{
     button, container, progress_bar, text_input, Background, Color, Vector,
 };
 
-const DARK: Color = Color::from_rgb(
+pub const DARK: Color = Color::from_rgb(
     0x19 as f32 / 255.0,
     0x1B as f32 / 255.0,
     0x28 as f32 / 255.0,
 );
 
-const DARK_FOCUSED: Color = Color::from_rgb(
+pub const DARK_FOCUSED: Color = Color::from_rgb(
     0x29 as f32 / 255.0,
     0x2B as f32 / 255.0,
     0x38 as f32 / 255.0,
 );
 
-const DARK_BUTTON_FOCUSED: Color = Color::from_rgb(
+pub const DARK_BUTTON_FOCUSED: Color = Color::from_rgb(
     0x2C as f32 / 255.0,
     0x2F as f32 / 255.0,
     0x3B as f32 / 255.0,
 );
 
-const DARK_SELECTION: Color = Color::from_rgb(
+pub const DARK_SELECTION: Color = Color::from_rgb(
     0x82 as f32 / 255.0,
     0xAA as f32 / 255.0,
     0xFF as f32 / 255.0,
 );
 
-const TEXT_COLOR: Color = Color::from_rgb(
+pub const TEXT_COLOR: Color = Color::from_rgb(
     0x82 as f32 / 255.0,
     0x8B as f32 / 255.0,
     0xB8 as f32 / 255.0,
 );
 
-const BORDER_COLOR: Color = Color::from_rgb(
+pub const BORDER_COLOR: Color = Color::from_rgb(
     0x13 as f32 / 255.0,
     0x14 as f32 / 255.0,
     0x21 as f32 / 255.0,
 );
 
-pub(crate) struct Dark;
+pub struct Dark {
+    pub border_width: u16,
+    pub background: Background,
+}
+
+impl Default for Dark {
+    fn default() -> Self {
+        Self {
+            border_width: 1,
+            background: Background::Color(DARK),
+        }
+    }
+}
+
 impl container::StyleSheet for Dark {
     fn style(&self) -> container::Style {
         container::Style {
-            background: Some(Background::Color(DARK)),
-            border_width: 1,
+            background: Some(self.background),
+            border_width: self.border_width,
             border_color: BORDER_COLOR,
             text_color: Some(TEXT_COLOR),
             border_radius: 0,
@@ -56,7 +69,7 @@ impl button::StyleSheet for Dark {
             shadow_offset: Vector::new(0.0, 0.0),
             background: Some(Background::Color(DARK_FOCUSED)),
             border_radius: 0,
-            border_width: 1,
+            border_width: self.border_width,
             border_color: BORDER_COLOR,
             text_color: TEXT_COLOR,
         }
@@ -101,7 +114,7 @@ impl text_input::StyleSheet for Dark {
         text_input::Style {
             background: Background::Color(HEADER),
             border_radius: 0,
-            border_width: 1,
+            border_width: self.border_width,
             border_color: BORDER_COLOR,
         }
     }
@@ -109,7 +122,7 @@ impl text_input::StyleSheet for Dark {
         text_input::Style {
             background: Background::Color(DARK_FOCUSED),
             border_radius: 0,
-            border_width: 1,
+            border_width: self.border_width,
             border_color: BORDER_COLOR,
         }
     }
@@ -130,19 +143,29 @@ impl text_input::StyleSheet for Dark {
     }
 }
 
-const HEADER: Color = Color::from_rgb(
+impl progress_bar::StyleSheet for Dark {
+    fn style(&self) -> progress_bar::Style {
+        progress_bar::Style {
+            background: self.background,
+            bar: Background::Color(TEXT_COLOR),
+            border_radius: 0,
+        }
+    }
+}
+
+pub const HEADER: Color = Color::from_rgb(
     0x1B as f32 / 255.0,
     0x1D as f32 / 255.0,
     0x2C as f32 / 255.0,
 );
 
-const HEADER_TEXT_HOVER: Color = Color::from_rgb(
+pub const HEADER_TEXT_HOVER: Color = Color::from_rgb(
     0x96 as f32 / 255.0,
     0x9F as f32 / 255.0,
     0xCB as f32 / 255.0,
 );
 
-const HEADER_TEXT_PRESSED: Color = Color::from_rgb(
+pub const HEADER_TEXT_PRESSED: Color = Color::from_rgb(
     0x96 as f32 / 255.0,
     0x9F as f32 / 255.0,
     0xCB as f32 / 255.0,
@@ -203,7 +226,7 @@ impl button::StyleSheet for Header {
     }
 }
 
-const ERROR_TEXT_COLOR: Color = Color::from_rgb(
+pub const ERROR_TEXT_COLOR: Color = Color::from_rgb(
     0x80 as f32 / 255.0,
     0x20 as f32 / 255.0,
     0x20 as f32 / 255.0,
@@ -222,7 +245,7 @@ impl container::StyleSheet for Error {
     }
 }
 
-const SUCCESS_TEXT_COLOR: Color = Color::from_rgb(
+pub const SUCCESS_TEXT_COLOR: Color = Color::from_rgb(
     0x20 as f32 / 255.0,
     0x80 as f32 / 255.0,
     0x20 as f32 / 255.0,
@@ -241,13 +264,13 @@ impl container::StyleSheet for Success {
     }
 }
 
-const LIST_TEXT_HOVER: Color = Color::from_rgb(
+pub const LIST_TEXT_HOVER: Color = Color::from_rgb(
     0xA9 as f32 / 255.0,
     0xB2 as f32 / 255.0,
     0xDF as f32 / 255.0,
 );
 
-const LIST_TEXT_PRESSED: Color = Color::from_rgb(
+pub const LIST_TEXT_PRESSED: Color = Color::from_rgb(
     0xA9 as f32 / 255.0,
     0xB2 as f32 / 255.0,
     0xDF as f32 / 255.0,
@@ -293,16 +316,6 @@ impl button::StyleSheet for List {
                 ..active.text_color
             },
             ..active
-        }
-    }
-}
-
-impl progress_bar::StyleSheet for Dark {
-    fn style(&self) -> progress_bar::Style {
-        progress_bar::Style {
-            background: Background::Color(DARK_FOCUSED),
-            bar: Background::Color(TEXT_COLOR),
-            border_radius: 0,
         }
     }
 }
