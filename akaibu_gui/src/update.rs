@@ -1,5 +1,6 @@
 use crate::{
     app::App,
+    logic::convert,
     logic::extract,
     message::Status,
     message::{Message, Scene},
@@ -24,7 +25,28 @@ pub(crate) fn handle_message(
                 content.back_dir();
             }
         }
-        Message::ConvertFile(file_entry) => {}
+        Message::ConvertFile(file_entry) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                convert::convert_resource(
+                    &content.archive,
+                    &file_entry,
+                    &app.opt.file,
+                )
+                .map_err(|_| {
+                    akaibu::error::AkaibuError::Custom(format!(
+                        "Convert not available for: {}",
+                        file_entry.file_name
+                    ))
+                })?;
+                return Ok(Command::perform(
+                    futures::future::ready(Status::Success(format!(
+                        "Converted: {}",
+                        file_entry.file_name
+                    ))),
+                    Message::SetStatus,
+                ));
+            };
+        }
         Message::ExtractFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 extract::extract_single_file(

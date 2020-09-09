@@ -6,4 +6,4 @@ members = [
 ]
 
 [profile.dev.package.image]
-opt-level = 1
+opt-level = 2

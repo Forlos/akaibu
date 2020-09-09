@@ -174,7 +174,7 @@ fn write_resource(
         }
         ResourceType::Text(s) => {
             let mut new_file_name = file_name.clone();
-            new_file_name.set_extension("png");
+            new_file_name.set_extension("txt");
             File::create(new_file_name)?.write_all(s.as_bytes())?;
             Ok(())
         }
