@@ -11,6 +11,7 @@ pub enum Message {
     ExtractFile(FileEntry),
     PreviewFile(FileEntry),
     SetStatus(Status),
+    ClosePreview,
     Error(String),
 }
 

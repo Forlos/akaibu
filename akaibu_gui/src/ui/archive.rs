@@ -41,10 +41,10 @@ impl ArchiveContent {
         if self.archive.get_navigable_dir().has_parent() {
             back_button = back_button.on_press(Message::BackDirectory);
         }
-        let mut row = Row::new()
+        let mut column = Column::new()
             .push(
                 Column::new()
-                    .width(Length::FillPortion(3))
+                    .height(Length::FillPortion(2))
                     .push(Space::new(Length::Units(0), Length::Units(5)))
                     .push(
                         Row::new()
@@ -113,9 +113,12 @@ impl ArchiveContent {
             )
             .height(Length::Fill);
         if self.preview.is_visible() {
-            row = row.push(self.preview.view());
+            column = column.push(
+                Container::new(self.preview.view())
+                    .height(Length::FillPortion(3)),
+            );
         }
-        let content = Column::new().push(row).push(self.footer.view());
+        let content = Column::new().push(column).push(self.footer.view());
         Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)

@@ -1,14 +1,15 @@
 use crate::{message::Message, style};
 use akaibu::resource;
 use iced::{
-    Column, Container, Element, HorizontalAlignment, Image, Length, Text,
-    VerticalAlignment,
+    button, Align, Button, Column, Container, Element, HorizontalAlignment,
+    Image, Length, Text, VerticalAlignment,
 };
 use image::{buffer::ConvertBuffer, ImageBuffer};
 
 pub struct Preview {
     resource: resource::ResourceType,
     is_visible: bool,
+    close_button_state: button::State,
 }
 
 impl Preview {
@@ -16,10 +17,23 @@ impl Preview {
         Self {
             resource: resource::ResourceType::Other,
             is_visible: false,
+            close_button_state: button::State::new(),
         }
     }
     pub fn view(&mut self) -> Element<Message> {
-        let mut content = Column::new();
+        let x_image = iced::image::Handle::from_memory(
+            crate::Resources::get("icons/x.png")
+                .expect("Could not embedded resource")
+                .into(),
+        );
+        let mut content = Column::new().align_items(Align::End).push(
+            Button::new(
+                &mut self.close_button_state,
+                iced::image::Image::new(x_image),
+            )
+            .style(style::Dark::default())
+            .on_press(Message::ClosePreview),
+        );
 
         match &self.resource {
             resource::ResourceType::RgbaImage { image } => {
@@ -36,8 +50,7 @@ impl Preview {
                     .center_x()
                     .center_y()
                     .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style(style::Dark::default()),
+                    .height(Length::Fill),
                 )
             }
             resource::ResourceType::Text(text) => {
@@ -50,8 +63,7 @@ impl Preview {
                             .horizontal_alignment(HorizontalAlignment::Center),
                     )
                     .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style(style::Dark::default()),
+                    .height(Length::Fill),
                 )
             }
             resource::ResourceType::Other => {
@@ -64,15 +76,14 @@ impl Preview {
                             .horizontal_alignment(HorizontalAlignment::Center),
                     )
                     .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style(style::Dark::default()),
+                    .height(Length::Fill),
                 )
             }
         };
-
         Container::new(content)
             .height(Length::Fill)
-            .width(Length::FillPortion(2))
+            .width(Length::Fill)
+            .style(style::Dark::default())
             .into()
     }
     pub fn set_visible(&mut self, visible: bool) {

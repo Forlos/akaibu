@@ -105,6 +105,11 @@ pub(crate) fn handle_message(
                 content.set_status(status);
             }
         }
+        Message::ClosePreview => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.preview.set_visible(false);
+            }
+        }
         Message::Error(err) => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 content.set_status(Status::Error(err));
