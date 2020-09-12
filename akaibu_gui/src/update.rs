@@ -68,7 +68,7 @@ pub(crate) fn handle_message(
             if let Content::ArchiveView(ref mut content) = app.content {
                 let resource =
                     preview::get_resource_type(&content.archive, &file_entry)?;
-                content.preview.set_resource(resource);
+                content.preview.set_resource(resource, file_entry.file_name);
                 content.preview.set_visible(true);
             }
         }
