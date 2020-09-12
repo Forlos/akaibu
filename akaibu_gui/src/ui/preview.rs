@@ -1,35 +1,38 @@
 use crate::{message::Message, style};
 use akaibu::resource;
 use iced::{
-    image, Column, Container, Element, HorizontalAlignment, Image, Length,
-    Text, VerticalAlignment,
+    Column, Container, Element, HorizontalAlignment, Image, Length, Text,
+    VerticalAlignment,
 };
+use image::{buffer::ConvertBuffer, ImageBuffer};
 
-pub(crate) struct Preview {
-    pub(crate) resource: resource::ResourceType,
+pub struct Preview {
+    resource: resource::ResourceType,
+    is_visible: bool,
 }
 
 impl Preview {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             resource: resource::ResourceType::Other,
+            is_visible: false,
         }
     }
-    pub(crate) fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<Message> {
         let mut content = Column::new();
 
         match &self.resource {
-            resource::ResourceType::RgbaImage {
-                pixels,
-                width,
-                height,
-            } => {
+            resource::ResourceType::RgbaImage { image } => {
+                let bgra: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+                    image.convert();
                 content = content.push(
-                    Container::new(Image::new(image::Handle::from_pixels(
-                        *width,
-                        *height,
-                        pixels.to_vec(),
-                    )))
+                    Container::new(Image::new(
+                        iced::image::Handle::from_pixels(
+                            bgra.width(),
+                            bgra.height(),
+                            bgra.into_vec(),
+                        ),
+                    ))
                     .center_x()
                     .center_y()
                     .width(Length::Fill)
@@ -71,5 +74,14 @@ impl Preview {
             .height(Length::Fill)
             .width(Length::FillPortion(2))
             .into()
+    }
+    pub fn set_visible(&mut self, visible: bool) {
+        self.is_visible = visible;
+    }
+    pub fn is_visible(&self) -> bool {
+        self.is_visible
+    }
+    pub fn set_resource(&mut self, resource: resource::ResourceType) {
+        self.resource = resource;
     }
 }

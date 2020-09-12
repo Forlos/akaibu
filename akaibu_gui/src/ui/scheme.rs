@@ -3,9 +3,7 @@ use crate::{
     style,
 };
 use akaibu::scheme::Scheme;
-use iced::{
-    button, Button, Column, Container, Element, Length, Row, Space, Text,
-};
+use iced::{button, Button, Column, Container, Element, Length, Row, Text};
 
 pub struct SchemeContent {
     schemes: Vec<(Box<dyn Scheme>, button::State)>,

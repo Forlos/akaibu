@@ -159,16 +159,9 @@ fn write_resource(
     file_name: &PathBuf,
 ) -> anyhow::Result<()> {
     match resource {
-        ResourceType::RgbaImage {
-            pixels,
-            width,
-            height,
-        } => {
+        ResourceType::RgbaImage { image } => {
             let mut new_file_name = file_name.clone();
             new_file_name.set_extension("png");
-            let image: ImageBuffer<image::Rgba<u8>, Vec<u8>> =
-                ImageBuffer::from_raw(width, height, pixels)
-                    .context("Could not create image")?;
             image.save(new_file_name)?;
             Ok(())
         }

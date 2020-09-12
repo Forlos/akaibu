@@ -1,11 +1,11 @@
 use crate::error::AkaibuError;
-use image::{buffer::ConvertBuffer, ImageBuffer};
+use image::{buffer::ConvertBuffer, ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
 
 #[derive(Debug)]
 pub(crate) struct Pb3b {
     header: Header,
-    pub(crate) image: ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    pub(crate) image: RgbaImage,
 }
 
 impl Pb3b {
@@ -39,10 +39,7 @@ impl Pb3b {
                 *b = b.wrapping_sub(tail_key[i]);
             });
     }
-    fn decode_v1(
-        buf: &mut [u8],
-        header: &Header,
-    ) -> anyhow::Result<ImageBuffer<image::Rgba<u8>, Vec<u8>>> {
+    fn decode_v1(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let off = &mut 0x2C;
         let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
             ImageBuffer::new(header.width as u32, header.height as u32);
@@ -156,10 +153,7 @@ impl Pb3b {
 
         Ok(image.convert())
     }
-    fn decode_v3(
-        buf: &mut [u8],
-        header: &Header,
-    ) -> anyhow::Result<ImageBuffer<image::Rgba<u8>, Vec<u8>>> {
+    fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         // let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
         //     ImageBuffer::new(header.width as u32, header.height as u32);
         // let jbp1_data = &buf[0x34..];
@@ -167,10 +161,7 @@ impl Pb3b {
         // Ok(image.convert())
     }
 
-    fn decode_v5(
-        buf: &mut [u8],
-        header: &Header,
-    ) -> anyhow::Result<ImageBuffer<image::Rgba<u8>, Vec<u8>>> {
+    fn decode_v5(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let off = &mut 0x34;
         let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
             ImageBuffer::new(header.width as u32, header.height as u32);
@@ -216,10 +207,7 @@ impl Pb3b {
 
         Ok(image.convert())
     }
-    fn decode_v6(
-        buf: &mut [u8],
-        header: &Header,
-    ) -> anyhow::Result<ImageBuffer<image::Rgba<u8>, Vec<u8>>> {
+    fn decode_v6(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
             ImageBuffer::new(header.width as u32, header.height as u32);
 

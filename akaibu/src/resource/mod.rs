@@ -2,6 +2,7 @@ mod jbp1;
 mod pb3b;
 
 use crate::error::AkaibuError;
+use image::RgbaImage;
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
 
 #[derive(Debug)]
@@ -30,41 +31,25 @@ impl ResourceMagic {
         match self {
             Self::TLG0 => {
                 let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::RgbaImage {
-                    width: image.width(),
-                    height: image.height(),
-                    pixels: image.into_vec(),
-                })
+                Ok(ResourceType::RgbaImage { image })
             }
             Self::TLG5 => Err(AkaibuError::Unimplemented.into()),
             Self::TLG6 => {
                 let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::RgbaImage {
-                    width: image.width(),
-                    height: image.height(),
-                    pixels: image.into_vec(),
-                })
+                Ok(ResourceType::RgbaImage { image })
             }
             Self::PB3B => {
                 let pb3b = pb3b::Pb3b::from_bytes(buf)?;
-                Ok(ResourceType::RgbaImage {
-                    width: pb3b.image.width(),
-                    height: pb3b.image.height(),
-                    pixels: pb3b.image.into_vec(),
-                })
+                Ok(ResourceType::RgbaImage { image: pb3b.image })
             }
-            Self::Unrecognized => Err(AkaibuError::Unimplemented.into()),
+            Self::Unrecognized => Ok(ResourceType::Other),
         }
     }
 }
 
 #[derive(Debug)]
 pub enum ResourceType {
-    RgbaImage {
-        pixels: Vec<u8>,
-        width: u32,
-        height: u32,
-    },
+    RgbaImage { image: RgbaImage },
     Text(String),
     Other,
 }

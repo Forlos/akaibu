@@ -2,6 +2,7 @@ use crate::{
     app::App,
     logic::convert,
     logic::extract,
+    logic::preview,
     message::Status,
     message::{Message, Scene},
     ui::archive::ArchiveContent,
@@ -63,7 +64,14 @@ pub(crate) fn handle_message(
                 ));
             };
         }
-        Message::PreviewFile(file_entry) => {}
+        Message::PreviewFile(file_entry) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                let resource =
+                    preview::get_resource_type(&content.archive, &file_entry)?;
+                content.preview.set_resource(resource);
+                content.preview.set_visible(true);
+            }
+        }
         Message::ExtractAll => {
             // TODO make extracting async
             if let Content::ArchiveView(ref mut content) = app.content {
