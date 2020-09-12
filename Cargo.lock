@@ -70,6 +70,7 @@ dependencies = [
  "anyhow",
  "bytesize",
  "env_logger",
+ "fuzzy-matcher",
  "iced",
  "image 0.23.9",
  "itertools",
@@ -920,6 +921,15 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro-nested",
  "slab",
+]
+
+[[package]]
+name = "fuzzy-matcher"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cda28c4acb13182d935e0ab6bc12329d1d22134d69801d0836d1ae4b47054f2a"
+dependencies = [
+ "thread_local",
 ]
 
 [[package]]

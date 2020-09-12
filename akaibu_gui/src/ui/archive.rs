@@ -1,9 +1,10 @@
 use crate::{message::Message, message::Status, style, ui::preview::Preview};
 use akaibu::archive;
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use iced::{
-    button, image, scrollable, Background, Button, Column, Container, Element,
-    Image, Length, ProgressBar, Row, Scrollable, Space, Text,
-    VerticalAlignment,
+    button, image, scrollable, text_input, Background, Button, Column,
+    Container, Element, Image, Length, ProgressBar, Row, Scrollable, Space,
+    Text, TextInput, VerticalAlignment,
 };
 use itertools::Itertools;
 
@@ -14,8 +15,10 @@ pub struct ArchiveContent {
     extract_all_button_state: button::State,
     back_dir_button_state: button::State,
     pub preview: Preview,
-    pub(crate) extract_all_progress: f32,
     footer: Footer,
+    pattern_text_input: text_input::State,
+    fuzzy_matcher: SkimMatcherV2,
+    pub pattern: String,
 }
 
 impl ArchiveContent {
@@ -30,17 +33,13 @@ impl ArchiveContent {
             extract_all_button_state: button::State::new(),
             back_dir_button_state: button::State::new(),
             preview: Preview::new(),
-            extract_all_progress: 0.0,
             footer,
+            pattern_text_input: text_input::State::new(),
+            fuzzy_matcher: SkimMatcherV2::default(),
+            pattern: String::new(),
         }
     }
     pub fn view(&mut self) -> Element<Message> {
-        let mut back_button =
-            Button::new(&mut self.back_dir_button_state, Text::new("Back dir"))
-                .style(style::Dark::default());
-        if self.archive.get_navigable_dir().has_parent() {
-            back_button = back_button.on_press(Message::BackDirectory);
-        }
         let mut column = Column::new()
             .push(
                 Column::new()
@@ -48,6 +47,7 @@ impl ArchiveContent {
                     .push(Space::new(Length::Units(0), Length::Units(5)))
                     .push(
                         Row::new()
+                            .height(Length::Units(30))
                             .push(Space::new(
                                 Length::Units(5),
                                 Length::Units(0),
@@ -64,15 +64,29 @@ impl ArchiveContent {
                                 Length::Units(5),
                                 Length::Units(0),
                             ))
-                            .push(back_button)
+                            .push({
+                                let back_button = Button::new(
+                                    &mut self.back_dir_button_state,
+                                    Text::new("Back dir"),
+                                )
+                                .style(style::Dark::default());
+                                if self.archive.get_navigable_dir().has_parent()
+                                {
+                                    back_button.on_press(Message::BackDirectory)
+                                } else {
+                                    back_button
+                                }
+                            })
                             .push(Space::new(
                                 Length::Units(5),
                                 Length::Units(0),
                             ))
                             .push(
-                                ProgressBar::new(
-                                    0.0..=100.0,
-                                    self.extract_all_progress,
+                                TextInput::new(
+                                    &mut self.pattern_text_input,
+                                    "Search...",
+                                    &self.pattern,
+                                    Message::PatternChanged,
                                 )
                                 .style(style::Dark::default()),
                             )
@@ -102,13 +116,23 @@ impl ArchiveContent {
                     )
                     .push(
                         Scrollable::new(&mut self.entries_scrollable_state)
-                            .push(
+                            .push({
+                                let matcher = &self.fuzzy_matcher;
+                                let pattern = &self.pattern;
                                 self.entries
                                     .iter_mut()
+                                    .filter(|entry| {
+                                        matcher
+                                            .fuzzy_match(
+                                                entry.get_name(),
+                                                pattern,
+                                            )
+                                            .is_some()
+                                    })
                                     .fold(Column::new(), |col, entry| {
                                         col.push(entry.view())
-                                    }),
-                            ),
+                                    })
+                            }),
                     ),
             )
             .height(Length::Fill);
@@ -135,6 +159,7 @@ impl ArchiveContent {
         self.footer.set_current_dir(
             self.archive.get_navigable_dir().get_current_full_path(),
         );
+        self.pattern = String::new();
     }
     pub fn back_dir(&mut self) {
         self.entries = Self::new_entries(
@@ -143,6 +168,7 @@ impl ArchiveContent {
         self.footer.set_current_dir(
             self.archive.get_navigable_dir().get_current_full_path(),
         );
+        self.pattern = String::new();
     }
     pub fn set_status(&mut self, status: Status) {
         self.footer.set_status(status);
@@ -185,6 +211,12 @@ enum Entry {
 }
 
 impl Entry {
+    fn get_name(&self) -> &str {
+        match self {
+            Entry::Directory { dir_name, .. } => dir_name,
+            Entry::File { file, .. } => &file.file_name,
+        }
+    }
     fn view(&mut self) -> Element<Message> {
         match self {
             Entry::Directory {

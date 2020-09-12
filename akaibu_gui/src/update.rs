@@ -110,6 +110,11 @@ pub(crate) fn handle_message(
                 content.preview.set_visible(false);
             }
         }
+        Message::PatternChanged(pattern) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.pattern = pattern;
+            }
+        }
         Message::Error(err) => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 content.set_status(Status::Error(err));

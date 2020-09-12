@@ -12,6 +12,7 @@ pub enum Message {
     PreviewFile(FileEntry),
     SetStatus(Status),
     ClosePreview,
+    PatternChanged(String),
     Error(String),
 }
 
