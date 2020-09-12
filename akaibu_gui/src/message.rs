@@ -24,4 +24,5 @@ pub enum Status {
     Normal(String),
     Success(String),
     Error(String),
+    Empty,
 }

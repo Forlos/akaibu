@@ -27,7 +27,7 @@ pub(crate) fn handle_message(
         }
         Message::ConvertFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                convert::convert_resource(
+                let path = convert::convert_resource(
                     &content.archive,
                     &file_entry,
                     &app.opt.file,
@@ -40,8 +40,8 @@ pub(crate) fn handle_message(
                 })?;
                 return Ok(Command::perform(
                     futures::future::ready(Status::Success(format!(
-                        "Converted: {}",
-                        file_entry.file_name
+                        "Converted: {:?}",
+                        path
                     ))),
                     Message::SetStatus,
                 ));
@@ -49,19 +49,19 @@ pub(crate) fn handle_message(
         }
         Message::ExtractFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                extract::extract_single_file(
+                let path = extract::extract_single_file(
                     &content.archive,
                     &file_entry,
                     &app.opt.file,
-                )?
+                )?;
+                return Ok(Command::perform(
+                    futures::future::ready(Status::Success(format!(
+                        "Extracted: {:?}",
+                        path
+                    ))),
+                    Message::SetStatus,
+                ));
             };
-            return Ok(Command::perform(
-                futures::future::ready(Status::Success(format!(
-                    "Extracted: {}",
-                    file_entry.file_name
-                ))),
-                Message::SetStatus,
-            ));
         }
         Message::PreviewFile(file_entry) => {}
         Message::ExtractAll => {

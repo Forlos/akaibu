@@ -11,13 +11,14 @@ pub fn convert_resource(
     archive: &Box<dyn Archive>,
     entry: &FileEntry,
     file_path: &PathBuf,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<PathBuf> {
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
     log::info!("Converting resource {:?}", resource_magic);
     let mut converted_path = file_path.clone();
     converted_path.set_file_name(&entry.file_name);
-    write_resource(resource_magic.parse(contents.to_vec())?, &converted_path)
+    write_resource(resource_magic.parse(contents.to_vec())?, &converted_path)?;
+    Ok(converted_path)
 }
 
 fn write_resource(

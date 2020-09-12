@@ -141,21 +141,23 @@ impl ArchiveContent {
                 .move_dir(&dir_name)
                 .unwrap(),
         );
-        self.footer.current_dir =
-            self.archive.get_navigable_dir().get_current_full_path();
+        self.footer.set_current_dir(
+            self.archive.get_navigable_dir().get_current_full_path(),
+        );
     }
     pub fn back_dir(&mut self) {
         self.entries = Self::new_entries(
             self.archive.get_navigable_dir().back_dir().unwrap(),
         );
-        self.footer.current_dir =
-            self.archive.get_navigable_dir().get_current_full_path();
+        self.footer.set_current_dir(
+            self.archive.get_navigable_dir().get_current_full_path(),
+        );
     }
     pub fn set_status(&mut self, status: Status) {
-        self.footer.status = status;
+        self.footer.set_status(status);
     }
     pub fn set_progress(&mut self, progress: f32) {
-        self.footer.progress = progress;
+        self.footer.set_progress(progress);
     }
     fn new_entries(current: &archive::Directory) -> Vec<Entry> {
         current
@@ -424,6 +426,7 @@ impl Footer {
                     .size(16)
                     .height(Length::Fill)
                     .vertical_alignment(VerticalAlignment::Center),
+                Status::Empty => Text::new(""),
             })
             .push(Space::new(Length::Units(5), Length::Units(0)));
         Container::new(content)
@@ -434,5 +437,15 @@ impl Footer {
                 background: Background::Color(style::DARK_BUTTON_FOCUSED),
             })
             .into()
+    }
+    pub fn set_current_dir(&mut self, new_dir: String) {
+        self.current_dir = new_dir;
+        self.status = Status::Empty;
+    }
+    pub fn set_status(&mut self, status: Status) {
+        self.status = status;
+    }
+    pub fn set_progress(&mut self, progress: f32) {
+        self.progress = progress;
     }
 }

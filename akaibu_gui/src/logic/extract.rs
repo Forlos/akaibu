@@ -13,7 +13,7 @@ pub fn extract_single_file(
     archive: &Box<dyn Archive>,
     entry: &FileEntry,
     file_path: &PathBuf,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<PathBuf> {
     let buf = archive.extract(&entry)?;
     let mut output_file_name = PathBuf::from(
         file_path
@@ -22,8 +22,8 @@ pub fn extract_single_file(
     );
     output_file_name.push(&entry.file_name);
     log::info!("Extracting resource: {:?} {:X?}", output_file_name, entry);
-    File::create(output_file_name)?.write_all(&buf)?;
-    Ok(())
+    File::create(&output_file_name)?.write_all(&buf)?;
+    Ok(output_file_name)
 }
 
 pub fn extract_all(
