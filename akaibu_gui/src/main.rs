@@ -13,8 +13,8 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt()]
 pub(crate) struct Opt {
-    /// Files to process
-    #[structopt(required = true, name = "ARCHIVES", parse(from_os_str))]
+    /// File to process
+    #[structopt(required = true, name = "ARCHIVE", parse(from_os_str))]
     pub(crate) file: PathBuf,
 }
 

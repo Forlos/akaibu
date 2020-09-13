@@ -56,6 +56,7 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                 if opt.convert {
                     let resource_magic = ResourceMagic::parse_magic(&magic);
                     let mut contents = Vec::with_capacity(1 << 20);
+                    log::info!("Converting: {:?}", file);
                     File::open(&file)?.read_to_end(&mut contents)?;
                     match resource_magic.parse(contents) {
                         Ok(r) => return write_resource(r, file),
