@@ -21,7 +21,10 @@ impl Scheme for GxpScheme {
     fn extract(
         &self,
         file_path: &PathBuf,
-    ) -> anyhow::Result<Box<dyn archive::Archive + Sync>> {
+    ) -> anyhow::Result<(
+        Box<dyn archive::Archive + Sync>,
+        archive::NavigableDirectory,
+    )> {
         let mut buf = vec![0; 48];
         let file = RandomAccessFile::open(file_path)?;
         file.read_exact_at(0, &mut buf)?;
@@ -35,11 +38,7 @@ impl Scheme for GxpScheme {
 
         let root_dir = GxpArchive::new_root_dir(&archive.file_entries);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
-        Ok(Box::new(GxpArchive {
-            file,
-            archive,
-            navigable_dir,
-        }))
+        Ok((Box::new(GxpArchive { file, archive }), navigable_dir))
     }
     fn get_name(&self) -> &str {
         "GXP"
@@ -56,17 +55,9 @@ impl Scheme for GxpScheme {
 struct GxpArchive {
     file: RandomAccessFile,
     archive: Gxp,
-    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for GxpArchive {
-    fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.navigable_dir
-            .get_root_dir()
-            .get_all_files()
-            .cloned()
-            .collect::<Vec<archive::FileEntry>>()
-    }
     fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
         self.archive
             .file_entries
@@ -93,10 +84,6 @@ impl archive::Archive for GxpArchive {
             File::create(output_file_name)?.write_all(&buf)?;
             Ok(())
         })
-    }
-
-    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        &mut self.navigable_dir
     }
 }
 

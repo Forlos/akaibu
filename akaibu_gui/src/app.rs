@@ -32,11 +32,14 @@ impl Application for App {
 
         if archive_magic.is_universal() {
             let scheme = schemes.get(0).expect("Expected universal scheme");
-            let archive = scheme.extract(&opt.file).expect("Could not extract");
+            let (archive, dir) =
+                scheme.extract(&opt.file).expect("Could not extract");
             (
                 Self {
                     opt,
-                    content: Content::ArchiveView(ArchiveContent::new(archive)),
+                    content: Content::ArchiveView(ArchiveContent::new(
+                        archive, dir,
+                    )),
                 },
                 Command::none(),
             )

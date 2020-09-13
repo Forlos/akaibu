@@ -7,10 +7,12 @@ use iced::{
     Text, TextInput, VerticalAlignment,
 };
 use itertools::Itertools;
+use std::sync::Arc;
 
 pub struct ArchiveContent {
     entries: Vec<Entry>,
-    pub(crate) archive: Box<dyn archive::Archive>,
+    pub archive: Arc<Box<dyn archive::Archive>>,
+    pub navigable_dir: archive::NavigableDirectory,
     entries_scrollable_state: scrollable::State,
     extract_all_button_state: button::State,
     back_dir_button_state: button::State,
@@ -22,13 +24,17 @@ pub struct ArchiveContent {
 }
 
 impl ArchiveContent {
-    pub fn new(mut archive: Box<dyn archive::Archive>) -> Self {
-        let current = archive.get_navigable_dir().get_current();
+    pub fn new(
+        archive: Box<dyn archive::Archive>,
+        navigable_dir: archive::NavigableDirectory,
+    ) -> Self {
+        let current = navigable_dir.get_current();
         let entries = Self::new_entries(current);
         let footer = Footer::new();
         Self {
             entries,
-            archive,
+            archive: Arc::new(archive),
+            navigable_dir,
             entries_scrollable_state: scrollable::State::new(),
             extract_all_button_state: button::State::new(),
             back_dir_button_state: button::State::new(),
@@ -70,8 +76,7 @@ impl ArchiveContent {
                                     Text::new("Back dir"),
                                 )
                                 .style(style::Dark::default());
-                                if self.archive.get_navigable_dir().has_parent()
-                                {
+                                if self.navigable_dir.has_parent() {
                                     back_button.on_press(Message::BackDirectory)
                                 } else {
                                     back_button
@@ -150,24 +155,17 @@ impl ArchiveContent {
             .into()
     }
     pub fn move_dir(&mut self, dir_name: String) {
-        self.entries = Self::new_entries(
-            self.archive
-                .get_navigable_dir()
-                .move_dir(&dir_name)
-                .unwrap(),
-        );
-        self.footer.set_current_dir(
-            self.archive.get_navigable_dir().get_current_full_path(),
-        );
+        self.entries =
+            Self::new_entries(self.navigable_dir.move_dir(&dir_name).unwrap());
+        self.footer
+            .set_current_dir(self.navigable_dir.get_current_full_path());
         self.pattern = String::new();
     }
     pub fn back_dir(&mut self) {
-        self.entries = Self::new_entries(
-            self.archive.get_navigable_dir().back_dir().unwrap(),
-        );
-        self.footer.set_current_dir(
-            self.archive.get_navigable_dir().get_current_full_path(),
-        );
+        self.entries =
+            Self::new_entries(self.navigable_dir.back_dir().unwrap());
+        self.footer
+            .set_current_dir(self.navigable_dir.get_current_full_path());
         self.pattern = String::new();
     }
     pub fn set_status(&mut self, status: Status) {
@@ -463,7 +461,6 @@ impl Footer {
     }
     pub fn set_current_dir(&mut self, new_dir: String) {
         self.current_dir = new_dir;
-        self.status = Status::Empty;
     }
     pub fn set_status(&mut self, status: Status) {
         self.status = status;

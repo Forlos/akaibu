@@ -1,11 +1,11 @@
 use akaibu::{
+    archive::FileEntry,
     error::AkaibuError,
     magic::Archive,
     resource::{ResourceMagic, ResourceType},
     scheme::Scheme,
 };
 use anyhow::Context;
-use image::ImageBuffer;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::io::{Read, Write};
@@ -83,20 +83,24 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
             };
             log::debug!("Scheme {:?}", scheme);
 
-            let archive = match scheme.extract(&file) {
+            let (archive, dir) = match scheme.extract(&file) {
                 Ok(archive) => archive,
                 Err(err) => {
                     log::error!("{:?}: {}", file, err);
                     return Ok(());
                 }
             };
+            let files = dir
+                .get_root_dir()
+                .get_all_files()
+                .cloned()
+                .collect::<Vec<FileEntry>>();
             let progress_bar = init_progressbar(
                 &format!("Extracting: {:?}", file),
-                archive.get_files().len() as u64,
+                files.len() as u64,
             );
 
-            archive
-                .get_files()
+            files
                 .par_iter()
                 .progress_with(progress_bar)
                 .try_for_each(|entry| {

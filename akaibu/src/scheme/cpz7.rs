@@ -36,7 +36,10 @@ impl Scheme for Cpz7Scheme {
     fn extract(
         &self,
         file_path: &PathBuf,
-    ) -> anyhow::Result<Box<dyn archive::Archive + Sync>> {
+    ) -> anyhow::Result<(
+        Box<dyn archive::Archive + Sync>,
+        archive::NavigableDirectory,
+    )> {
         let mut buf = vec![0; 68];
         let file = RandomAccessFile::open(file_path)?;
         file.read_exact_at(4, &mut buf)?;
@@ -64,12 +67,14 @@ impl Scheme for Cpz7Scheme {
 
         let root_dir = Cpz7Archive::new_root_dir(&archive);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
-        Ok(Box::new(Cpz7Archive {
-            file,
-            game_keys,
-            archive,
+        Ok((
+            Box::new(Cpz7Archive {
+                file,
+                game_keys,
+                archive,
+            }),
             navigable_dir,
-        }))
+        ))
     }
     fn get_name(&self) -> &str {
         match self {
@@ -107,17 +112,9 @@ struct Cpz7Archive {
     file: RandomAccessFile,
     game_keys: [u32; 4],
     archive: Cpz7,
-    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for Cpz7Archive {
-    fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.navigable_dir
-            .get_root_dir()
-            .get_all_files()
-            .cloned()
-            .collect()
-    }
     fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
         self.archive
             .file_data
@@ -151,10 +148,6 @@ impl archive::Archive for Cpz7Archive {
                 File::create(output_file_name)?.write_all(&buf)?;
                 Ok(())
             })
-    }
-
-    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        &mut self.navigable_dir
     }
 }
 

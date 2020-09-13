@@ -4,10 +4,8 @@ use std::{collections::HashMap, ffi::OsStr, fmt::Debug, path::PathBuf};
 
 // Workaround until it is possible to return impl Trait in traits
 pub trait Archive: Sync + Send + Debug {
-    fn get_files(&self) -> Vec<FileEntry>;
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes>;
     fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()>;
-    fn get_navigable_dir(&mut self) -> &mut NavigableDirectory;
 }
 
 // pub trait FileEntry: Debug {

@@ -8,7 +8,7 @@ use crate::{
     ui::archive::ArchiveContent,
     ui::content::Content,
 };
-use iced::{futures, Command};
+use iced::Command;
 
 pub(crate) fn handle_message(
     app: &mut App,
@@ -28,39 +28,41 @@ pub(crate) fn handle_message(
         }
         Message::ConvertFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                let path = convert::convert_resource(
-                    &content.archive,
-                    &file_entry,
-                    &app.opt.file,
-                )
-                .map_err(|_| {
-                    akaibu::error::AkaibuError::Custom(format!(
-                        "Convert not available for: {}",
-                        file_entry.file_name
-                    ))
-                })?;
                 return Ok(Command::perform(
-                    futures::future::ready(Status::Success(format!(
-                        "Converted: {:?}",
-                        path
-                    ))),
-                    Message::SetStatus,
+                    convert::convert_resource(
+                        content.archive.clone(),
+                        file_entry,
+                        app.opt.file.clone(),
+                    ),
+                    |result| match result {
+                        Ok(path) => Message::SetStatus(Status::Success(
+                            format!("Extracted: {:?}", path),
+                        )),
+                        Err(err) => Message::SetStatus(Status::Error(format!(
+                            "{}",
+                            err
+                        ))),
+                    },
                 ));
             };
         }
         Message::ExtractFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                let path = extract::extract_single_file(
-                    &content.archive,
-                    &file_entry,
-                    &app.opt.file,
-                )?;
                 return Ok(Command::perform(
-                    futures::future::ready(Status::Success(format!(
-                        "Extracted: {:?}",
-                        path
-                    ))),
-                    Message::SetStatus,
+                    extract::extract_single_file(
+                        content.archive.clone(),
+                        file_entry,
+                        app.opt.file.clone(),
+                    ),
+                    |result| match result {
+                        Ok(path) => Message::SetStatus(Status::Success(
+                            format!("Extracted: {:?}", path),
+                        )),
+                        Err(err) => Message::SetStatus(Status::Error(format!(
+                            "Error while extracting: {}",
+                            err
+                        ))),
+                    },
                 ));
             };
         }
@@ -73,19 +75,35 @@ pub(crate) fn handle_message(
             }
         }
         Message::ExtractAll => {
-            // TODO make extracting async
             if let Content::ArchiveView(ref mut content) = app.content {
-                return Ok(Command::perform(
-                    futures::future::ready(extract::extract_all(
-                        &content.archive,
-                        &app.opt.file,
-                    )?),
-                    |_| {
-                        Message::SetStatus(Status::Success(String::from(
-                            "Extracted all!",
-                        )))
-                    },
-                ));
+                let commands = vec![
+                    Command::perform(async {}, |_| {
+                        Message::SetStatus(Status::Normal(
+                            "Extracting...".to_string(),
+                        ))
+                    }),
+                    Command::perform(
+                        extract::extract_all(
+                            content.archive.clone(),
+                            content
+                                .navigable_dir
+                                .get_root_dir()
+                                .get_all_files()
+                                .cloned()
+                                .collect(),
+                            app.opt.file.clone(),
+                        ),
+                        |result| match result {
+                            Ok(_) => Message::SetStatus(Status::Success(
+                                String::from("Extracted all!"),
+                            )),
+                            Err(err) => Message::SetStatus(Status::Error(
+                                format!("Error while extracting: {}", err),
+                            )),
+                        },
+                    ),
+                ];
+                return Ok(Command::batch(commands));
             };
         }
         Message::UpdateScrollbar(progress) => {
@@ -95,9 +113,9 @@ pub(crate) fn handle_message(
         }
         Message::MoveScene(scene) => match scene {
             Scene::ArchiveView(scheme) => {
-                app.content = Content::ArchiveView(ArchiveContent::new(
-                    scheme.extract(&app.opt.file)?,
-                ));
+                let (archive, dir) = scheme.extract(&app.opt.file)?;
+                app.content =
+                    Content::ArchiveView(ArchiveContent::new(archive, dir));
             }
         },
         Message::SetStatus(status) => {

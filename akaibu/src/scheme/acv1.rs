@@ -25,7 +25,10 @@ impl Scheme for Acv1Scheme {
     fn extract(
         &self,
         file_path: &PathBuf,
-    ) -> anyhow::Result<Box<dyn archive::Archive + Sync>> {
+    ) -> anyhow::Result<(
+        Box<dyn archive::Archive + Sync>,
+        archive::NavigableDirectory,
+    )> {
         let file_names = crate::Resources::get("acv1/all_file_names.txt")
             .context("Could not get resouce")?;
         let (sjis_file_names, _encoding_used, _any_errors) =
@@ -47,12 +50,14 @@ impl Scheme for Acv1Scheme {
 
         let root_dir = Acv1Archive::new_root_dir(&archive.file_entries);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
-        Ok(Box::new(Acv1Archive {
-            file,
-            archive,
-            script_key: self.get_script_key(),
+        Ok((
+            Box::new(Acv1Archive {
+                file,
+                archive,
+                script_key: self.get_script_key(),
+            }),
             navigable_dir,
-        }))
+        ))
     }
     fn get_name(&self) -> &str {
         match self {
@@ -97,17 +102,9 @@ struct Acv1Archive {
     file: RandomAccessFile,
     script_key: u32,
     archive: Acv1,
-    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for Acv1Archive {
-    fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.navigable_dir
-            .get_root_dir()
-            .get_all_files()
-            .cloned()
-            .collect()
-    }
     fn extract(
         &self,
         entry: &archive::FileEntry,
@@ -139,10 +136,6 @@ impl archive::Archive for Acv1Archive {
             File::create(output_file_name)?.write_all(&buf)?;
             Ok(())
         })
-    }
-
-    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        &mut self.navigable_dir
     }
 }
 

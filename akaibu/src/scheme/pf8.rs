@@ -16,7 +16,10 @@ impl Scheme for Pf8Scheme {
     fn extract(
         &self,
         file_path: &PathBuf,
-    ) -> anyhow::Result<Box<dyn crate::archive::Archive + Sync>> {
+    ) -> anyhow::Result<(
+        Box<dyn crate::archive::Archive + Sync>,
+        archive::NavigableDirectory,
+    )> {
         let mut buf = vec![0; 11];
         let file = RandomAccessFile::open(file_path)?;
         file.read_exact_at(0, &mut buf)?;
@@ -35,12 +38,14 @@ impl Scheme for Pf8Scheme {
 
         let root_dir = Pf8Archive::new_root_dir(&archive.file_entries);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
-        Ok(Box::new(Pf8Archive {
-            file,
-            sha1,
-            archive,
+        Ok((
+            Box::new(Pf8Archive {
+                file,
+                sha1,
+                archive,
+            }),
             navigable_dir,
-        }))
+        ))
     }
     fn get_name(&self) -> &str {
         "pf8"
@@ -58,17 +63,9 @@ struct Pf8Archive {
     file: RandomAccessFile,
     sha1: [u8; 20],
     archive: Pf8,
-    navigable_dir: archive::NavigableDirectory,
 }
 
 impl archive::Archive for Pf8Archive {
-    fn get_files(&self) -> Vec<archive::FileEntry> {
-        self.navigable_dir
-            .get_root_dir()
-            .get_all_files()
-            .cloned()
-            .collect()
-    }
     fn extract(
         &self,
         entry: &archive::FileEntry,
@@ -99,10 +96,6 @@ impl archive::Archive for Pf8Archive {
             File::create(output_file_name)?.write_all(&buf)?;
             Ok(())
         })
-    }
-
-    fn get_navigable_dir(&mut self) -> &mut archive::NavigableDirectory {
-        &mut self.navigable_dir
     }
 }
 

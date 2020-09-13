@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
 
 use akaibu::archive::{Archive, FileEntry};
 use anyhow::Context;
@@ -9,10 +9,10 @@ use rayon::iter::{
 
 use crate::message::Message;
 
-pub fn extract_single_file(
-    archive: &Box<dyn Archive>,
-    entry: &FileEntry,
-    file_path: &PathBuf,
+pub async fn extract_single_file(
+    archive: Arc<Box<dyn Archive>>,
+    entry: FileEntry,
+    file_path: PathBuf,
 ) -> anyhow::Result<PathBuf> {
     let buf = archive.extract(&entry)?;
     let mut output_file_name = PathBuf::from(
@@ -26,11 +26,11 @@ pub fn extract_single_file(
     Ok(output_file_name)
 }
 
-pub fn extract_all(
-    archive: &Box<dyn Archive>,
-    file_path: &PathBuf,
+pub async fn extract_all(
+    archive: Arc<Box<dyn Archive>>,
+    files: Vec<FileEntry>,
+    file_path: PathBuf,
 ) -> anyhow::Result<()> {
-    let files = archive.get_files();
     let files_count = files.len();
     files.par_iter().enumerate().try_for_each(|(i, entry)| {
         let buf = archive.extract(entry)?;
@@ -51,7 +51,7 @@ pub fn extract_all(
                 .parent()
                 .context("Could not get parent directory")?,
         )?;
-        log::info!("Extracting resource: {:?} {:X?}", output_file_name, entry);
+        // log::info!("Extracting resource: {:?} {:X?}", output_file_name, entry);
         File::create(output_file_name)?.write_all(&buf)?;
         Command::perform(
             futures::future::ready((i / files_count) as f32 * 100.0),

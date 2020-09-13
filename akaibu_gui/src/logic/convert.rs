@@ -1,14 +1,14 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
 
 use akaibu::{
     archive::Archive, archive::FileEntry, resource::ResourceMagic,
     resource::ResourceType,
 };
 
-pub fn convert_resource(
-    archive: &Box<dyn Archive>,
-    entry: &FileEntry,
-    file_path: &PathBuf,
+pub async fn convert_resource(
+    archive: Arc<Box<dyn Archive>>,
+    entry: FileEntry,
+    file_path: PathBuf,
 ) -> anyhow::Result<PathBuf> {
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
@@ -17,7 +17,7 @@ pub fn convert_resource(
     converted_path.set_file_name(&entry.file_name);
     write_resource(
         resource_magic.parse(contents.to_vec())?,
-        entry,
+        &entry,
         &converted_path,
     )?;
     Ok(converted_path)
