@@ -47,7 +47,7 @@ impl ResourceMagic {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ResourceType {
     RgbaImage { image: RgbaImage },
     Text(String),

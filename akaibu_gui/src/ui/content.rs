@@ -6,7 +6,7 @@ use iced::Element;
 
 pub enum Content {
     SchemeView(SchemeContent),
-    ArchiveView(ArchiveContent),
+    ArchiveView(Box<ArchiveContent>),
 }
 
 impl Content {

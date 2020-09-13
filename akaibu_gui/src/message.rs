@@ -1,4 +1,4 @@
-use akaibu::{archive::FileEntry, scheme::Scheme};
+use akaibu::{archive::FileEntry, resource::ResourceType, scheme::Scheme};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
@@ -12,6 +12,7 @@ pub enum Message {
     ExtractFile(FileEntry),
     PreviewFile(FileEntry),
     SetStatus(Status),
+    OpenPreview(ResourceType, String),
     ClosePreview,
     PatternChanged(String),
     Error(String),

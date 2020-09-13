@@ -68,10 +68,22 @@ pub(crate) fn handle_message(
         }
         Message::PreviewFile(file_entry) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                let resource =
-                    preview::get_resource_type(&content.archive, &file_entry)?;
-                content.preview.set_resource(resource, file_entry.file_name);
-                content.preview.set_visible(true);
+                return Ok(Command::perform(
+                    preview::get_resource_type(
+                        content.archive.clone(),
+                        file_entry.clone(),
+                    ),
+                    move |result| match result {
+                        Ok(resource) => Message::OpenPreview(
+                            resource,
+                            file_entry.file_name.clone(),
+                        ),
+                        Err(err) => Message::SetStatus(Status::Error(format!(
+                            "{}",
+                            err
+                        ))),
+                    },
+                ));
             }
         }
         Message::ExtractAll => {
@@ -114,13 +126,20 @@ pub(crate) fn handle_message(
         Message::MoveScene(scene) => match scene {
             Scene::ArchiveView(scheme) => {
                 let (archive, dir) = scheme.extract(&app.opt.file)?;
-                app.content =
-                    Content::ArchiveView(ArchiveContent::new(archive, dir));
+                app.content = Content::ArchiveView(Box::new(
+                    ArchiveContent::new(archive, dir),
+                ));
             }
         },
         Message::SetStatus(status) => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 content.set_status(status);
+            }
+        }
+        Message::OpenPreview(resource, file_name) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.preview.set_resource(resource, file_name);
+                content.preview.set_visible(true);
             }
         }
         Message::ClosePreview => {

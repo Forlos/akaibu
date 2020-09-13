@@ -37,8 +37,8 @@ impl Application for App {
             (
                 Self {
                     opt,
-                    content: Content::ArchiveView(ArchiveContent::new(
-                        archive, dir,
+                    content: Content::ArchiveView(Box::new(
+                        ArchiveContent::new(archive, dir),
                     )),
                 },
                 Command::none(),

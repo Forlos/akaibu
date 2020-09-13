@@ -13,7 +13,7 @@ pub async fn convert_resource(
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
     log::info!("Converting resource {:?}", resource_magic);
-    let mut converted_path = file_path.clone();
+    let mut converted_path = file_path;
     converted_path.set_file_name(&entry.file_name);
     write_resource(
         resource_magic.parse(contents.to_vec())?,
