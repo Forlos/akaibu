@@ -11,7 +11,6 @@ pub async fn get_resource_type(
 ) -> anyhow::Result<ResourceType> {
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
-    log::info!("Converting resource {:?}", resource_magic);
     let resource = resource_magic.parse(contents.to_vec())?;
     Ok(match resource {
         ResourceType::Other => PreviewableResourceMagic::parse(&contents)?,
