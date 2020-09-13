@@ -36,7 +36,7 @@ pub(crate) fn handle_message(
                     ),
                     |result| match result {
                         Ok(path) => Message::SetStatus(Status::Success(
-                            format!("Extracted: {:?}", path),
+                            format!("Converted: {:?}", path),
                         )),
                         Err(err) => Message::SetStatus(Status::Error(format!(
                             "{}",
