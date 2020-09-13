@@ -6,7 +6,7 @@ mod ui;
 mod update;
 
 use app::App;
-use iced::{Application, Settings};
+use iced::{window, Application, Settings};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -28,6 +28,10 @@ fn main() {
             "../fonts/RictyDiminished-with-FiraCode-Regular.ttf"
         )),
         antialiasing: true,
+        window: window::Settings {
+            size: (1280, 720),
+            ..Default::default()
+        },
         ..Default::default()
     })
 }
