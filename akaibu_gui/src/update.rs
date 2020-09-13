@@ -94,8 +94,8 @@ pub(crate) fn handle_message(
                             app.opt.file.clone(),
                         ),
                         |result| match result {
-                            Ok(_) => Message::SetStatus(Status::Success(
-                                String::from("Extracted all!"),
+                            Ok(path) => Message::SetStatus(Status::Success(
+                                format!("Extracted all! {:?}", path),
                             )),
                             Err(err) => Message::SetStatus(Status::Error(
                                 format!("Error while extracting: {}", err),

@@ -1,5 +1,6 @@
 use akaibu::{archive::FileEntry, scheme::Scheme};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Message {
     MoveScene(Scene),
@@ -16,11 +17,13 @@ pub enum Message {
     Error(String),
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Scene {
     ArchiveView(Box<dyn Scheme>),
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Status {
     Normal(String),
