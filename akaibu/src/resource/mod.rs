@@ -1,4 +1,3 @@
-mod jbp1;
 mod pb3b;
 
 use crate::error::AkaibuError;
@@ -33,7 +32,10 @@ impl ResourceMagic {
                 let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
                 Ok(ResourceType::RgbaImage { image })
             }
-            Self::TLG5 => Err(AkaibuError::Unimplemented.into()),
+            Self::TLG5 => Err(AkaibuError::Unimplemented(String::from(
+                "TLG5 is not supported",
+            ))
+            .into()),
             Self::TLG6 => {
                 let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
                 Ok(ResourceType::RgbaImage { image })

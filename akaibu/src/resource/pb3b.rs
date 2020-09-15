@@ -12,18 +12,18 @@ impl Pb3b {
     pub(crate) fn from_bytes(mut buf: Vec<u8>) -> anyhow::Result<Self> {
         Self::decrypt(&mut buf);
         let header = buf.pread_with::<Header>(0x18, LE)?;
-        // if header.main_type == 1
-        //     || header.main_type == 5
-        //     || header.main_type == 6
-        // {
-        //     return Err(AkaibuError::Unimplemented.into());
-        // }
         let image = match header.main_type {
             1 => Self::decode_v1(&mut buf, &header),
             // 3 => Self::decode_v3(&mut buf, &header),
             5 => Self::decode_v5(&mut buf, &header),
             6 => Self::decode_v6(&mut buf, &header),
-            _ => return Err(AkaibuError::Unimplemented.into()),
+            _ => {
+                return Err(AkaibuError::Unimplemented(format!(
+                    "PB3 version {} is not supported",
+                    header.main_type
+                ))
+                .into())
+            }
         }?;
         Ok(Self { header, image })
     }
