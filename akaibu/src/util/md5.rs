@@ -107,8 +107,8 @@ impl Context {
             &PADDING[..(if k < 56 { 56 - k } else { 120 - k })],
         );
         let mut j = 0;
-        for i in 0..14 {
-            input[i] = ((self.buffer[j + 3] as u32) << 24)
+        for val in input.iter_mut().take(14) {
+            *val = ((self.buffer[j + 3] as u32) << 24)
                 | ((self.buffer[j + 2] as u32) << 16)
                 | ((self.buffer[j + 1] as u32) << 8)
                 | (self.buffer[j] as u32);
@@ -170,8 +170,8 @@ fn consume(
         k += 1;
         if k == 0x40 {
             let mut j = 0;
-            for i in 0..16 {
-                input[i] = ((buffer[j + 3] as u32) << 24)
+            for val in input.iter_mut().take(16) {
+                *val = ((buffer[j + 3] as u32) << 24)
                     | ((buffer[j + 2] as u32) << 16)
                     | ((buffer[j + 1] as u32) << 8)
                     | (buffer[j] as u32);

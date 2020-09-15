@@ -84,8 +84,15 @@ impl Pb3b {
             *off += control_block1_size;
             let data_block1 = &buf[*off..*off + data_block1_size];
             *off += data_block1_size;
-            let control_block2 =
-                &buf[*off..*off + main_offsets[channel] + main_sizes[channel]];
+            let control_block2 = if (*off
+                + main_offsets[channel]
+                + main_sizes[channel])
+                > buf.len()
+            {
+                &buf[*off..buf.len()]
+            } else {
+                &buf[*off..*off + main_offsets[channel] + main_sizes[channel]]
+            };
             *off = data_offsets[channel];
             let data_block2 = &buf[*off..*off + data_sizes[channel]];
 
@@ -153,13 +160,13 @@ impl Pb3b {
 
         Ok(image.convert())
     }
-    fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
-        // let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
-        //     ImageBuffer::new(header.width as u32, header.height as u32);
-        // let jbp1_data = &buf[0x34..];
-        todo!()
-        // Ok(image.convert())
-    }
+    // fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
+    //     // let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+    //     //     ImageBuffer::new(header.width as u32, header.height as u32);
+    //     // let jbp1_data = &buf[0x34..];
+    //     todo!()
+    //     // Ok(image.convert())
+    // }
 
     fn decode_v5(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let off = &mut 0x34;

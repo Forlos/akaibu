@@ -155,7 +155,7 @@ impl progress_bar::StyleSheet for Dark {
 }
 
 impl checkbox::StyleSheet for Dark {
-    fn active(&self, is_checked: bool) -> checkbox::Style {
+    fn active(&self, _is_checked: bool) -> checkbox::Style {
         checkbox::Style {
             background: self.background,
             checkmark_color: TEXT_COLOR,
@@ -165,7 +165,7 @@ impl checkbox::StyleSheet for Dark {
         }
     }
 
-    fn hovered(&self, is_checked: bool) -> checkbox::Style {
+    fn hovered(&self, _is_checked: bool) -> checkbox::Style {
         checkbox::Style {
             background: Background::Color(DARK_FOCUSED),
             checkmark_color: TEXT_COLOR,
