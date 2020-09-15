@@ -8,6 +8,7 @@ use crate::{
     ui::archive::ArchiveContent,
     ui::content::Content,
 };
+use extract::extract_all;
 use iced::Command;
 
 pub(crate) fn handle_message(
@@ -88,14 +89,14 @@ pub(crate) fn handle_message(
         }
         Message::ExtractAll => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                let commands = vec![
-                    Command::perform(async {}, |_| {
-                        Message::SetStatus(Status::Normal(
-                            "Extracting...".to_string(),
-                        ))
-                    }),
-                    Command::perform(
-                        extract::extract_all(
+                let mut commands = vec![Command::perform(async {}, |_| {
+                    Message::SetStatus(Status::Normal(
+                        "Extracting...".to_string(),
+                    ))
+                })];
+                if content.convert_all {
+                    commands.push(Command::perform(
+                        extract::extract_all_with_convert(
                             content.archive.clone(),
                             content
                                 .navigable_dir
@@ -113,8 +114,29 @@ pub(crate) fn handle_message(
                                 format!("Error while extracting: {}", err),
                             )),
                         },
-                    ),
-                ];
+                    ));
+                } else {
+                    commands.push(Command::perform(
+                        extract_all(
+                            content.archive.clone(),
+                            content
+                                .navigable_dir
+                                .get_root_dir()
+                                .get_all_files()
+                                .cloned()
+                                .collect(),
+                            app.opt.file.clone(),
+                        ),
+                        |result| match result {
+                            Ok(path) => Message::SetStatus(Status::Success(
+                                format!("Extracted all! {:?}", path),
+                            )),
+                            Err(err) => Message::SetStatus(Status::Error(
+                                format!("Error while extracting: {}", err),
+                            )),
+                        },
+                    ));
+                }
                 return Ok(Command::batch(commands));
             };
         }
@@ -145,6 +167,11 @@ pub(crate) fn handle_message(
         Message::ClosePreview => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 content.preview.set_visible(false);
+            }
+        }
+        Message::ConvertAllToggle(convert_all) => {
+            if let Content::ArchiveView(ref mut content) = app.content {
+                content.convert_all = convert_all;
             }
         }
         Message::PatternChanged(pattern) => {

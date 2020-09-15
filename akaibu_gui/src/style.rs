@@ -1,5 +1,6 @@
 use iced::{
-    button, container, progress_bar, text_input, Background, Color, Vector,
+    button, checkbox, container, progress_bar, text_input, Background, Color,
+    Vector,
 };
 
 pub const DARK: Color = Color::from_rgb(
@@ -149,6 +150,28 @@ impl progress_bar::StyleSheet for Dark {
             background: self.background,
             bar: Background::Color(TEXT_COLOR),
             border_radius: 0,
+        }
+    }
+}
+
+impl checkbox::StyleSheet for Dark {
+    fn active(&self, is_checked: bool) -> checkbox::Style {
+        checkbox::Style {
+            background: self.background,
+            checkmark_color: TEXT_COLOR,
+            border_radius: 0,
+            border_width: self.border_width,
+            border_color: Color::BLACK,
+        }
+    }
+
+    fn hovered(&self, is_checked: bool) -> checkbox::Style {
+        checkbox::Style {
+            background: Background::Color(DARK_FOCUSED),
+            checkmark_color: TEXT_COLOR,
+            border_radius: 0,
+            border_width: self.border_width,
+            border_color: Color::BLACK,
         }
     }
 }

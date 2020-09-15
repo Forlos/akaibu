@@ -14,6 +14,7 @@ pub enum Message {
     SetStatus(Status),
     OpenPreview(ResourceType, String),
     ClosePreview,
+    ConvertAllToggle(bool),
     PatternChanged(String),
     Error(String),
 }

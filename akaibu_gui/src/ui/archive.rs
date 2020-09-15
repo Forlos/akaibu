@@ -2,9 +2,9 @@ use crate::{message::Message, message::Status, style, ui::preview::Preview};
 use akaibu::archive;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use iced::{
-    button, image, scrollable, text_input, Background, Button, Column,
-    Container, Element, Image, Length, ProgressBar, Row, Scrollable, Space,
-    Text, TextInput, VerticalAlignment,
+    button, image, scrollable, text_input, Background, Button, Checkbox,
+    Column, Container, Element, Image, Length, ProgressBar, Row, Scrollable,
+    Space, Text, TextInput, VerticalAlignment,
 };
 use itertools::Itertools;
 use std::sync::Arc;
@@ -15,6 +15,7 @@ pub struct ArchiveContent {
     pub navigable_dir: archive::NavigableDirectory,
     entries_scrollable_state: scrollable::State,
     extract_all_button_state: button::State,
+    pub convert_all: bool,
     back_dir_button_state: button::State,
     pub preview: Preview,
     footer: Footer,
@@ -37,6 +38,7 @@ impl ArchiveContent {
             navigable_dir,
             entries_scrollable_state: scrollable::State::new(),
             extract_all_button_state: button::State::new(),
+            convert_all: false,
             back_dir_button_state: button::State::new(),
             preview: Preview::new(),
             footer,
@@ -54,6 +56,7 @@ impl ArchiveContent {
                     .push(
                         Row::new()
                             .height(Length::Units(30))
+                            .spacing(5)
                             .push(Space::new(
                                 Length::Units(5),
                                 Length::Units(0),
@@ -66,10 +69,21 @@ impl ArchiveContent {
                                 .on_press(Message::ExtractAll)
                                 .style(style::Dark::default()),
                             )
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
+                            .push(
+                                Container::new(
+                                    Checkbox::new(
+                                        self.convert_all,
+                                        "Convert all",
+                                        Message::ConvertAllToggle,
+                                    )
+                                    .text_size(16)
+                                    .spacing(3)
+                                    .style(style::Dark::default()),
+                                )
+                                .height(Length::Fill)
+                                .center_y()
+                                .center_x(),
+                            )
                             .push({
                                 let back_button = Button::new(
                                     &mut self.back_dir_button_state,
@@ -82,10 +96,6 @@ impl ArchiveContent {
                                     back_button
                                 }
                             })
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
                             .push(
                                 TextInput::new(
                                     &mut self.pattern_text_input,
