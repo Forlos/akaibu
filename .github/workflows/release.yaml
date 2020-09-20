@@ -122,10 +122,16 @@ jobs:
         include:
           - version: linux
             OS: linux
+            cli_executable: akaibu_cli
+            gui_executable: akaibu_gui
           - version: windows
             OS: windows
+            cli_executable: akaibu_cli.exe
+            gui_executable: akaibu_gui.exe
           - version: mac-os
             OS: macos
+            cli_executable: akaibu_cli
+            gui_executable: akaibu_gui
     steps:
       - name: Retrieve stashed intermediary build artifact
         uses: actions/download-artifact@v1
@@ -136,13 +142,11 @@ jobs:
         run: |
           mv ./akaibu-${{ matrix.OS }}/* .
 
-          test -f ./akaibu_cli && chmod +x ./akaibu_cli
-          strip ./akaibu_cli || echo "strip not supported"
-          zip -j akaibu_cli-${{ matrix.OS }}.zip ./akaibu_cli
+          strip ./${{ matrix.cli_executable }} || echo "strip not supported"
+          zip -j akaibu_cli-${{ matrix.OS }}.zip ./${{ matrix.cli_executable }}
 
-          test -f ./akaibu_gui && chmod +x ./akaibu_gui
-          strip ./akaibu_gui || echo "strip not supported"
-          zip -j akaibu_gui-${{ matrix.OS }}.zip ./akaibu_gui
+          strip ./${{ matrix.gui_executable }} || echo "strip not supported"
+          zip -j akaibu_gui-${{ matrix.OS }}.zip ./${{ matrix.gui_executable }}
 
       - name: Retrieve stashed release URL
         uses: actions/download-artifact@v1
