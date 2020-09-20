@@ -1,0 +1,29 @@
+#+title: Supported archives
+#+author: Forlos
+#+description: Table of supported archive formats
+'Games' column lists only tested games. Other games could be also working but unexpected things could happen. Be careful!
+
+| Format name | Extension | Create                | Brand/Engine    | Games                                                                                          |
+|-------------+-----------+-----------------------+-----------------+------------------------------------------------------------------------------------------------|
+| [[./bin/acv1][ACV1]]        | *.dat     | Yes(Only for scripts) | [[https://vndb.org/p4572][Mirai]]           | [[https://vndb.org/v22880][Shukusei no Girlfriend -the destiny star of girlfriend-(宿星のガールフレンド)]]                  |
+|             |           |                       |                 | [[https://vndb.org/v23290][Shukusei no Girlfriend 2 -the destiny star of girlfriend-(宿星のガールフレンド 2)]]              |
+|             |           |                       |                 | [[https://vndb.org/v23772][Shukusei no Girlfriend 3 -the destiny star of girlfriend-(宿星のガールフレンド 3)]]              |
+| [[./bin/cpz7][CPZ7]]        | *.cpz     | No                    | [[https://vndb.org/p132][Purple Software]] | [[https://vndb.org/v21523][Aoi Tori(アオイトリ)]]                                                                           |
+|             |           |                       |                 | [[https://vndb.org/v24725][Realive(リアライブ)]]                                                                            |
+| [[./bin/gxp][GXP]]         | *.gxp     | No                    | [[https://vndb.org/p2692][Astronauts]]      | [[https://vndb.org/v17835][Tou no Shita no Exercitus(塔の下のエクセルキトゥス)]]                                            |
+|             |           |                       |                 | [[https://vndb.org/v10047][Erect!(えれくと！)]]                                                                             |
+|             |           |                       |                 | [[https://vndb.org/v10427][Spocon! ~Sports Wear-Complex~(すぽコン！～SPORTS WEAR-COMPLEX～)]]                               |
+|             |           |                       |                 | [[https://vndb.org/v15697][Tsukiyo no Mura(憑夜ノ村)]]                                                                      |
+|             |           |                       |                 | [[https://vndb.org/v12604][Aozora Stripe(あおぞらストライプ)]]                                                              |
+|             |           |                       |                 | [[https://vndb.org/v12338][Grimoire no Shisho(魔導書の司書)]]                                                               |
+| [[./bin/pfs][PFS]]         | *.pfs*    | No                    | [[https://vndb.org/p3312][Madosoft]]        | [[https://vndb.org/v22847][Raspberry Cube(ラズベリーキューブ)]]                                                             |
+|             |           |                       | [[https://vndb.org/p4542][Azarashi Soft]]   | [[https://vndb.org/v24619][Aibeya(アイベヤ)]]                                                                               |
+|             |           |                       |                 | [[https://vndb.org/v24618][Aikagi 2(アイカギ2)]]                                                                            |
+|             |           |                       |                 | [[https://vndb.org/v24620][Maid-san no Iru Kurashi(メイドさんのいる暮らし)]]                                                |
+|             |           |                       | [[https://vndb.org/p6978][Prekano]]         | [[https://vndb.org/v25380][Aikano ~Yukizora no Triangle~(アイカノ ～雪空のトライアングル～)]]                               |
+|             |           |                       |                 | [[https://vndb.org/v24915][Tonari ni Kanojo no Iru Shiawase ~Summer Surprise~(となりに彼女のいる幸せ ～Summer Surprise～)]] |
+|             |           |                       |                 | [[https://vndb.org/v27842][Tonari ni Kanojo no Iru Shiawase ~Curious Queen~(となりに彼女のいる幸せ ～Curious Queen～)]]     |
+|             |           |                       | [[https://vndb.org/p8788][qureate]]         | [[https://vndb.org/v26310][NinNinDays]]                                                                                     |
+|             |           |                       | [[https://vndb.org/p7035][Torte Soft]]      | [[https://vndb.org/v21530][Abnormal Lovers(あぶのーまるらば～ず)]]                                                          |
+|             |           |                       | [[https://vndb.org/p8302][Heliodor]]        | [[https://vndb.org/v24110][Ryuusei World Actor(流星ワールドアクター)]]                                                      |
+|             |           |                       | [[https://vndb.org/p5397][Jitaku Studio]]   | [[https://vndb.org/v27436][Real Eroge Situation! 2(リアルエロゲシチュエーション！2)]]                                       |

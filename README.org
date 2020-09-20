@@ -1,1 +1,53 @@
-WIP
+#+author: Forlos
+
+* Akaibu
+Visual novel archive extractor and resource converter
+
+[[./SUPPORTED_ARCHIVES.org][Supported archive formats]]
+[[./SUPPORTED_RESOURCES.org][Supported resource formats]]
+
+** Usage
+*** GUI
+Drag and drop file on akaibu_gui executable
+**** Select extract scheme if applicable
+ [[./media/gui1.png]]
+**** Browse archive contents
+ [[./media/gui2.png]]
+**** Convert,extract,preview files
+ [[./media/gui3.png]]
+
+*** CLI
+#+BEGIN_SRC bash
+akaibu_cli --help
+akaibu_cli 0.1.0
+
+USAGE:
+    akaibu_cli [FLAGS] [OPTIONS] <ARCHIVES>...
+
+FLAGS:
+    -c, --convert    Convert resource files to commonly used formats
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --output <output-dir>    Directory to output extracted files [default: ext/]
+
+ARGS:
+    <ARCHIVES>...    Files to process
+#+END_SRC
+**** Extract archives
+#+BEGIN_SRC bash
+akaibu_cli path/to/archive path/to/archive2 path/to/archives/*
+#+END_SRC
+**** Convert resources
+#+BEGIN_SRC bash
+akaibu_cli -c path/to/resource path/to/resource2 path/to/resources/*
+#+END_SRC
+
+** Install
+*** Binaries
+See [[https://github.com/Forlos/akaibu/releases][releases]] tab
+*** From source
+#+BEGIN_SRC bash
+cargo install --bins --git https://github.com/Forlos/akaibu --branch master
+#+END_SRC
