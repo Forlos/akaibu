@@ -16,7 +16,7 @@
 |             |           |                 | [[https://vndb.org/v15697][Tsukiyo no Mura(憑夜ノ村)]]                                                                      |
 |             |           |                 | [[https://vndb.org/v12604][Aozora Stripe(あおぞらストライプ)]]                                                              |
 |             |           |                 | [[https://vndb.org/v12338][Grimoire no Shisho(魔導書の司書)]]                                                               |
-| PFS         | \*.pfs\*  | [[https://vndb.org/p3312][Madosoft]]        | [[https://vndb.org/v22847][Raspberry Cube(ラズベリーキューブ)]]                                                             |
+| PFS         | \*.pfs*   | [[https://vndb.org/p3312][Madosoft]]        | [[https://vndb.org/v22847][Raspberry Cube(ラズベリーキューブ)]]                                                             |
 |             |           | [[https://vndb.org/p4542][Azarashi Soft]]   | [[https://vndb.org/v24619][Aibeya(アイベヤ)]]                                                                               |
 |             |           |                 | [[https://vndb.org/v24618][Aikagi 2(アイカギ2)]]                                                                            |
 |             |           |                 | [[https://vndb.org/v24620][Maid-san no Iru Kurashi(メイドさんのいる暮らし)]]                                                |
