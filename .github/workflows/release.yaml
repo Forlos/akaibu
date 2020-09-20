@@ -15,6 +15,9 @@ jobs:
         uses: actions/checkout@master
       - name: Build Rust release
         uses: actions-rs/cargo@v1
+        env:
+          CARGO_PROFILE_RELEASE_LTO: fat
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
         with:
           command: build
           args: --release
