@@ -12,7 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Build Rust release
         uses: actions-rs/cargo@v1
         env:
@@ -22,7 +25,7 @@ jobs:
           command: build
           args: --release
       - name: Stash the build artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: akaibu-linux
           path: |
@@ -34,7 +37,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Build Rust release
         uses: actions-rs/cargo@v1
         env:
@@ -44,7 +50,7 @@ jobs:
           command: build
           args: --release
       - name: Stash the build artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: akaibu-windows
           path: |
@@ -56,7 +62,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Build Rust release
         uses: actions-rs/cargo@v1
         env:
@@ -66,7 +75,7 @@ jobs:
           command: build
           args: --release
       - name: Stash the build artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: akaibu-macos
           path: |
