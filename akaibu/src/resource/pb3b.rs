@@ -1,6 +1,9 @@
 use crate::error::AkaibuError;
+use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
+
+use super::jbp1::jbp1_decompress;
 
 #[derive(Debug)]
 pub(crate) struct Pb3b {
@@ -14,7 +17,7 @@ impl Pb3b {
         let header = buf.pread_with::<Header>(0x18, LE)?;
         let image = match header.main_type {
             1 => Self::decode_v1(&mut buf, &header),
-            // 3 => Self::decode_v3(&mut buf, &header),
+            2 | 3 => Self::decode_v3(&mut buf, &header),
             5 => Self::decode_v5(&mut buf, &header),
             6 => Self::decode_v6(&mut buf, &header),
             _ => {
@@ -67,10 +70,16 @@ impl Pb3b {
         data_offsets.push(data_sizes_offset + 4 * channel_count);
         for channel in 1..channel_count {
             main_offsets.push(
-                main_offsets.last().unwrap() + main_sizes[channel - 1] as usize,
+                main_offsets
+                    .last()
+                    .context("Could not get last main_offset")?
+                    + main_sizes[channel - 1] as usize,
             );
             data_offsets.push(
-                data_offsets.last().unwrap() + data_sizes[channel - 1] as usize,
+                data_offsets
+                    .last()
+                    .context("Could not get last data_offset")?
+                    + data_sizes[channel - 1] as usize,
             );
         }
 
@@ -160,13 +169,39 @@ impl Pb3b {
 
         Ok(image.convert())
     }
-    // fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
-    //     // let mut image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
-    //     //     ImageBuffer::new(header.width as u32, header.height as u32);
-    //     // let jbp1_data = &buf[0x34..];
-    //     todo!()
-    //     // Ok(image.convert())
-    // }
+    fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
+        let jbp1_data = &buf[0x34..];
+        let mut output = jbp1_decompress(jbp1_data)?;
+        let mut alpha_pos = buf.pread_with::<u32>(0x2C, LE)? as usize;
+        if header.depth == 32 && alpha_pos != 0 {
+            let mut dst = 3;
+            let end = header.width as usize * header.height as usize * 4;
+            while dst < end {
+                let alpha = buf[alpha_pos];
+                alpha_pos += 1;
+                if alpha != 0 && alpha != 255 {
+                    output[dst] = alpha;
+                    dst += 4;
+                } else {
+                    let mut count = buf[alpha_pos];
+                    alpha_pos += 1;
+                    while count > 0 {
+                        output[dst] = alpha;
+                        dst += 4;
+                        count -= 1;
+                    }
+                }
+            }
+        }
+        let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+            ImageBuffer::from_vec(
+                header.width as u32,
+                header.height as u32,
+                output,
+            )
+            .context("Invalid image resolution")?;
+        Ok(image.convert())
+    }
 
     fn decode_v5(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let off = &mut 0x34;
@@ -188,8 +223,18 @@ impl Pb3b {
             control_sizes.push(control_offsets[i] - control_offsets[i - 1]);
             data_sizes.push(data_offsets[i] - data_offsets[i - 1]);
         }
-        control_sizes.push(buf.len() - control_offsets.last().unwrap());
-        data_sizes.push(buf.len() - data_offsets.last().unwrap());
+        control_sizes.push(
+            buf.len()
+                - control_offsets
+                    .last()
+                    .context("Could not get last control_offset")?,
+        );
+        data_sizes.push(
+            buf.len()
+                - data_offsets
+                    .last()
+                    .context("Could not get last data_offset")?,
+        );
 
         for channel in 0..channel_count {
             let control_block = &buf[control_offsets[channel]

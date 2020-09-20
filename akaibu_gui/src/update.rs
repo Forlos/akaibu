@@ -19,12 +19,12 @@ pub(crate) fn handle_message(
     match message {
         Message::OpenDirectory(dir_name) => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                content.move_dir(dir_name);
+                content.move_dir(dir_name)?;
             }
         }
         Message::BackDirectory => {
             if let Content::ArchiveView(ref mut content) = app.content {
-                content.back_dir();
+                content.back_dir()?;
             }
         }
         Message::ConvertFile(file_entry) => {

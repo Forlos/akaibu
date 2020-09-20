@@ -98,7 +98,9 @@ impl NavigableDirectory {
         &self.root_dir
     }
     pub fn get_current(&self) -> &Directory {
-        self.root_dir.find_dir(&self.current).unwrap()
+        self.root_dir
+            .find_dir(&self.current)
+            .expect("Could not get current dir")
     }
     pub fn move_dir(&mut self, dir: &str) -> Option<&Directory> {
         self.current.push(dir.to_string());

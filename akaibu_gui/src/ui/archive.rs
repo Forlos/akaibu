@@ -1,5 +1,6 @@
 use crate::{message::Message, message::Status, style, ui::preview::Preview};
 use akaibu::archive;
+use anyhow::Context;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use iced::{
     button, image, scrollable, text_input, Background, Button, Checkbox,
@@ -58,7 +59,7 @@ impl ArchiveContent {
                             .height(Length::Units(30))
                             .spacing(5)
                             .push(Space::new(
-                                Length::Units(5),
+                                Length::Units(0),
                                 Length::Units(0),
                             ))
                             .push(
@@ -106,7 +107,7 @@ impl ArchiveContent {
                                 .style(style::Dark::default()),
                             )
                             .push(Space::new(
-                                Length::Units(5),
+                                Length::Units(0),
                                 Length::Units(0),
                             )),
                     )
@@ -164,19 +165,27 @@ impl ArchiveContent {
             .style(style::Dark::default())
             .into()
     }
-    pub fn move_dir(&mut self, dir_name: String) {
-        self.entries =
-            Self::new_entries(self.navigable_dir.move_dir(&dir_name).unwrap());
+    pub fn move_dir(&mut self, dir_name: String) -> anyhow::Result<()> {
+        self.entries = Self::new_entries(
+            self.navigable_dir
+                .move_dir(&dir_name)
+                .context("Could not move into directory")?,
+        );
         self.footer
             .set_current_dir(self.navigable_dir.get_current_full_path());
         self.pattern = String::new();
+        Ok(())
     }
-    pub fn back_dir(&mut self) {
-        self.entries =
-            Self::new_entries(self.navigable_dir.back_dir().unwrap());
+    pub fn back_dir(&mut self) -> anyhow::Result<()> {
+        self.entries = Self::new_entries(
+            self.navigable_dir
+                .back_dir()
+                .context("Could not move back directory")?,
+        );
         self.footer
             .set_current_dir(self.navigable_dir.get_current_full_path());
         self.pattern = String::new();
+        Ok(())
     }
     pub fn set_status(&mut self, status: Status) {
         self.footer.set_status(status);

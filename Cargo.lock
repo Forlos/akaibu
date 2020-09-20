@@ -34,6 +34,7 @@ dependencies = [
  "image 0.23.9",
  "itertools",
  "log",
+ "once_cell",
  "positioned-io-preview",
  "rayon",
  "rust-embed",
@@ -1291,7 +1292,6 @@ checksum = "974e194911d1f7efe3cd8a8f9db3b767e43536327e899e8bc9a12ef5711b74d2"
 dependencies = [
  "bytemuck",
  "byteorder",
- "jpeg-decoder",
  "num-iter",
  "num-rational 0.3.0",
  "num-traits",
