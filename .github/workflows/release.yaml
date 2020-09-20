@@ -21,8 +21,10 @@ jobs:
       - name: Stash the build artifact
         uses: actions/upload-artifact@v1
         with:
-          name: vn_manager-linux
-          path: ./target/release/vn_manager
+          name: akaibu-linux
+          path: |
+            ./target/release/akaibu_cli
+            ./target/release/akaibu_gui
 
   build-windows:
     name: Build on Windows
@@ -38,10 +40,11 @@ jobs:
       - name: Stash the build artifact
         uses: actions/upload-artifact@v1
         with:
-          name: vn_manager-windows
-          path: ./target/release/vn_manager.exe
+          name: akaibu-windows
+          path: |
+            ./target/release/akaibu_cli.exe
+            ./target/release/akaibu_gui.exe
           
-
   build-macos:
     name: Build on Mac OS
     runs-on: macos-latest
@@ -56,8 +59,10 @@ jobs:
       - name: Stash the build artifact
         uses: actions/upload-artifact@v1
         with:
-          name: vn_manager-macos
-          path: ./target/release/vn_manager
+          name: akaibu-macos
+          path: |
+            ./target/release/akaibu_cli
+            ./target/release/akaibu_gui
 
   create-release:
     name: Create release
@@ -107,14 +112,19 @@ jobs:
       - name: Retrieve stashed intermediary build artifact
         uses: actions/download-artifact@v1
         with:
-          name: vn_manager-${{ matrix.OS }}
+          name: akaibu-${{ matrix.OS }}
 
-      - name: Prepare release artifact
+      - name: Prepare release artifacts
         run: |
-          mv ./vn_manager-${{ matrix.OS }}/* .
-          test -f ./vn_manager && chmod +x ./vn_manager
-          strip ./vn_manager || echo "strip not supported"
-          zip -j vn_manager-${{ matrix.OS }}.zip ./*
+          mv ./akaibu-${{ matrix.OS }}/* .
+
+          test -f ./akaibu_cli && chmod +x ./akaibu_cli
+          strip ./akaibu_cli || echo "strip not supported"
+          zip -j akaibu_cli-${{ matrix.OS }}.zip ./akaibu_cli
+
+          test -f ./akaibu_gui && chmod +x ./akaibu_gui
+          strip ./akaibu_gui || echo "strip not supported"
+          zip -j akaibu_gui-${{ matrix.OS }}.zip ./akaibu_gui
 
       - name: Retrieve stashed release URL
         uses: actions/download-artifact@v1
@@ -124,13 +134,24 @@ jobs:
         id: get_release_url
         run: echo ::set-output name=URL::$(cat release-url/url.txt)
 
-      - name: Upload release assets
+      - name: Upload cli executable
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_url.outputs.URL }}
-          asset_path: ./vn_manager-${{ matrix.OS }}.zip
-          asset_name: vn_manager-${{ matrix.OS }}.zip
+          asset_path: ./akaibu_cli-${{ matrix.OS }}.zip
+          asset_name: akaibu_cli-${{ matrix.OS }}.zip
+          asset_content_type: application/gzip
+
+      - name: Upload gui executable
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_url.outputs.URL }}
+          asset_path: ./akaibu_gui-${{ matrix.OS }}.zip
+          asset_name: akaibu_gui-${{ matrix.OS }}.zip
           asset_content_type: application/gzip
