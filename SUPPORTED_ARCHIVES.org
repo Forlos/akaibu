@@ -10,6 +10,7 @@
 |             |           |                 | [[https://vndb.org/v23772][Shukusei no Girlfriend 3 -the destiny star of girlfriend-(宿星のガールフレンド 3)]]              |
 | CPZ7        | *.cpz     | [[https://vndb.org/p132][Purple Software]] | [[https://vndb.org/v21523][Aoi Tori(アオイトリ)]]                                                                           |
 |             |           |                 | [[https://vndb.org/v24725][Realive(リアライブ)]]                                                                            |
+|             |           |                 | [[https://vndb.org/v28304][Seishun Fragile(青春フラジャイル)]]                                                              |
 | GXP         | *.gxp     | [[https://vndb.org/p2692][Astronauts]]      | [[https://vndb.org/v17835][Tou no Shita no Exercitus(塔の下のエクセルキトゥス)]]                                            |
 |             |           |                 | [[https://vndb.org/v10047][Erect!(えれくと！)]]                                                                             |
 |             |           |                 | [[https://vndb.org/v10427][Spocon! ~Sports Wear-Complex~(すぽコン！～SPORTS WEAR-COMPLEX～)]]                               |
