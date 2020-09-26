@@ -1,8 +1,9 @@
 [package]
 name = "akaibu"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["forlos <forlos@disroot.org>"]
 edition = "2018"
+publish = false
 
 [dependencies]
 # IO
