@@ -30,6 +30,7 @@ const PASSWORD: &[u8] = &[
 pub enum Cpz7Scheme {
     AoiTori,
     Realive,
+    SeishunFragile,
 }
 
 impl Scheme for Cpz7Scheme {
@@ -80,13 +81,18 @@ impl Scheme for Cpz7Scheme {
         match self {
             Self::AoiTori => "Aoi Tori",
             Self::Realive => "Realive",
+            Self::SeishunFragile => "Seishun Fragile",
         }
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where
         Self: Sized,
     {
-        vec![Box::new(Cpz7Scheme::AoiTori), Box::new(Cpz7Scheme::Realive)]
+        vec![
+            Box::new(Cpz7Scheme::AoiTori),
+            Box::new(Cpz7Scheme::Realive),
+            Box::new(Cpz7Scheme::SeishunFragile),
+        ]
     }
 }
 
@@ -101,6 +107,11 @@ impl Cpz7Scheme {
             Cpz7Scheme::Realive => serde_json::from_slice(
                 &crate::Resources::get("cpz7/realive.json").context(
                     format!("Could not find file: {}", "cpz7/realive.json"),
+                )?,
+            )?,
+            Cpz7Scheme::SeishunFragile => serde_json::from_slice(
+                &crate::Resources::get("cpz7/seishun.json").context(
+                    format!("Could not find file: {}", "cpz7/seishun.json"),
                 )?,
             )?,
         })
