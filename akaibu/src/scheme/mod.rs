@@ -7,6 +7,7 @@ pub mod acv1;
 pub mod cpz7;
 pub mod gxp;
 pub mod pf8;
+pub mod ypf;
 
 pub trait Scheme: Debug + Send + DynClone {
     fn extract(
