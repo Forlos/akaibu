@@ -294,7 +294,7 @@ impl Acv1Entry {
             c[2] ^= (xor_key >> 16) as u8;
             c[3] ^= (xor_key >> 24) as u8;
         });
-        zlib_decompress(&buf)
+        Ok(Bytes::from(zlib_decompress(&buf)?))
     }
     fn dump_script(
         &self,
@@ -313,6 +313,6 @@ impl Acv1Entry {
             c[3] ^= (xor_key >> 24) as u8;
         });
 
-        zlib_decompress(&buf)
+        Ok(Bytes::from(zlib_decompress(&buf)?))
     }
 }

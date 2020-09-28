@@ -1,5 +1,6 @@
 mod jbp1;
 mod pb3b;
+mod ycg;
 
 use crate::error::AkaibuError;
 use image::RgbaImage;
@@ -11,6 +12,7 @@ pub enum ResourceMagic {
     TLG5,
     TLG6,
     PB3B,
+    YCG,
     Unrecognized,
 }
 
@@ -23,7 +25,10 @@ impl ResourceMagic {
             [84, 76, 71, 53, 46, 48, 0, 114, 97, 119, 26, ..] => Self::TLG5,
             // TLG6.0\x00raw\x1a
             [84, 76, 71, 54, 46, 48, 0, 114, 97, 119, 26, ..] => Self::TLG6,
+            // PB3B
             [80, 66, 51, 66, ..] => Self::PB3B,
+            // YCG\x00
+            [89, 67, 71, 0, ..] => Self::YCG,
             _ => Self::Unrecognized,
         }
     }
@@ -44,6 +49,10 @@ impl ResourceMagic {
             Self::PB3B => {
                 let pb3b = pb3b::Pb3b::from_bytes(buf)?;
                 Ok(ResourceType::RgbaImage { image: pb3b.image })
+            }
+            Self::YCG => {
+                let ycg = ycg::Ycg::from_bytes(buf)?;
+                Ok(ResourceType::RgbaImage { image: ycg.image })
             }
             Self::Unrecognized => Ok(ResourceType::Other),
         }

@@ -48,7 +48,9 @@ impl Scheme for Pf8Scheme {
         ))
     }
     fn get_name(&self) -> &str {
-        "pf8"
+        match self {
+            Self::Universal => "Universal",
+        }
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

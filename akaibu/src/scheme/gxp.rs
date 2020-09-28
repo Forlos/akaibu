@@ -41,7 +41,9 @@ impl Scheme for GxpScheme {
         Ok((Box::new(GxpArchive { file, archive }), navigable_dir))
     }
     fn get_name(&self) -> &str {
-        "GXP"
+        match self {
+            Self::Universal => "Universal",
+        }
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

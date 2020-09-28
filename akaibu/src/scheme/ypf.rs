@@ -47,7 +47,9 @@ impl Scheme for YpfScheme {
     }
 
     fn get_name(&self) -> &str {
-        todo!()
+        match self {
+            YpfScheme::Universal => "Universal",
+        }
     }
 
     fn get_schemes() -> Vec<Box<dyn Scheme>>
@@ -131,7 +133,7 @@ impl YpfArchive {
         if entry.flags == 1 {
             buf.resize(entry.compressed_file_size as usize, 0);
             self.file.read_exact_at(entry.file_offset, &mut buf)?;
-            Ok(zlib_decompress(&buf)?)
+            Ok(Bytes::from(zlib_decompress(&buf)?))
         } else {
             buf.resize(entry.file_size as usize, 0);
             self.file.read_exact_at(entry.file_offset, &mut buf)?;

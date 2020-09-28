@@ -1,5 +1,3 @@
-use bytes::{Bytes, BytesMut};
-
 pub mod md5;
 
 pub fn crc64(buf: &[u8]) -> u64 {
@@ -10,16 +8,14 @@ pub fn crc64(buf: &[u8]) -> u64 {
     crc64.get_crc()
 }
 
-pub fn zlib_decompress(buf: &[u8]) -> anyhow::Result<Bytes> {
+pub fn zlib_decompress(buf: &[u8]) -> anyhow::Result<Vec<u8>> {
     use flate2::read::ZlibDecoder;
     use std::io::Read;
 
     let mut decoder = ZlibDecoder::new(&buf[..]);
-    let mut ret = BytesMut::with_capacity(buf.len());
-    ret.resize(buf.len(), 0);
-    // let mut ret = vec![0; buf.len()];
-    decoder.read_exact(&mut ret)?;
-    Ok(ret.freeze())
+    let mut ret = Vec::with_capacity(buf.len());
+    decoder.read_to_end(&mut ret)?;
+    Ok(ret)
 }
 
 pub fn md5(buf: &[u8]) -> [u8; 16] {
