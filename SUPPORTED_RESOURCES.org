@@ -2,7 +2,8 @@
 #+author: Forlos
 #+description: Table of supported resource formats
 
-| Name | Type  | Extension | Versions  | Destination format |
-|------+-------+-----------+-----------+--------------------|
-| TLG  | Image | *.tlg     | 0,6       | PNG                |
-| PB3  | Image | *.pb3     | 1,2,3,5,6 | PNG                |
+| Name | Type  | Extension    | Versions  | Destination format |
+|------+-------+--------------+-----------+--------------------|
+| TLG  | Image | *.tlg        | 0,6       | PNG                |
+| PB3  | Image | *.pb3        | 1,2,3,5,6 | PNG                |
+| YCG  | Image | *.png, *.ycg | 1         | PNG                |
