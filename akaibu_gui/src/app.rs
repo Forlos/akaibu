@@ -54,7 +54,7 @@ impl Application for App {
         }
     }
     fn title(&self) -> String {
-        "Akaibu".to_owned()
+        format!("Akaibu {}", env!("CARGO_PKG_VERSION"))
     }
     fn update(&mut self, message: Self::Message) -> Command<Message> {
         match update::handle_message(self, message) {
