@@ -1,11 +1,13 @@
+use std::iter;
+
 use once_cell::sync::Lazy;
 use scroll::{Pread, LE};
 
 static LOOKUP_TABLE: Lazy<Vec<u8>> = Lazy::new(|| {
-    (0..=255)
-        .map(|_| 0)
-        .chain((0..=255).map(|n| n))
-        .chain((0..=255).map(|_| 255))
+    iter::repeat(0)
+        .take(256)
+        .chain(0..=255)
+        .chain(iter::repeat(255).take(256))
         .collect::<Vec<u8>>()
 });
 
