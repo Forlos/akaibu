@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "akaibu"
-version = "0.1.3-alpha.0"
+version = "0.1.3"
 dependencies = [
  "anyhow",
  "bytes",
@@ -48,7 +48,7 @@ dependencies = [
 
 [[package]]
 name = "akaibu_cli"
-version = "0.1.3-alpha.0"
+version = "0.1.3"
 dependencies = [
  "akaibu",
  "anyhow",
@@ -65,7 +65,7 @@ dependencies = [
 
 [[package]]
 name = "akaibu_gui"
-version = "0.1.3-alpha.0"
+version = "0.1.3"
 dependencies = [
  "akaibu",
  "anyhow",
