@@ -13,7 +13,7 @@ pub(crate) struct Pb3b {
 
 impl Pb3b {
     pub(crate) fn from_bytes(mut buf: Vec<u8>) -> anyhow::Result<Self> {
-        Self::decrypt(&mut buf);
+        Self::decrypt(&mut buf)?;
         let header = buf.pread_with::<Header>(0x18, LE)?;
         let image = match header.main_type {
             1 => Self::decode_v1(&mut buf, &header),
@@ -30,17 +30,28 @@ impl Pb3b {
         }?;
         Ok(Self { header, image })
     }
-    fn decrypt(buf: &mut [u8]) {
-        let tail_key = &buf[buf.len() - 0x2F..buf.len() - 3].to_vec();
-        let pair_key = &buf[buf.len() - 3..buf.len() - 1].to_vec();
+    fn decrypt(buf: &mut [u8]) -> anyhow::Result<()> {
+        let tail_key = &buf
+            .get(buf.len() - 0x2F..buf.len() - 3)
+            .context("Out of bounds access")?
+            .to_vec();
+        let pair_key = &buf
+            .get(buf.len() - 3..buf.len() - 1)
+            .context("Out of bounds access")?
+            .to_vec();
         buf.iter_mut()
             .skip(8)
             .take(0x2C)
             .enumerate()
-            .for_each(|(i, b)| {
-                *b ^= pair_key[i % pair_key.len()];
-                *b = b.wrapping_sub(tail_key[i]);
-            });
+            .try_for_each(|(i, b)| {
+                *b ^= pair_key
+                    .get(i % pair_key.len())
+                    .context("Out of bounds access")?;
+                *b = b.wrapping_sub(
+                    *tail_key.get(i).context("Out of bounds access")?,
+                );
+                Ok(())
+            })
     }
     fn decode_v1(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
         let off = &mut 0x2C;
@@ -73,37 +84,54 @@ impl Pb3b {
                 main_offsets
                     .last()
                     .context("Could not get last main_offset")?
-                    + main_sizes[channel - 1] as usize,
+                    + *main_sizes
+                        .get(channel - 1)
+                        .context("Out of bounds access")?,
             );
             data_offsets.push(
                 data_offsets
                     .last()
                     .context("Could not get last data_offset")?
-                    + data_sizes[channel - 1] as usize,
+                    + *data_sizes
+                        .get(channel - 1)
+                        .context("Out of bounds access")?,
             );
         }
 
         for channel in 0..channel_count {
-            *off = main_offsets[channel];
+            *off =
+                *main_offsets.get(channel).context("Out of bounds access")?;
             let control_block1_size = buf.gread_with::<u32>(off, LE)? as usize;
             let data_block1_size = buf.gread_with::<u32>(off, LE)? as usize;
             let size_orig = buf.gread_with::<u32>(off, LE)? as usize;
 
-            let control_block1 = &buf[*off..*off + control_block1_size];
+            let control_block1 = buf
+                .get(*off..*off + control_block1_size)
+                .context("Out of bounds access")?;
             *off += control_block1_size;
-            let data_block1 = &buf[*off..*off + data_block1_size];
+            let data_block1 = buf
+                .get(*off..*off + data_block1_size)
+                .context("Out of bounds access")?;
             *off += data_block1_size;
-            let control_block2 = if (*off
-                + main_offsets[channel]
-                + main_sizes[channel])
-                > buf.len()
+            let main_offset =
+                *main_offsets.get(channel).context("Out of bounds access")?;
+            let main_size =
+                *main_sizes.get(channel).context("Out of bounds access")?;
+            let data_offset =
+                *data_offsets.get(channel).context("Out of bounds access")?;
+            let data_size =
+                data_sizes.get(channel).context("Out of bounds access")?;
+            let control_block2 = if (*off + main_offset + main_size) > buf.len()
             {
-                &buf[*off..buf.len()]
+                buf.get(*off..buf.len()).context("Out of bounds access")?
             } else {
-                &buf[*off..*off + main_offsets[channel] + main_sizes[channel]]
+                buf.get(*off..*off + main_offset + main_size)
+                    .context("Out of bounds access")?
             };
-            *off = data_offsets[channel];
-            let data_block2 = &buf[*off..*off + data_sizes[channel]];
+            *off = data_offset;
+            let data_block2 = &buf
+                .get(*off..*off + data_size)
+                .context("Out of bounds access")?;
 
             let plane =
                 Self::custom_lzss(control_block2, data_block2, size_orig)?;
@@ -170,23 +198,27 @@ impl Pb3b {
         Ok(image.convert())
     }
     fn decode_v3(buf: &mut [u8], header: &Header) -> anyhow::Result<RgbaImage> {
-        let jbp1_data = &buf[0x34..];
+        let jbp1_data = buf.get(0x34..).context("Out of bounds access")?;
         let mut output = jbp1_decompress(jbp1_data)?;
         let mut alpha_pos = buf.pread_with::<u32>(0x2C, LE)? as usize;
         if header.depth == 32 && alpha_pos != 0 {
             let mut dst = 3;
             let end = header.width as usize * header.height as usize * 4;
             while dst < end {
-                let alpha = buf[alpha_pos];
+                let alpha =
+                    *buf.get(alpha_pos).context("Out of bounds access")?;
                 alpha_pos += 1;
                 if alpha != 0 && alpha != 255 {
                     output[dst] = alpha;
                     dst += 4;
                 } else {
-                    let mut count = buf[alpha_pos];
+                    let mut count =
+                        *buf.get(alpha_pos).context("Out of bounds access")?;
                     alpha_pos += 1;
                     while count > 0 {
-                        output[dst] = alpha;
+                        *output
+                            .get_mut(dst)
+                            .context("Out of bounds access")? = alpha;
                         dst += 4;
                         count -= 1;
                     }
@@ -220,8 +252,18 @@ impl Pb3b {
         let mut control_sizes = Vec::with_capacity(channel_count);
         let mut data_sizes = Vec::with_capacity(channel_count);
         for i in 1..channel_count {
-            control_sizes.push(control_offsets[i] - control_offsets[i - 1]);
-            data_sizes.push(data_offsets[i] - data_offsets[i - 1]);
+            control_sizes.push(
+                *control_offsets.get(i).context("Out of bounds access")?
+                    - *control_offsets
+                        .get(i - 1)
+                        .context("Out of bounds access")?,
+            );
+            data_sizes.push(
+                *data_offsets.get(i).context("Out of bounds access")?
+                    - *data_offsets
+                        .get(i - 1)
+                        .context("Out of bounds access")?,
+            );
         }
         control_sizes.push(
             buf.len()
@@ -237,10 +279,18 @@ impl Pb3b {
         );
 
         for channel in 0..channel_count {
-            let control_block = &buf[control_offsets[channel]
-                ..control_offsets[channel] + control_sizes[channel]];
-            let data_block = &buf[data_offsets[channel]
-                ..data_offsets[channel] + data_sizes[channel]];
+            let control_block = buf
+                .get(
+                    control_offsets[channel]
+                        ..control_offsets[channel] + control_sizes[channel],
+                )
+                .context("Out of bounds access")?;
+            let data_block = buf
+                .get(
+                    data_offsets[channel]
+                        ..data_offsets[channel] + data_sizes[channel],
+                )
+                .context("Out of bounds access")?;
             let plane = Self::custom_lzss(
                 control_block,
                 data_block,
@@ -250,7 +300,11 @@ impl Pb3b {
             let mut acc = 0u8;
             for y in 0..header.height {
                 for x in 0..header.width {
-                    acc = acc.wrapping_add(plane[*plane_off]);
+                    acc = acc.wrapping_add(
+                        *plane
+                            .get(*plane_off)
+                            .context("Out of bounds access")?,
+                    );
                     *plane_off += 1;
                     image.get_pixel_mut(x as u32, y as u32)[channel] = acc;
                 }
@@ -271,10 +325,14 @@ impl Pb3b {
         let data_block_size = buf.pread_with::<u32>(0x30, LE)? as usize;
         let control_block_size = data_block_offset - control_block_offset;
 
-        let control_block1 = &buf
-            [control_block_offset..control_block_offset + control_block_size];
-        let data_block1 =
-            &buf[data_block_offset..data_block_offset + data_block_size];
+        let control_block1 = buf
+            .get(
+                control_block_offset..control_block_offset + control_block_size,
+            )
+            .context("Out of bounds access")?;
+        let data_block1 = buf
+            .get(data_block_offset..data_block_offset + data_block_size)
+            .context("Out of bounds access")?;
         let proxy_block =
             Self::custom_lzss(control_block1, data_block1, size_orig)?;
 
@@ -283,11 +341,13 @@ impl Pb3b {
             proxy_block.gread_with::<u32>(proxy_off, LE)? as usize;
         let data_block2_size =
             proxy_block.gread_with::<u32>(proxy_off, LE)? as usize;
-        let control_block2 =
-            &proxy_block[*proxy_off..*proxy_off + control_block2_size];
+        let control_block2 = &proxy_block
+            .get(*proxy_off..*proxy_off + control_block2_size)
+            .context("Out of bounds access")?;
         *proxy_off += control_block2_size;
-        let data_block2 =
-            &proxy_block[*proxy_off..*proxy_off + data_block2_size];
+        let data_block2 = &proxy_block
+            .get(*proxy_off..*proxy_off + data_block2_size)
+            .context("Out of bounds access")?;
 
         let control_off = &mut 0;
         let data_off = &mut 0;
@@ -360,22 +420,25 @@ impl Pb3b {
                 let mut src_ptr = look_behind_pos as usize;
                 let mut repetitions = (tmp & 0x1F) + 3;
                 while repetitions > 0 && i < output.len() {
-                    let b = dict[src_ptr];
+                    let b =
+                        *dict.get(src_ptr).context("Out of bounds access")?;
                     src_ptr = (src_ptr + 1) % dict.len();
 
-                    output[i] = b;
+                    *output.get_mut(i).context("Out of bounds access")? = b;
                     i += 1;
 
-                    dict[*dict_off] = b;
+                    *dict
+                        .get_mut(*dict_off)
+                        .context("Out of bounds access")? = b;
                     *dict_off = (*dict_off + 1) % dict.len();
 
                     repetitions -= 1;
                 }
             } else {
                 let b = data_block.gread(data_off)?;
-                output[i] = b;
+                *output.get_mut(i).context("Out of bounds access")? = b;
                 i += 1;
-                dict[*dict_off] = b;
+                *dict.get_mut(*dict_off).context("Out of bounds access")? = b;
                 *dict_off = (*dict_off + 1) % dict.len();
             }
             bit_mask >>= 1;

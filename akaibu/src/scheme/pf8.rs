@@ -132,12 +132,16 @@ impl Pf8Archive {
 
         self.file
             .read_exact_at(entry.file_offset as u64, &mut buf)?;
-        self.decrypt_file(&mut buf);
+        self.decrypt_file(&mut buf)?;
         Ok(buf.freeze())
     }
-    fn decrypt_file(&self, data: &mut [u8]) {
-        data.iter_mut().enumerate().for_each(|(i, b)| {
-            *b ^= self.sha1[i % self.sha1.len()];
+    fn decrypt_file(&self, data: &mut [u8]) -> anyhow::Result<()> {
+        data.iter_mut().enumerate().try_for_each(|(i, b)| {
+            *b ^= self
+                .sha1
+                .get(i % self.sha1.len())
+                .context("Out of bounds access")?;
+            Ok(())
         })
     }
 }
@@ -197,7 +201,9 @@ impl<'a> ctx::TryFromCtx<'a, ()> for Pf8FileEntry {
         let file_name_size = buf.gread_with::<u32>(off, LE)?;
         let full_path = PathBuf::from(
             String::from_utf8(
-                buf[*off..*off + file_name_size as usize].to_vec(),
+                buf.get(*off..*off + file_name_size as usize)
+                    .context("Out of bounds access")?
+                    .to_vec(),
             )?
             .replace("\\", "/"),
         );

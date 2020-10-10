@@ -239,11 +239,14 @@ impl<'a> ctx::TryFromCtx<'a, (Cpz7Header, &[u32; 4])> for Cpz7 {
             header.encryption_data_size as usize,
         )?;
         let mut raw_data = BytesMut::from(
-            &buf[*off..*off
-                + header.archive_data_size as usize
-                + header.file_data_size as usize],
+            buf.get(
+                *off..*off
+                    + header.archive_data_size as usize
+                    + header.file_data_size as usize,
+            )
+            .context("Out of bounds access")?,
         );
-        encryption_data.decrypt_buf(&mut raw_data);
+        encryption_data.decrypt_buf(&mut raw_data)?;
         raw_data = decrypt_with_password(
             &raw_data,
             raw_data.len(),
@@ -254,17 +257,19 @@ impl<'a> ctx::TryFromCtx<'a, (Cpz7Header, &[u32; 4])> for Cpz7 {
         let archive_data_decrypt_table = init_decrypt_table(
             header.archive_data_key,
             md5_cpz7.pread_with::<u32>(4, LE)?,
-        );
+        )?;
         decrypt_with_decrypt_table(
             &archive_data_decrypt_table,
             &mut raw_data,
             header.archive_data_size as usize,
             0x3A,
-        );
+        )?;
         let decrypt_buf = get_decrypt_buf(&md5_cpz7, header.archive_data_key);
         let raw_archive_data = decrypt_archive_data(
             &decrypt_buf,
-            &raw_data[..header.archive_data_size as usize],
+            raw_data
+                .get(..header.archive_data_size as usize)
+                .context("Out of bounds access")?,
             game_keys[0],
         )?;
         let mut archive_data: Vec<ArchiveDataEntry> =
@@ -276,12 +281,16 @@ impl<'a> ctx::TryFromCtx<'a, (Cpz7Header, &[u32; 4])> for Cpz7 {
         let file_data_decrypt_table = init_decrypt_table(
             header.archive_data_key,
             md5_cpz7.pread_with(8, LE)?,
-        );
+        )?;
         let raw_file_data = decrypt_file_data(
             &archive_data,
-            &mut raw_data[header.archive_data_size as usize
-                ..header.archive_data_size as usize
-                    + header.file_data_size as usize],
+            raw_data
+                .get_mut(
+                    header.archive_data_size as usize
+                        ..header.archive_data_size as usize
+                            + header.file_data_size as usize,
+                )
+                .context("Out of bounds access")?,
             &file_data_decrypt_table,
             &md5_cpz7,
             game_keys[1],
@@ -289,7 +298,7 @@ impl<'a> ctx::TryFromCtx<'a, (Cpz7Header, &[u32; 4])> for Cpz7 {
         let files_decrypt_table = init_decrypt_table(
             md5_cpz7.pread_with(12, LE)?,
             header.archive_data_key,
-        );
+        )?;
         let mut file_data = HashMap::new();
         let off = &mut 0;
         for archive in archive_data {
@@ -340,9 +349,15 @@ impl<'a> ctx::TryFromCtx<'a, scroll::Endian> for Cpz7Header {
         let archive_data_size =
             buf.gread_with::<u32>(off, LE)? ^ HEADER_KEYS[1];
         let file_data_size = buf.gread_with::<u32>(off, LE)? ^ HEADER_KEYS[2];
-        let raw_data_md5 = buf[*off..*off + 16].try_into()?;
+        let raw_data_md5 = buf
+            .get(*off..*off + 16)
+            .context("Out of bounds access")?
+            .try_into()?;
         *off += 16;
-        let mut cpz7_md5: [u8; 16] = buf[*off..*off + 16].try_into()?;
+        let mut cpz7_md5: [u8; 16] = buf
+            .get(*off..*off + 16)
+            .context("Out of bounds access")?
+            .try_into()?;
         cpz7_md5.chunks_mut(4).enumerate().for_each(|(i, c)| {
             c[0] ^= HEADER_KEYS[i + 3] as u8;
             c[1] ^= (HEADER_KEYS[i + 3] >> 8) as u8;
@@ -397,7 +412,10 @@ impl<'a> ctx::TryFromCtx<'a, scroll::Endian> for ArchiveDataEntry {
         let offset = buf.gread_with(off, LE)?;
         let file_decrypt_key = buf.gread_with(off, LE)?;
         let name = SHIFT_JIS
-            .decode(&buf[*off..*off + entry_size as usize - 0x10])
+            .decode(
+                buf.get(*off..*off + entry_size as usize - 0x10)
+                    .context("Out of bounds access")?,
+            )
             .0
             .to_string()
             .trim_matches('\0')
@@ -447,7 +465,10 @@ impl<'a> ctx::TryFromCtx<'a, &ArchiveDataEntry> for FileEntry {
             "{}/{}",
             archive.name,
             SHIFT_JIS
-                .decode(&buf[*off..*off + entry_size as usize - 0x1C])
+                .decode(
+                    buf.get(*off..*off + entry_size as usize - 0x1C)
+                        .context("Out of bounds access")?
+                )
                 .0
                 .to_string()
                 .trim_matches('\0')
@@ -484,11 +505,14 @@ impl<'a> ctx::TryFromCtx<'a, usize> for EncryptionData {
         buf: &'a [u8],
         size: usize,
     ) -> Result<(Self, usize), Self::Error> {
-        let md5_checksum = buf[0..16].try_into()?;
+        let md5_checksum =
+            buf.get(0..16).context("Out of bounds access")?.try_into()?;
         let off = &mut 16;
         let data_size = buf.gread_with::<u32>(off, LE)?;
         let key = buf.gread_with::<u32>(off, LE)?;
-        let data = BytesMut::from(&buf[*off..size]);
+        let data = BytesMut::from(
+            buf.get(*off..size).context("Out of bounds access")?,
+        );
         let encryption_data = EncryptionData {
             md5_checksum,
             data_size,
@@ -538,15 +562,20 @@ impl EncryptionData {
                     let temp = *z;
                     *z >>= 1;
                     if temp & 1 == 0 {
-                        inner_result = data1[inner_result as usize] as u32;
+                        inner_result = *data1
+                            .get(inner_result as usize)
+                            .context("Out of bounds access")?;
                     } else {
-                        inner_result = data2[inner_result as usize] as u32;
+                        inner_result = *data2
+                            .get(inner_result as usize)
+                            .context("Out of bounds access")?;
                     }
                     if inner_result < 0x100 {
                         break;
                     }
                 }
-                dest[i] = inner_result as u8;
+                *dest.get_mut(i).context("Out of bounds access")? =
+                    inner_result as u8;
             }
         }
         self.data = dest;
@@ -573,12 +602,18 @@ impl EncryptionData {
         } else {
             let temp = *num;
             *num += 1;
-            data1[temp as usize] = EncryptionData::recursive_decrypt(
-                data, data1, data2, y, z, num, off,
-            )?;
-            data2[temp as usize] = EncryptionData::recursive_decrypt(
-                data, data1, data2, y, z, num, off,
-            )?;
+            *data1
+                .get_mut(temp as usize)
+                .context("Out of bounds access")? =
+                EncryptionData::recursive_decrypt(
+                    data, data1, data2, y, z, num, off,
+                )?;
+            *data2
+                .get_mut(temp as usize)
+                .context("Out of bounds access")? =
+                EncryptionData::recursive_decrypt(
+                    data, data1, data2, y, z, num, off,
+                )?;
             temp
         })
     }
@@ -629,10 +664,14 @@ impl EncryptionData {
         }
         Ok(result)
     }
-    fn decrypt_buf(&self, buf: &mut [u8]) {
-        buf.iter_mut()
-            .enumerate()
-            .for_each(|(i, b)| *b ^= self.data[(i + 3) % 0x3FF])
+    fn decrypt_buf(&self, buf: &mut [u8]) -> anyhow::Result<()> {
+        buf.iter_mut().enumerate().try_for_each(|(i, b)| {
+            *b ^= self
+                .data
+                .get((i + 3) % 0x3FF)
+                .context("Out of bounds access")?;
+            Ok(())
+        })
     }
 }
 
@@ -680,7 +719,7 @@ fn decrypt_with_password(
     Ok(result)
 }
 
-fn init_decrypt_table(key1: u32, key2: u32) -> Bytes {
+fn init_decrypt_table(key1: u32, key2: u32) -> anyhow::Result<Bytes> {
     let mut table = BytesMut::with_capacity(0x100);
     for i in 0..=255 {
         table.put_u8(i);
@@ -690,24 +729,28 @@ fn init_decrypt_table(key1: u32, key2: u32) -> Bytes {
         let mut x = val;
         x >>= 0x10;
         x &= 0xFF;
-        let mut y = table[x as usize];
-        let mut z = table[(val & 0xFF) as usize] as u32;
-        table[(val & 0xFF) as usize] = y;
-        table[x as usize] = z as u8;
+        let mut y = *table.get(x as usize).context("Out of bounds access")?;
+        let mut z = *table
+            .get((val & 0xFF) as usize)
+            .context("Out of bounds access")? as u32;
+        *table
+            .get_mut((val & 0xFF) as usize)
+            .context("Out of bounds access")? = y;
+        *table.get_mut(x as usize).context("Out of bounds access")? = z as u8;
         z = val;
         z >>= 8;
         z &= 0xFF;
         x = val;
         x >>= 0x18;
-        y = table[x as usize];
+        y = *table.get(x as usize).context("Out of bounds access")?;
         val = val.rotate_right(2);
         val = val.wrapping_mul(0x1A74F195);
         val = val.wrapping_add(key2);
-        let a = table[z as usize];
-        table[z as usize] = y;
-        table[x as usize] = a;
+        let a = *table.get(z as usize).context("Out of bounds access")?;
+        *table.get_mut(z as usize).context("Out of bounds access")? = y;
+        *table.get_mut(x as usize).context("Out of bounds access")? = a;
     }
-    table.freeze()
+    Ok(table.freeze())
 }
 
 fn decrypt_with_decrypt_table(
@@ -715,10 +758,13 @@ fn decrypt_with_decrypt_table(
     data: &mut [u8],
     size: usize,
     xor_key: u8,
-) {
-    data.iter_mut()
-        .take(size)
-        .for_each(|b| *b = table[(*b ^ xor_key) as usize])
+) -> anyhow::Result<()> {
+    data.iter_mut().take(size).try_for_each(|b| {
+        *b = *table
+            .get((*b ^ xor_key) as usize)
+            .context("Out of bounds access")?;
+        Ok(())
+    })
 }
 
 fn get_decrypt_buf(md5_cpz7: &[u8], key: u32) -> Bytes {
@@ -777,19 +823,26 @@ fn decrypt_file_data(
         let offset = archive.offset;
         let mut size = raw_file_data.len() as u32;
         if i < archive_data.len() - 1 {
-            size = archive_data[i + 1].offset;
+            size = archive_data
+                .get(i + 1)
+                .context("Out of bounds access")?
+                .offset;
         }
         size -= offset;
         decrypt_with_decrypt_table(
             &table,
-            &mut raw_file_data[offset as usize..],
+            raw_file_data
+                .get_mut(offset as usize..)
+                .context("Out of bounds access")?,
             size as usize,
             0x7E,
-        );
+        )?;
         let decrypt_buf = get_decrypt_buf2(&md5_cpz7, archive.file_decrypt_key);
         let internal_data = internal_decrypt_file_data(
             &decrypt_buf,
-            &raw_file_data[offset as usize..offset as usize + size as usize],
+            raw_file_data
+                .get(offset as usize..offset as usize + size as usize)
+                .context("Out of bounds access")?,
             key2,
         )?;
         result.extend(internal_data);
@@ -875,7 +928,9 @@ fn decrypt_file(
     let v = md5_cpz7.pread_with::<u32>(4, LE)? >> 2;
     let mut decrypt_buf = BytesMut::with_capacity(password.len());
     for b in password {
-        decrypt_buf.put_u8(table[*b as usize] ^ v as u8);
+        decrypt_buf.put_u8(
+            table.get(*b as usize).context("Out of bounds access")? ^ v as u8,
+        );
     }
     decrypt_buf.chunks_mut(4).for_each(|c| {
         c[0] ^= file_key as u8;
@@ -901,7 +956,11 @@ fn decrypt_file(
             *decrypt_off &= 60;
         } else {
             for b in chunk {
-                result.put_u8(table[(b ^ 0xAE) as usize]);
+                result.put_u8(
+                    *table
+                        .get((b ^ 0xAE) as usize)
+                        .context("Out of bounds access")?,
+                );
             }
         }
     }

@@ -203,9 +203,12 @@ impl<'a> ctx::TryFromCtx<'a, (&'a YpfHeader, &'a [u8])> for YpfFileEntry {
         let off = &mut 0;
         let unk0 = buf.gread_with::<u32>(off, LE)?;
         let name_size =
-            get_name_size(buf.gread_with::<u8>(off, LE)?, decrypt_name_table);
-        let full_path =
-            decrypt_file_name(&buf[*off..*off + name_size], &header);
+            get_name_size(buf.gread_with::<u8>(off, LE)?, decrypt_name_table)?;
+        let full_path = decrypt_file_name(
+            &buf.get(*off..*off + name_size)
+                .context("Out of bounds access")?,
+            &header,
+        );
         *off += name_size;
         let unk1 = buf.gread_with::<u8>(off, LE)?;
         let flags = buf.gread_with::<u8>(off, LE)?;
@@ -231,8 +234,13 @@ impl<'a> ctx::TryFromCtx<'a, (&'a YpfHeader, &'a [u8])> for YpfFileEntry {
 }
 
 #[inline]
-fn get_name_size(name_size: u8, decrypt_name_table: &[u8]) -> usize {
-    decrypt_name_table[!name_size as usize] as usize
+fn get_name_size(
+    name_size: u8,
+    decrypt_name_table: &[u8],
+) -> anyhow::Result<usize> {
+    Ok(*decrypt_name_table
+        .get(!name_size as usize)
+        .context("Out of bounds context")? as usize)
 }
 
 fn get_decrypt_name_table(archive_version: u32) -> anyhow::Result<Vec<u8>> {

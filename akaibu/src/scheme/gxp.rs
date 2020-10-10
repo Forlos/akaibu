@@ -124,7 +124,7 @@ impl GxpArchive {
                 + entry.file_offset as u64,
             &mut buf,
         )?;
-        xor_data_with_password(&mut buf, buf_len, 0);
+        xor_data_with_password(&mut buf, buf_len, 0)?;
         Ok(buf.freeze())
     }
 }
@@ -194,11 +194,19 @@ impl<'a> ctx::TryFromCtx<'a, &GxpHeader> for GxpFileEntry {
     ) -> Result<(Self, usize), Self::Error> {
         let off = &mut 0;
         if header.unk5 != 0 && header.file_entries_count != 0 {
-            let mut entry_data = buf[0..4].to_vec();
-            xor_data_with_password(&mut entry_data, 4, 0);
+            let mut entry_data =
+                buf.get(0..4).context("Out of bounds access")?.to_vec();
+            xor_data_with_password(&mut entry_data, 4, 0)?;
             let entry_size = entry_data.gread_with::<u32>(off, LE)?;
-            let mut entry_data = buf[0..entry_size as usize].to_vec();
-            xor_data_with_password(&mut entry_data, entry_size as usize - 4, 4);
+            let mut entry_data = buf
+                .get(0..entry_size as usize)
+                .context("Out of bounds access")?
+                .to_vec();
+            xor_data_with_password(
+                &mut entry_data,
+                entry_size as usize - 4,
+                4,
+            )?;
 
             let file_size = entry_data.gread_with::<u32>(off, LE)?;
             let unk1 = entry_data.gread_with::<u32>(off, LE)?;
@@ -208,7 +216,8 @@ impl<'a> ctx::TryFromCtx<'a, &GxpHeader> for GxpFileEntry {
             let file_offset = entry_data.gread_with::<u32>(off, LE)?;
             let unk4 = entry_data.gread_with::<u32>(off, LE)?;
             let utf16_string: Vec<u16> = entry_data
-                [*off..*off + entry_size as usize - 0x20]
+                .get(*off..*off + entry_size as usize - 0x20)
+                .context("Out of bounds access")?
                 .chunks(2)
                 .map(|c| c[0] as u16 + ((c[1] as u16) << 8))
                 .filter(|v| *v != 0)
@@ -238,7 +247,8 @@ impl<'a> ctx::TryFromCtx<'a, &GxpHeader> for GxpFileEntry {
             let file_offset = buf.gread_with::<u32>(off, LE)?;
             let unk4 = buf.gread_with::<u32>(off, LE)?;
             let utf16_string: Vec<u16> = buf
-                [*off..*off + file_name_utf16_len as usize * 2]
+                .get(*off..*off + file_name_utf16_len as usize * 2)
+                .context("Out of bounds access")?
                 .chunks(2)
                 .map(|c| c[0] as u16 + ((c[1] as u16) << 8))
                 .filter(|v| *v != 0)
@@ -262,11 +272,18 @@ impl<'a> ctx::TryFromCtx<'a, &GxpHeader> for GxpFileEntry {
     }
 }
 
-fn xor_data_with_password(data: &mut [u8], size: usize, offset: usize) {
+fn xor_data_with_password(
+    data: &mut [u8],
+    size: usize,
+    offset: usize,
+) -> anyhow::Result<()> {
     for i in 0..size {
         let mut al = (offset & 0xFF) as u8;
         al += (i & 0xFF) as u8;
-        al ^= PASSWORD[(i + offset) % PASSWORD.len()];
-        data[offset + i] ^= al;
+        al ^= PASSWORD
+            .get((i + offset) % PASSWORD.len())
+            .context("Out of bounds access")?;
+        *data.get_mut(offset + i).context("Out of bounds access")? ^= al;
     }
+    Ok(())
 }

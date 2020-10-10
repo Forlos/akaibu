@@ -22,9 +22,16 @@ impl Ycg {
         let compressed_size = buf.pread_with::<u32>(36, LE)? as usize;
         match version {
             1 => {
-                let mut result =
-                    zlib_decompress(&buf[0x38..])?[..size].to_vec();
-                result.extend(zlib_decompress(&buf[0x38 + compressed_size..])?);
+                let mut result = zlib_decompress(
+                    &buf.get(0x38..).context("Out of bounds access")?,
+                )?
+                .get(..size)
+                .context("Out of bounds access")?
+                .to_vec();
+                result.extend(zlib_decompress(
+                    &buf.get(0x38 + compressed_size..)
+                        .context("Out of bounds access")?,
+                )?);
                 let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
                     ImageBuffer::from_vec(width, height, result)
                         .context("Invalid image resolution")?;

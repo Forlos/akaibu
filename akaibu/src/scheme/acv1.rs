@@ -234,9 +234,18 @@ impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
             let file_name = v.to_string();
             let name = SHIFT_JIS.encode(&file_name).0;
             if flags & 2 == 0 {
-                file_offset ^= name[name.len() >> 1] as u32;
-                file_size ^= name[name.len() >> 2] as u32;
-                uncompressed_file_size ^= name[name.len() >> 3] as u32;
+                file_offset ^= *name
+                    .get(name.len() >> 1)
+                    .context("Out of bounds access")?
+                    as u32;
+                file_size ^= *name
+                    .get(name.len() >> 2)
+                    .context("Out of bounds access")?
+                    as u32;
+                uncompressed_file_size ^= *name
+                    .get(name.len() >> 3)
+                    .context("Out of bounds access")?
+                    as u32;
             }
             file_name
         } else if flags & 4 >= 1 {
@@ -280,7 +289,10 @@ impl Acv1Entry {
                 && name_index < name.len() - 1
             {
                 for _ in 0..result {
-                    buf[index] ^= name[name_index];
+                    *buf.get_mut(index).context("Out of bounds access")? ^=
+                        *name
+                            .get(name_index)
+                            .context("Out of bounds access")?;
                     index += 1;
                 }
                 name_index += 1;

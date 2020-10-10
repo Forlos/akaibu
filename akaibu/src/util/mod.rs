@@ -12,7 +12,7 @@ pub fn zlib_decompress(buf: &[u8]) -> anyhow::Result<Vec<u8>> {
     use flate2::read::ZlibDecoder;
     use std::io::Read;
 
-    let mut decoder = ZlibDecoder::new(&buf[..]);
+    let mut decoder = ZlibDecoder::new(buf);
     let mut ret = Vec::with_capacity(buf.len());
     decoder.read_to_end(&mut ret)?;
     Ok(ret)

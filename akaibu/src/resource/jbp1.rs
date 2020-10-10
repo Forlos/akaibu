@@ -1,5 +1,6 @@
 use std::iter;
 
+use anyhow::Context;
 use once_cell::sync::Lazy;
 use scroll::{Pread, LE};
 
@@ -191,7 +192,10 @@ pub(crate) fn jbp1_decompress(buf: &[u8]) -> anyhow::Result<Vec<u8>> {
     for val in freq_ac.iter_mut().take(16) {
         *val = buf.gread_with::<u32>(off, LE)?;
     }
-    let tree_input = &mut buf[*off..*off + 16].to_vec();
+    let tree_input = &mut buf
+        .get(*off..*off + 16)
+        .context("Out of bounds access")?
+        .to_vec();
     *off += 16;
     tree_input.iter_mut().for_each(|b| *b += 1);
 
@@ -207,11 +211,15 @@ pub(crate) fn jbp1_decompress(buf: &[u8]) -> anyhow::Result<Vec<u8>> {
     }
 
     let mut bit_stream_1 = BitStream::new(
-        buf[*off..*off + jbp1.bit_pool_size_1 as usize].to_vec(),
+        buf.get(*off..*off + jbp1.bit_pool_size_1 as usize)
+            .context("Out of bounds access")?
+            .to_vec(),
     );
     *off += jbp1.bit_pool_size_1 as usize;
     let mut bit_stream_2 = BitStream::new(
-        buf[*off..*off + jbp1.bit_pool_size_2 as usize].to_vec(),
+        buf.get(*off..*off + jbp1.bit_pool_size_2 as usize)
+            .context("Out of bounce context")?
+            .to_vec(),
     );
     *off += jbp1.bit_pool_size_2 as usize;
     let mut block_output = decode_blocks(
@@ -258,9 +266,10 @@ fn decode_blocks(
         if x < (1 << (bit_count - 1)) {
             x = x - (1 << bit_count) + 1;
         }
-        blocks[i] = x;
+        *blocks.get_mut(i).context("Out of bounds access")? = x;
         if i != 0 {
-            blocks[i] += blocks[i - 1];
+            *blocks.get_mut(i).context("Out of bounce access")? +=
+                *blocks.get(i - 1).context("Out of bounds context")?;
         }
     }
     let mut block_output =
@@ -287,8 +296,13 @@ fn decode_blocks(
             ];
 
             for n in 0..6 {
-                dct_table[n][0] = blocks
-                    [(y * jbp1.x_block_count as usize + x) * 6 + n]
+                *dct_table
+                    .get_mut(n)
+                    .context("Out of bounds access")?
+                    .get_mut(0)
+                    .context("Out of bounds access")? = *blocks
+                    .get((y * jbp1.x_block_count as usize + x) * 6 + n)
+                    .context("Out of bounds access")?
                     as i16;
 
                 let mut i = 0;
@@ -302,13 +316,23 @@ fn decode_blocks(
                         while bit_stream_2.read(1)? != 0 {
                             tree_input_pos += 1;
                         }
-                        i += tree_input[tree_input_pos];
+                        i += tree_input
+                            .get(tree_input_pos)
+                            .context("Out of bounds access")?;
                     } else {
                         let mut x = bit_stream_2.read(bit_count as usize)?;
                         if x < (1 << (bit_count - 1)) {
                             x = x - (1 << bit_count) + 1;
                         }
-                        dct_table[n][original_order[i as usize]] = x as i16;
+                        *dct_table
+                            .get_mut(n)
+                            .context("Out of bounds access")?
+                            .get_mut(
+                                *original_order
+                                    .get(i as usize)
+                                    .context("Out of bounds access")?,
+                            )
+                            .context("Out of bounds access")? = x as i16;
                         i += 1;
                     }
                 }
