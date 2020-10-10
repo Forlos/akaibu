@@ -36,5 +36,13 @@
 |             |           |                 | [[https://vndb.org/v18141][World Election(ワールド・エレクション)]]                                                                                  |
 |             |           | [[https://vndb.org/p3277][More]]            | [[https://vndb.org/v23258][Kiss&Crisis]]                                                                                                             |
 |             |           | [[https://vndb.org/p2770][Luxury]]          | [[https://vndb.org/v17769][Oh Yuusha yo, Itte Shimau to wa Nasakenai!(おお勇者よ、イってしまうとは情けない！)]]                                      |
-|             |           | [[https://vndb.org/p10421][GLASSES]]         | [[https://vndb.org/v28260][Megasuki! ~Kanojo to Boku no Megane Jijou~ Sakura Ayumu Hen(メガスキ！ ～彼女と僕の眼鏡事情～ 咲良歩編)]]           |
-|             |           |                 |                                                                                                                         |
+|             |           | [[https://vndb.org/p10421][GLASSES]]         | [[https://vndb.org/v28260][Megasuki! ~Kanojo to Boku no Megane Jijou~ Sakura Ayumu Hen(メガスキ！ ～彼女と僕の眼鏡事情～ 咲良歩編)]]                 |
+| BURIKO ARC  | *.arc     | [[https://vndb.org/p81][Lump of Sugar]]   | [[https://vndb.org/v26513][Animal☆Panic(あにまる☆ぱにっく)]]                                                                                         |
+|             |           |                 | [[https://vndb.org/v28130][Nekotsuku, Sakura.(ねこツク、さくら。)]]                                                                                  |
+|             |           |                 | [[https://vndb.org/v16458][Rensou Relation(恋想リレーション)]]                                                                                       |
+|             |           |                 | [[https://vndb.org/v21717][Yorite Konoha wa Kurenai ni(縁りて此の葉は紅に)]]                                                                                     |
+|             |           | [[https://vndb.org/p106][Hooksoft]]        | [[https://vndb.org/v25999][Docchi no i ga Suki Desu ka?(どっちのiが好きですか？)]]                                                                   |
+|             |           | [[https://vndb.org/p328][Smee]]            | [[https://vndb.org/v11856][Fureraba ~Friend to Lover~(フレラバ ～Friend to Lover～)]]                                                                |
+|             |           |                 | [[https://vndb.org/v26765][HaremKingdom(ハーレムキングダム)]]                                                                                        |
+|             |           |                 | [[https://vndb.org/v21552][Making＊Lovers(メイキング・ラバーズ)]]                                                                                    |
+|             |           | [[https://vndb.org/p6193][Cabbage Soft]]    | [[https://vndb.org/v26664][Sakura no Kumo * Scarlet no Koi(さくらの雲＊スカアレットの恋)]]                                                           |
