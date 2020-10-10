@@ -4,7 +4,7 @@ use anyhow::Context;
 use bytes::Bytes;
 use bytes::BytesMut;
 use encoding_rs::SHIFT_JIS;
-use positioned_io_preview::{RandomAccessFile, ReadAt};
+use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use scroll::{ctx, Pread, LE};
@@ -48,7 +48,7 @@ impl Scheme for YpfScheme {
 
     fn get_name(&self) -> &str {
         match self {
-            YpfScheme::Universal => "Universal",
+            Self::Universal => "Universal",
         }
     }
 

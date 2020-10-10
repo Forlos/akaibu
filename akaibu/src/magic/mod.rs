@@ -7,6 +7,7 @@ pub enum Archive {
     GXP,
     PF8,
     YPF,
+    BURIKO,
     NotRecognized,
 }
 
@@ -23,6 +24,10 @@ impl Archive {
             // pf8
             [0x70, 0x66, 0x38, ..] => Self::PF8,
             [0x59, 0x50, 0x46, 0x00, ..] => Self::YPF,
+            // BURIKO ARC20
+            [0x42, 0x55, 0x52, 0x49, 0x4b, 0x4f, 0x20, 0x41, 0x52, 0x43, 0x32, 0x30, ..] => {
+                Self::BURIKO
+            }
             _ => Self::NotRecognized,
         }
     }
@@ -34,6 +39,7 @@ impl Archive {
             Self::GXP => true,
             Self::PF8 => true,
             Self::YPF => true,
+            Self::BURIKO => true,
             Self::NotRecognized => false,
         }
     }
@@ -45,6 +51,7 @@ impl Archive {
             Self::GXP => scheme::gxp::GxpScheme::get_schemes(),
             Self::PF8 => scheme::pf8::Pf8Scheme::get_schemes(),
             Self::YPF => scheme::ypf::YpfScheme::get_schemes(),
+            Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
