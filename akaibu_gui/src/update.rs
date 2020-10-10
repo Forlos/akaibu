@@ -180,9 +180,18 @@ pub(crate) fn handle_message(
             }
         }
         Message::Error(err) => {
-            if let Content::ArchiveView(ref mut content) = app.content {
-                content.set_status(Status::Error(err));
+            match app.content {
+                Content::ArchiveView(ref mut content) => {
+                    content.set_status(Status::Error(err));
+                }
+                Content::SchemeView(ref mut content) => {
+                    content.set_status(Status::Error(err));
+                }
             }
+            // }
+            // if let Content::ArchiveView(ref mut content) = app.content {
+            //     content.set_status(Status::Error(err));
+            // }
         }
     };
     Ok(Command::none())

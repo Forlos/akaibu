@@ -1,12 +1,14 @@
 use crate::{
-    message::{Message, Scene},
+    message::{Message, Scene, Status},
     style,
+    ui::footer::Footer,
 };
 use akaibu::scheme::Scheme;
 use iced::{button, Button, Column, Container, Element, Length, Row, Text};
 
 pub struct SchemeContent {
     schemes: Vec<(Box<dyn Scheme>, button::State)>,
+    footer: Footer,
 }
 
 impl SchemeContent {
@@ -15,10 +17,11 @@ impl SchemeContent {
             .into_iter()
             .map(|scheme| (scheme, button::State::new()))
             .collect();
-        Self { schemes }
+        let footer = Footer::new();
+        Self { schemes, footer }
     }
     pub fn view(&mut self) -> Element<Message> {
-        Container::new(
+        let schemes = Container::new(
             self.schemes.iter_mut().fold(
                 Column::new()
                     .spacing(5)
@@ -43,7 +46,10 @@ impl SchemeContent {
         .center_y()
         .width(Length::Fill)
         .height(Length::Fill)
-        .style(style::Dark::default())
-        .into()
+        .style(style::Dark::default());
+        Column::new().push(schemes).push(self.footer.view()).into()
+    }
+    pub fn set_status(&mut self, status: Status) {
+        self.footer.set_status(status);
     }
 }
