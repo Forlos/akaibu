@@ -1,3 +1,1 @@
 consolidate-commits = true
-tag-name = "{{version}}"
-tag-message = "{{tag_name}}"

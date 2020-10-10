@@ -42,3 +42,7 @@ rust-embed= { version = "5.6", default_features = false, features = ["compressio
 dyn-clone = "1.0.2"
 itertools = "0.9"
 once_cell = "1.4.1"
+
+[package.metadata.release]
+tag-name = "{{version}}"
+tag-message = "{{tag_name}}"
