@@ -18,7 +18,7 @@ impl Footer {
             status: Status::Normal(String::new()),
         }
     }
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<'_, Message> {
         let content = Row::new()
             .push(Space::new(Length::Units(5), Length::Units(0)))
             .push(
@@ -66,7 +66,7 @@ impl Footer {
             .height(Length::Units(20))
             .width(Length::Fill)
             .style(style::Dark {
-                border_width: 0,
+                border_width: 0.0,
                 background: Background::Color(style::DARK_BUTTON_FOCUSED),
             })
             .into()

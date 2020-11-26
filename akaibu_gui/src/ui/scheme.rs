@@ -20,7 +20,7 @@ impl SchemeContent {
         let footer = Footer::new();
         Self { schemes, footer }
     }
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<'_, Message> {
         let schemes = Container::new(
             self.schemes.iter_mut().fold(
                 Column::new()

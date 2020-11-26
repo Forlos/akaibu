@@ -10,7 +10,7 @@ pub enum Content {
 }
 
 impl Content {
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<'_, Message> {
         match self {
             Content::ArchiveView(content) => content.view(),
             Content::SchemeView(content) => content.view(),

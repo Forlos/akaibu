@@ -44,7 +44,7 @@ impl PreviewableResourceMagic {
         use self::PreviewableResourceMagic::*;
         Ok(match Self::parse_magic(buf) {
             PNG | JPG | BMP | ICO | RIFF => ResourceType::RgbaImage {
-                image: image::load_from_memory(buf)?.to_rgba(),
+                image: image::load_from_memory(buf)?.to_rgba8(),
             },
             Unrecognized => ResourceType::Other,
         })

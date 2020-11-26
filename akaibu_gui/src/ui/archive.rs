@@ -50,7 +50,7 @@ impl ArchiveContent {
             pattern: String::new(),
         }
     }
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<'_, Message> {
         let mut column = Column::new()
             .push(
                 Column::new()
@@ -236,7 +236,7 @@ impl Entry {
             Entry::File { file, .. } => &file.file_name,
         }
     }
-    fn view(&mut self) -> Element<Message> {
+    fn view(&mut self) -> Element<'_, Message> {
         match self {
             Entry::Directory {
                 dir_name,

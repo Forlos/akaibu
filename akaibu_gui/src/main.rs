@@ -1,3 +1,10 @@
+#![deny(
+    rust_2018_idioms,
+    unsafe_code,
+    unused_imports,
+    unused_mut,
+    missing_debug_implementations
+)]
 #![windows_subsystem = "windows"]
 
 mod app;
@@ -20,7 +27,7 @@ pub(crate) struct Opt {
     pub(crate) file: PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), iced::Error> {
     env_logger::init();
 
     App::run(Settings {

@@ -1,3 +1,12 @@
+#![deny(
+    rust_2018_idioms,
+    unreachable_pub,
+    unsafe_code,
+    unused_imports,
+    unused_mut,
+    missing_debug_implementations
+)]
+
 use akaibu::{
     archive::FileEntry,
     error::AkaibuError,

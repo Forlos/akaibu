@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 # IO
-bytes = { version = "0.5", default_features = false }
+bytes = { version = "0.6", default_features = false }
 scroll = { version = "0.10", features = ["derive"] }
 positioned-io-preview = "0.3.3"
 

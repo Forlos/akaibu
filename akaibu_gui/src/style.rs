@@ -40,14 +40,14 @@ pub const BORDER_COLOR: Color = Color::from_rgb(
 );
 
 pub struct Dark {
-    pub border_width: u16,
+    pub border_width: f32,
     pub background: Background,
 }
 
 impl Default for Dark {
     fn default() -> Self {
         Self {
-            border_width: 1,
+            border_width: 1.0,
             background: Background::Color(DARK),
         }
     }
@@ -57,10 +57,10 @@ impl container::StyleSheet for Dark {
     fn style(&self) -> container::Style {
         container::Style {
             background: Some(self.background),
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: BORDER_COLOR,
             text_color: Some(TEXT_COLOR),
-            border_radius: 0,
         }
     }
 }
@@ -69,7 +69,7 @@ impl button::StyleSheet for Dark {
         button::Style {
             shadow_offset: Vector::new(0.0, 0.0),
             background: Some(Background::Color(DARK_FOCUSED)),
-            border_radius: 0,
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: BORDER_COLOR,
             text_color: TEXT_COLOR,
@@ -114,7 +114,7 @@ impl text_input::StyleSheet for Dark {
     fn active(&self) -> text_input::Style {
         text_input::Style {
             background: Background::Color(HEADER),
-            border_radius: 0,
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: BORDER_COLOR,
         }
@@ -122,7 +122,7 @@ impl text_input::StyleSheet for Dark {
     fn focused(&self) -> text_input::Style {
         text_input::Style {
             background: Background::Color(DARK_FOCUSED),
-            border_radius: 0,
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: BORDER_COLOR,
         }
@@ -149,7 +149,7 @@ impl progress_bar::StyleSheet for Dark {
         progress_bar::Style {
             background: self.background,
             bar: Background::Color(TEXT_COLOR),
-            border_radius: 0,
+            border_radius: 0.0,
         }
     }
 }
@@ -159,7 +159,7 @@ impl checkbox::StyleSheet for Dark {
         checkbox::Style {
             background: self.background,
             checkmark_color: TEXT_COLOR,
-            border_radius: 0,
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: Color::BLACK,
         }
@@ -169,7 +169,7 @@ impl checkbox::StyleSheet for Dark {
         checkbox::Style {
             background: Background::Color(DARK_FOCUSED),
             checkmark_color: TEXT_COLOR,
-            border_radius: 0,
+            border_radius: 0.0,
             border_width: self.border_width,
             border_color: Color::BLACK,
         }
@@ -199,10 +199,10 @@ impl container::StyleSheet for Header {
     fn style(&self) -> container::Style {
         container::Style {
             background: Some(Background::Color(HEADER)),
-            border_width: 1,
+            border_width: 1.0,
             border_color: BORDER_COLOR,
             text_color: Some(Color { ..TEXT_COLOR }),
-            border_radius: 0,
+            border_radius: 0.0,
         }
     }
 }
@@ -211,8 +211,8 @@ impl button::StyleSheet for Header {
         button::Style {
             shadow_offset: Vector::new(0.0, 0.0),
             background: Some(Background::Color(HEADER)),
-            border_radius: 0,
-            border_width: 0,
+            border_radius: 0.0,
+            border_width: 0.0,
             border_color: Color::TRANSPARENT,
             text_color: TEXT_COLOR,
         }
@@ -260,10 +260,10 @@ impl container::StyleSheet for Error {
     fn style(&self) -> container::Style {
         container::Style {
             background: Some(Background::Color(DARK)),
-            border_width: 0,
+            border_width: 0.0,
             border_color: Color::TRANSPARENT,
             text_color: Some(ERROR_TEXT_COLOR),
-            border_radius: 0,
+            border_radius: 0.0,
         }
     }
 }
@@ -279,10 +279,10 @@ impl container::StyleSheet for Success {
     fn style(&self) -> container::Style {
         container::Style {
             background: Some(Background::Color(DARK)),
-            border_width: 0,
+            border_width: 0.0,
             border_color: Color::TRANSPARENT,
             text_color: Some(SUCCESS_TEXT_COLOR),
-            border_radius: 0,
+            border_radius: 0.0,
         }
     }
 }
@@ -305,8 +305,8 @@ impl button::StyleSheet for List {
         button::Style {
             shadow_offset: Vector::new(0.0, 0.0),
             background: Some(Background::Color(DARK)),
-            border_radius: 0,
-            border_width: 0,
+            border_radius: 0.0,
+            border_width: 0.0,
             border_color: Color::BLACK,
             text_color: TEXT_COLOR,
         }

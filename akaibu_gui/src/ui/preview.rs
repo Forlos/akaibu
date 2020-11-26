@@ -22,7 +22,7 @@ impl Preview {
             close_button_state: button::State::new(),
         }
     }
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self) -> Element<'_, Message> {
         let x_image = iced::image::Handle::from_memory(
             crate::Resources::get("icons/x.png")
                 .expect("Could not embedded resource")
