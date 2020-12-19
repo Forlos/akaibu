@@ -1,12 +1,11 @@
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 name: Release
 
 jobs:
-
   build-linux:
     name: Build on Linux
     runs-on: ubuntu-latest
@@ -56,7 +55,7 @@ jobs:
           path: |
             ./target/release/akaibu_cli.exe
             ./target/release/akaibu_gui.exe
-          
+
   build-macos:
     name: Build on Mac OS
     runs-on: macos-latest
@@ -90,6 +89,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
 
+      - name: Create release body
+        run: |
+          git log $(git describe --abbrev=0 --tags $(git describe --abbrev=0)^)... --oneline > body.txt
+
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -100,6 +103,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+          body_path: body.txt
 
       - name: Copy release URL into file
         run: |
@@ -118,7 +122,7 @@ jobs:
     needs: [build-linux, build-windows, build-macos, create-release]
     strategy:
       matrix:
-        version: ['linux', 'windows', 'mac-os']
+        version: ["linux", "windows", "mac-os"]
         include:
           - version: linux
             OS: linux
