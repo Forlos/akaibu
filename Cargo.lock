@@ -2791,7 +2791,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "tlg_rs"
 version = "0.2.0"
-source = "git+https://github.com/Forlos/tlg_rs?branch=master#c731a083017c7621f5347729f5eaed6151c87128"
+source = "git+https://github.com/Forlos/tlg_rs#c731a083017c7621f5347729f5eaed6151c87128"
 dependencies = [
  "anyhow",
  "byteorder",

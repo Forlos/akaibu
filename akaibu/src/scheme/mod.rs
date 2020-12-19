@@ -6,6 +6,7 @@ use std::{fmt::Debug, path::PathBuf};
 pub mod acv1;
 pub mod buriko;
 pub mod cpz7;
+pub mod esc_arc2;
 pub mod gxp;
 pub mod pf8;
 pub mod ypf;

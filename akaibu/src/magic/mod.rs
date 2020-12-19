@@ -8,6 +8,7 @@ pub enum Archive {
     PF8,
     YPF,
     BURIKO,
+    EscArc2,
     NotRecognized,
 }
 
@@ -28,6 +29,10 @@ impl Archive {
             [0x42, 0x55, 0x52, 0x49, 0x4b, 0x4f, 0x20, 0x41, 0x52, 0x43, 0x32, 0x30, ..] => {
                 Self::BURIKO
             }
+            // ESC-ARC2
+            [0x45, 0x53, 0x43, 0x2D, 0x41, 0x52, 0x43, 0x32, ..] => {
+                Self::EscArc2
+            }
             _ => Self::NotRecognized,
         }
     }
@@ -40,6 +45,7 @@ impl Archive {
             Self::PF8 => true,
             Self::YPF => true,
             Self::BURIKO => true,
+            Self::EscArc2 => true,
             Self::NotRecognized => false,
         }
     }
@@ -52,6 +58,7 @@ impl Archive {
             Self::PF8 => scheme::pf8::Pf8Scheme::get_schemes(),
             Self::YPF => scheme::ypf::YpfScheme::get_schemes(),
             Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
+            Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
