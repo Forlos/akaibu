@@ -40,9 +40,15 @@
 | BURIKO ARC  | *.arc     | [[https://vndb.org/p81][Lump of Sugar]]   | [[https://vndb.org/v26513][Animal☆Panic(あにまる☆ぱにっく)]]                                                                                         |
 |             |           |                 | [[https://vndb.org/v28130][Nekotsuku, Sakura.(ねこツク、さくら。)]]                                                                                  |
 |             |           |                 | [[https://vndb.org/v16458][Rensou Relation(恋想リレーション)]]                                                                                       |
-|             |           |                 | [[https://vndb.org/v21717][Yorite Konoha wa Kurenai ni(縁りて此の葉は紅に)]]                                                                                     |
+|             |           |                 | [[https://vndb.org/v21717][Yorite Konoha wa Kurenai ni(縁りて此の葉は紅に)]]                                                                         |
 |             |           | [[https://vndb.org/p106][Hooksoft]]        | [[https://vndb.org/v25999][Docchi no i ga Suki Desu ka?(どっちのiが好きですか？)]]                                                                   |
 |             |           | [[https://vndb.org/p328][Smee]]            | [[https://vndb.org/v11856][Fureraba ~Friend to Lover~(フレラバ ～Friend to Lover～)]]                                                                |
 |             |           |                 | [[https://vndb.org/v26765][HaremKingdom(ハーレムキングダム)]]                                                                                        |
 |             |           |                 | [[https://vndb.org/v21552][Making＊Lovers(メイキング・ラバーズ)]]                                                                                    |
 |             |           | [[https://vndb.org/p6193][Cabbage Soft]]    | [[https://vndb.org/v26664][Sakura no Kumo * Scarlet no Koi(さくらの雲＊スカアレットの恋)]]                                                           |
+| ESC-ARC2    | *.bin     | [[https://vndb.org/p403][Escu:de]]         | [[https://vndb.org/v28921][Yamizome Liberator -Yamiochi Yuusha to Ochiru Senki-(闇染Liberator －闇堕ち勇者と堕ちる戦姫－)]]                          |
+|             |           |                 | [[https://vndb.org/v27366][Trinity x Calamity ~Midara na Shitsuke to Owaru Sekai~(トリニティ×カラミティ～淫らな躾と終わる世界～)]]                   |
+|             |           |                 | [[https://vndb.org/v25838][Hime to Aiyoku no Sacrifice(姫と穢欲のサクリファイス)]]                                                                   |
+|             |           |                 | [[https://vndb.org/v24553][Maid in Witch Life! -Yakata de Hajimaru H na Miryou Seikatsu-(メイドinウィッチライフ！ －館で始まるＨな魅了性活－)]]      |
+|             |           |                 | [[https://vndb.org/v22739][Yamizome Revenger -Ochita Maou to Ochiru Senki-(闇染Revenger －墜ちた魔王と堕ちる戦姫－)]]                                |
+|             |           |                 | [[https://vndb.org/v18172][Fall in Love x 4 Tune(フォーリンラブ×４tune)]]                                                                            |
