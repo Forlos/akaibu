@@ -43,6 +43,7 @@ version = "0.1.6-alpha.0"
 dependencies = [
  "anyhow",
  "bytes",
+ "camellia-rs",
  "crc-any",
  "dyn-clone",
  "encoding_rs",
@@ -267,6 +268,12 @@ dependencies = [
  "log",
  "nix",
 ]
+
+[[package]]
+name = "camellia-rs"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e35297e9cdc59f2aa4b852f218389594deb52278d650d87bf8c38750a51f533"
 
 [[package]]
 name = "cc"

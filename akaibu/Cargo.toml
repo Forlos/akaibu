@@ -32,6 +32,7 @@ log = "0.4"
 sha1 = "0.6"
 crc-any = "2.3"
 flate2 = { version = "1.0", default-features = false, features = ["zlib"] }
+camellia-rs = "0.2"
 
 # Resources
 tlg_rs = { git = "https://github.com/Forlos/tlg_rs", branch = "master" }

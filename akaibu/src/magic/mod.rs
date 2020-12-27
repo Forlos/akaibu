@@ -9,6 +9,7 @@ pub enum Archive {
     YPF,
     BURIKO,
     EscArc2,
+    Malie,
     NotRecognized,
 }
 
@@ -33,6 +34,9 @@ impl Archive {
             [0x45, 0x53, 0x43, 0x2D, 0x41, 0x52, 0x43, 0x32, ..] => {
                 Self::EscArc2
             }
+            [0xc1, 0xf2, 0x5e, 0x79, ..] | [0x7f, 0x4d, 0x8f, 0xe9, ..] => {
+                Self::Malie
+            }
             _ => Self::NotRecognized,
         }
     }
@@ -46,6 +50,7 @@ impl Archive {
             Self::YPF => true,
             Self::BURIKO => true,
             Self::EscArc2 => true,
+            Self::Malie => false,
             Self::NotRecognized => false,
         }
     }
@@ -59,6 +64,7 @@ impl Archive {
             Self::YPF => scheme::ypf::YpfScheme::get_schemes(),
             Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
             Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
+            Self::Malie => scheme::malie::MalieScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
