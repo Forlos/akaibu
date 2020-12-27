@@ -52,3 +52,5 @@
 |             |           |                 | [[https://vndb.org/v24553][Maid in Witch Life! -Yakata de Hajimaru H na Miryou Seikatsu-(メイドinウィッチライフ！ －館で始まるＨな魅了性活－)]]      |
 |             |           |                 | [[https://vndb.org/v22739][Yamizome Revenger -Ochita Maou to Ochiru Senki-(闇染Revenger －墜ちた魔王と堕ちる戦姫－)]]                                |
 |             |           |                 | [[https://vndb.org/v18172][Fall in Love x 4 Tune(フォーリンラブ×４tune)]]                                                                            |
+| MALIE/LIBP  | *.dat     | [[https://vndb.org/p5457][Campus]]          | [[https://vndb.org/v17978][Haru Uso -Passing Memories-(ハルウソ -Passing Memories-)]]                                                                |
+|             |           |                 | [[https://vndb.org/v18873][Natsu Uso -Ahead of the Reminiscence-(ナツウソ -Ahead of the reminiscence-)]]                                             |
