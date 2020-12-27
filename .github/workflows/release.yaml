@@ -91,7 +91,8 @@ jobs:
 
       - name: Create release body
         run: |
-          git log $(git describe --abbrev=0 --tags $(git describe --abbrev=0)^)... --oneline > body.txt
+          git log $(git describe --abbrev=0 --tags $(git describe --abbrev=0)^)... --oneline > body.md
+          cat body.md
 
       - name: Create release
         id: create_release
@@ -103,7 +104,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-          body_path: body.txt
+          body_path: body.md
 
       - name: Copy release URL into file
         run: |
