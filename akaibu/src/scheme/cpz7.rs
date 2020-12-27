@@ -981,5 +981,5 @@ fn md5_cpz7(buf: &[u8]) -> anyhow::Result<[u8; 16]> {
     digest.put_u32_le(b.wrapping_add(0x5BB17FDA));
     digest.put_u32_le(a.wrapping_add(0x6853E14D));
     digest.put_u32_le(d ^ 0xF5C6A9A3);
-    Ok(digest.bytes().try_into()?)
+    Ok(digest.as_ref().try_into()?)
 }
