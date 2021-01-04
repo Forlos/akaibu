@@ -11,7 +11,7 @@ pub enum Archive {
     BURIKO,
     EscArc2,
     Malie,
-    // Silky,
+    Silky,
     NotRecognized,
 }
 
@@ -55,7 +55,7 @@ impl Archive {
             Self::BURIKO => true,
             Self::EscArc2 => true,
             Self::Malie => false,
-            // Self::Silky => true,
+            Self::Silky => true,
             Self::NotRecognized => false,
         }
     }
@@ -70,7 +70,7 @@ impl Archive {
             Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
             Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
             Self::Malie => scheme::malie::MalieScheme::get_schemes(),
-            // Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
+            Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }

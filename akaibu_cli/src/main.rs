@@ -82,7 +82,7 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                 println!(
                     "{}",
                     "Not recognized archive. Please enter scheme manually."
-                        .red()
+                        .yellow()
                 );
                 Archive::get_all_schemes()
             } else {
