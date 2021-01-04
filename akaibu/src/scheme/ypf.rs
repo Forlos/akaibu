@@ -46,10 +46,13 @@ impl Scheme for YpfScheme {
         Ok((Box::new(YpfArchive { file, archive }), navigable_dir))
     }
 
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Universal => "Universal",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[YPF] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
     }
 
     fn get_schemes() -> Vec<Box<dyn Scheme>>

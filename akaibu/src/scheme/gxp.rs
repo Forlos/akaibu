@@ -40,10 +40,13 @@ impl Scheme for GxpScheme {
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
         Ok((Box::new(GxpArchive { file, archive }), navigable_dir))
     }
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Universal => "Universal",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[GXP] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

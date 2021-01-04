@@ -77,12 +77,15 @@ impl Scheme for Cpz7Scheme {
             navigable_dir,
         ))
     }
-    fn get_name(&self) -> &str {
-        match self {
-            Self::AoiTori => "Aoi Tori",
-            Self::Realive => "Realive",
-            Self::SeishunFragile => "Seishun Fragile",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[CPZ7] {}",
+            match self {
+                Self::AoiTori => "Aoi Tori",
+                Self::Realive => "Realive",
+                Self::SeishunFragile => "Seishun Fragile",
+            }
+        )
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

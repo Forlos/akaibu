@@ -1,6 +1,7 @@
 use crate::scheme::{self, Scheme};
+use enum_iterator::IntoEnumIterator;
 
-#[derive(Debug)]
+#[derive(Debug, IntoEnumIterator)]
 pub enum Archive {
     ACV1,
     CPZ7,
@@ -10,6 +11,7 @@ pub enum Archive {
     BURIKO,
     EscArc2,
     Malie,
+    // Silky,
     NotRecognized,
 }
 
@@ -21,10 +23,11 @@ impl Archive {
             [0x41, 0x43, 0x56, 0x31, ..] => Self::ACV1,
             // CPZ7
             [0x43, 0x50, 0x5A, 0x37, ..] => Self::CPZ7,
-            // GXP
+            // GXP\x00
             [0x47, 0x58, 0x50, 0x00, ..] => Self::GXP,
             // pf8
             [0x70, 0x66, 0x38, ..] => Self::PF8,
+            // YFP\x00
             [0x59, 0x50, 0x46, 0x00, ..] => Self::YPF,
             // BURIKO ARC20
             [0x42, 0x55, 0x52, 0x49, 0x4b, 0x4f, 0x20, 0x41, 0x52, 0x43, 0x32, 0x30, ..] => {
@@ -34,6 +37,7 @@ impl Archive {
             [0x45, 0x53, 0x43, 0x2D, 0x41, 0x52, 0x43, 0x32, ..] => {
                 Self::EscArc2
             }
+            // No magic but each game has only one archive so we can just hardcode first 4 bytes here
             [0xc1, 0xf2, 0x5e, 0x79, ..] | [0x7f, 0x4d, 0x8f, 0xe9, ..] => {
                 Self::Malie
             }
@@ -51,6 +55,7 @@ impl Archive {
             Self::BURIKO => true,
             Self::EscArc2 => true,
             Self::Malie => false,
+            // Self::Silky => true,
             Self::NotRecognized => false,
         }
     }
@@ -65,7 +70,15 @@ impl Archive {
             Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
             Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
             Self::Malie => scheme::malie::MalieScheme::get_schemes(),
+            // Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
+    }
+    /// Get all available schemes
+    pub fn get_all_schemes() -> Vec<Box<dyn Scheme>> {
+        Archive::into_enum_iter()
+            .map(|arc| arc.get_schemes())
+            .flatten()
+            .collect()
     }
 }

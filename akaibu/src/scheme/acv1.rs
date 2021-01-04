@@ -59,19 +59,22 @@ impl Scheme for Acv1Scheme {
             navigable_dir,
         ))
     }
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Shukugar1 => {
-                "Shukusei no Girlfriend -the destiny star of girlfriend-"
+    fn get_name(&self) -> String {
+        format!(
+            "[ACV1] {}",
+            match self {
+                Self::Shukugar1 => {
+                    "Shukusei no Girlfriend -the destiny star of girlfriend-"
+                }
+                Self::Shukugar2 => {
+                    "Shukusei no Girlfriend 2 -the destiny star of girlfriend-"
+                }
+                Self::Shukugar3 => {
+                    "Shukusei no Girlfriend 3 -the destiny star of girlfriend-"
+                }
+                Self::HanaHime => "Hana Hime * Absolute!",
             }
-            Self::Shukugar2 => {
-                "Shukusei no Girlfriend 2 -the destiny star of girlfriend-"
-            }
-            Self::Shukugar3 => {
-                "Shukusei no Girlfriend 3 -the destiny star of girlfriend-"
-            }
-            Self::HanaHime => "Hana Hime * Absolute!",
-        }
+        )
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

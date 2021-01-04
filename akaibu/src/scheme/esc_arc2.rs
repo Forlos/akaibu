@@ -57,10 +57,13 @@ impl Scheme for EscArc2Scheme {
         Ok((Box::new(EscArc2Archive { file, archive }), navigable_dir))
     }
 
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Universal => "Universal",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[EscArc2] {}",
+            match self {
+                Self::Universal => "EscArc2",
+            }
+        )
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

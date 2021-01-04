@@ -26,11 +26,23 @@ impl Application for App {
             .expect("Could not open file")
             .read_exact(&mut magic)
             .expect("Could not read file");
-        let archive_magic = magic::Archive::parse(&magic);
+        let archive = magic::Archive::parse(&magic);
 
-        let schemes = archive_magic.get_schemes();
+        if let magic::Archive::NotRecognized = archive {
+            return (
+                Self {
+                    opt,
+                    content: Content::SchemeView(SchemeContent::new(
+                        magic::Archive::get_all_schemes(),
+                    )),
+                },
+                Command::none(),
+            );
+        }
 
-        if archive_magic.is_universal() {
+        let schemes = archive.get_schemes();
+
+        if archive.is_universal() {
             let scheme = schemes.get(0).expect("Expected universal scheme");
             let (archive, dir) =
                 scheme.extract(&opt.file).expect("Could not extract");

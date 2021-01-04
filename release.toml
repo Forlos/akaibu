@@ -1,1 +1,2 @@
 consolidate-commits = true
+tag-message = "{{tag_name}}"

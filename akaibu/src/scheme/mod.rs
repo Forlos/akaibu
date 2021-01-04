@@ -10,6 +10,7 @@ pub mod esc_arc2;
 pub mod gxp;
 pub mod malie;
 pub mod pf8;
+pub mod silky;
 pub mod ypf;
 
 pub trait Scheme: Debug + Send + DynClone {
@@ -17,7 +18,7 @@ pub trait Scheme: Debug + Send + DynClone {
         &self,
         file_path: &PathBuf,
     ) -> anyhow::Result<(Box<dyn archive::Archive + Sync>, NavigableDirectory)>;
-    fn get_name(&self) -> &str;
+    fn get_name(&self) -> String;
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where
         Self: Sized;

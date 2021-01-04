@@ -49,10 +49,13 @@ impl Scheme for BurikoScheme {
         Ok((Box::new(BurikoArchive { file, archive }), navigable_dir))
     }
 
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Universal => "Universal",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[BURIKO] {}",
+            match self {
+                Self::Universal => "Buriko",
+            }
+        )
     }
 
     fn get_schemes() -> Vec<Box<dyn Scheme>>

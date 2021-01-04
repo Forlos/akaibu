@@ -120,11 +120,14 @@ impl Scheme for MalieScheme {
         ))
     }
 
-    fn get_name(&self) -> &str {
-        match self {
-            Self::HaruUso => "Haru Uso -Passing Memories-",
-            Self::NatsuUso => "Natsu Uso -Ahead of the Reminiscence-",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[MALIE] {}",
+            match self {
+                Self::HaruUso => "Haru Uso -Passing Memories-",
+                Self::NatsuUso => "Natsu Uso -Ahead of the Reminiscence-",
+            }
+        )
     }
 
     fn get_schemes() -> Vec<Box<dyn Scheme>>
@@ -144,7 +147,10 @@ impl MalieScheme {
             ))?,
         )?;
         Ok(keys
-            .get(self.get_name())
+            .get(match self {
+                Self::HaruUso => "HaruUso",
+                Self::NatsuUso => "NatsuUso",
+            })
             .context("Malie key not found")?
             .clone())
     }

@@ -47,10 +47,13 @@ impl Scheme for Pf8Scheme {
             navigable_dir,
         ))
     }
-    fn get_name(&self) -> &str {
-        match self {
-            Self::Universal => "Universal",
-        }
+    fn get_name(&self) -> String {
+        format!(
+            "[PF8] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
     }
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

@@ -9,12 +9,12 @@
 
 use akaibu::{
     archive::FileEntry,
-    error::AkaibuError,
     magic::Archive,
     resource::{ResourceMagic, ResourceType},
     scheme::Scheme,
 };
 use anyhow::Context;
+use colored::*;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::io::{Read, Write};
@@ -74,16 +74,21 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
                             return Ok(());
                         }
                     }
-                } else {
-                    let err =
-                        AkaibuError::UnrecognizedFormat(file.clone(), magic);
-                    log::error!("{}", err);
-                    return Ok(());
                 }
             }
 
             log::debug!("Archive: {:?}", archive_magic);
-            let schemes = archive_magic.get_schemes();
+            let schemes = if let Archive::NotRecognized = archive_magic {
+                println!(
+                    "{}",
+                    "Not recognized archive. Please enter scheme manually."
+                        .red()
+                );
+                Archive::get_all_schemes()
+            } else {
+                archive_magic.get_schemes()
+            };
+
             let scheme = if archive_magic.is_universal() {
                 schemes.get(0).context("Scheme list is empty")?
             } else {
@@ -134,7 +139,6 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
 }
 
 fn prompt_for_game(schemes: &[Box<dyn Scheme>], file_name: &PathBuf) -> usize {
-    use colored::*;
     use read_input::prelude::*;
 
     let msg = schemes
