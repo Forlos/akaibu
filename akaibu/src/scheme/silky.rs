@@ -185,21 +185,18 @@ impl<'a> ctx::TryFromCtx<'a, ()> for SilkyEntry {
 
 fn decompress(buf: &[u8], dest_len: usize) -> Bytes {
     let mut dest = vec![0u8; dest_len];
-    let mut temp_buf = vec![0u8; 4096];
+    let mut lookup_table = vec![0u8; 4096];
 
     let mut x = 0_u16;
-    let mut a = 4078;
-    let mut b = 0_u16;
-    let mut c = 0_u16;
+    let mut lookup_index = 4078;
     let mut bytes_read = 0;
     let mut bytes_written = 0;
     while bytes_read < buf.len() {
         x >>= 1;
         if (x & 0x100) == 0 {
-            b = buf[bytes_read] as u16;
+            x = buf[bytes_read] as u16;
             bytes_read += 1;
-            b |= 0xFF00;
-            x = b;
+            x |= 0xFF00;
         }
         if ((x & 0xFF) & 1) == 0 {
             let bl = buf[bytes_read];
@@ -208,7 +205,7 @@ fn decompress(buf: &[u8], dest_len: usize) -> Bytes {
             bytes_read += 1;
             let mut s = cl as u16;
             let mut d = s as u16;
-            c = bl as u16;
+            let mut c = bl as u16;
             d &= 0xF0;
             s &= 0x0F;
             d <<= 4;
@@ -217,20 +214,20 @@ fn decompress(buf: &[u8], dest_len: usize) -> Bytes {
             c = s;
             if c > 0 {
                 s = d;
-                b = c;
-                while b != 0 {
+                let mut counter = c;
+                while counter != 0 {
                     c = s;
                     s += 1;
                     c &= 0xFFF;
-                    d = temp_buf[c as usize] as u16;
+                    d = lookup_table[c as usize] as u16;
                     dest[bytes_written] = d as u8;
-                    c = a;
+                    c = lookup_index;
                     bytes_written += 1;
-                    a += 1;
-                    a &= 0xFFF;
-                    temp_buf[c as usize] = d as u8;
+                    lookup_index += 1;
+                    lookup_index &= 0xFFF;
+                    lookup_table[c as usize] = d as u8;
 
-                    b -= 1;
+                    counter -= 1;
                 }
             }
         } else {
@@ -238,10 +235,10 @@ fn decompress(buf: &[u8], dest_len: usize) -> Bytes {
             bytes_read += 1;
             dest[bytes_written] = d;
             bytes_written += 1;
-            c = a;
-            a += 1;
-            a &= 0xFFF;
-            temp_buf[c as usize] = d;
+            let c = lookup_index;
+            lookup_index += 1;
+            lookup_index &= 0xFFF;
+            lookup_table[c as usize] = d;
         }
     }
     Bytes::from(dest)

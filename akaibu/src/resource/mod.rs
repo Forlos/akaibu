@@ -1,3 +1,4 @@
+mod akb;
 mod jbp1;
 mod pb3b;
 mod ycg;
@@ -13,6 +14,7 @@ pub enum ResourceMagic {
     TLG6,
     PB3B,
     YCG,
+    AKB,
     Unrecognized,
 }
 
@@ -29,6 +31,8 @@ impl ResourceMagic {
             [80, 66, 51, 66, ..] => Self::PB3B,
             // YCG\x00
             [89, 67, 71, 0, ..] => Self::YCG,
+            // AKB
+            [65, 75, 66, 32, ..] => Self::AKB,
             _ => Self::Unrecognized,
         }
     }
@@ -53,6 +57,10 @@ impl ResourceMagic {
             Self::YCG => {
                 let ycg = ycg::Ycg::from_bytes(buf)?;
                 Ok(ResourceType::RgbaImage { image: ycg.image })
+            }
+            Self::AKB => {
+                let akb = akb::Akb::from_bytes(buf)?;
+                Ok(ResourceType::RgbaImage { image: akb.image })
             }
             Self::Unrecognized => Ok(ResourceType::Other),
         }

@@ -47,4 +47,4 @@ enum-iterator = "0.6"
 
 [package.metadata.release]
 tag-name = "{{version}}"
-tag-message = "{{tag_name}}"
+tag-message = "Release {{tag_name}}"
