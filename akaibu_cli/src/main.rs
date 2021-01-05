@@ -46,13 +46,43 @@ fn main() {
     env_logger::init();
     let opt = Opt::from_args();
 
-    match run(&opt) {
+    match if opt.convert {
+        convert_resource(&opt)
+    } else {
+        extract_archive(&opt)
+    } {
         Ok(_) => (),
         Err(err) => log::error!("Error while extracting: {}", err),
     }
 }
 
-fn run(opt: &Opt) -> anyhow::Result<()> {
+fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
+    let progress_bar =
+        init_progressbar("Converting...", opt.files.len() as u64);
+
+    opt.files
+        .par_iter()
+        .progress_with(progress_bar)
+        .filter(|file| file.is_file())
+        .try_for_each(|file| {
+            let mut magic = vec![0; 16];
+            File::open(&file)?.read_exact(&mut magic)?;
+
+            let resource_magic = ResourceMagic::parse_magic(&magic);
+            let mut contents = Vec::with_capacity(1 << 20);
+            log::debug!("Converting: {:?}", file);
+            File::open(&file)?.read_to_end(&mut contents)?;
+            match resource_magic.parse(contents) {
+                Ok(r) => write_resource(r, file),
+                Err(err) => {
+                    log::error!("{:?}: {}", file, err);
+                    Ok(())
+                }
+            }
+        })
+}
+
+fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
     opt.files
         .iter()
         .filter(|file| file.is_file())
@@ -61,22 +91,6 @@ fn run(opt: &Opt) -> anyhow::Result<()> {
             File::open(&file)?.read_exact(&mut magic)?;
 
             let archive_magic = Archive::parse(&magic);
-            if let Archive::NotRecognized = archive_magic {
-                if opt.convert {
-                    let resource_magic = ResourceMagic::parse_magic(&magic);
-                    let mut contents = Vec::with_capacity(1 << 20);
-                    log::info!("Converting: {:?}", file);
-                    File::open(&file)?.read_to_end(&mut contents)?;
-                    match resource_magic.parse(contents) {
-                        Ok(r) => return write_resource(r, file),
-                        Err(err) => {
-                            log::error!("{:?}: {}", file, err);
-                            return Ok(());
-                        }
-                    }
-                }
-            }
-
             log::debug!("Archive: {:?}", archive_magic);
             let schemes = if let Archive::NotRecognized = archive_magic {
                 println!(
