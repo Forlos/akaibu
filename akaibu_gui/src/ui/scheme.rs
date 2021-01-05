@@ -8,24 +8,29 @@ use iced::{button, Button, Column, Container, Element, Length, Row, Text};
 
 pub struct SchemeContent {
     schemes: Vec<(Box<dyn Scheme>, button::State)>,
+    message: String,
     footer: Footer,
 }
 
 impl SchemeContent {
-    pub fn new(schemes: Vec<Box<dyn Scheme>>) -> Self {
+    pub fn new(schemes: Vec<Box<dyn Scheme>>, message: String) -> Self {
         let schemes = schemes
             .into_iter()
             .map(|scheme| (scheme, button::State::new()))
             .collect();
         let footer = Footer::new();
-        Self { schemes, footer }
+        Self {
+            schemes,
+            message,
+            footer,
+        }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
         let schemes = Container::new(
             self.schemes.iter_mut().fold(
                 Column::new()
                     .spacing(5)
-                    .push(Text::new("Select extract scheme").size(30)),
+                    .push(Text::new(&self.message).size(30)),
                 |col, (scheme, button_state)| {
                     col.push(
                         Row::new().push(

@@ -95,7 +95,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
             let schemes = if let Archive::NotRecognized = archive_magic {
                 println!(
                     "{}",
-                    "Not recognized archive. Please enter scheme manually."
+                    "Archive type could not be guessed. Please enter scheme manually:"
                         .yellow()
                 );
                 Archive::get_all_schemes()

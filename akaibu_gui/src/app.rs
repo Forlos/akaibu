@@ -34,6 +34,8 @@ impl Application for App {
                     opt,
                     content: Content::SchemeView(SchemeContent::new(
                         magic::Archive::get_all_schemes(),
+                        "Archive type could not be guessed. Please enter scheme manually:"
+                            .to_string(),
                     )),
                 },
                 Command::none(),
@@ -59,7 +61,10 @@ impl Application for App {
             (
                 Self {
                     opt,
-                    content: Content::SchemeView(SchemeContent::new(schemes)),
+                    content: Content::SchemeView(SchemeContent::new(
+                        schemes,
+                        "Select extract scheme:".to_string(),
+                    )),
                 },
                 Command::none(),
             )
