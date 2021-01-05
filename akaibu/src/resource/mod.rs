@@ -31,8 +31,8 @@ impl ResourceMagic {
             [80, 66, 51, 66, ..] => Self::PB3B,
             // YCG\x00
             [89, 67, 71, 0, ..] => Self::YCG,
-            // AKB
-            [65, 75, 66, 32, ..] => Self::AKB,
+            // AKB or AKB+
+            [65, 75, 66, 32, ..] | [65, 75, 66, 43, ..] => Self::AKB,
             _ => Self::Unrecognized,
         }
     }

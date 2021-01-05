@@ -1,3 +1,4 @@
+use crate::error::AkaibuError;
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, Pixel, RgbaImage};
 use scroll::Pread;
@@ -23,9 +24,20 @@ struct AkbHeader {
 impl Akb {
     pub(crate) fn from_bytes(buf: Vec<u8>) -> anyhow::Result<Self> {
         let header = buf.pread::<AkbHeader>(0)?;
+        let data_offset = match &header.magic {
+            b"AKB " => 32,
+            b"AKB+" => 64,
+            _ => {
+                return Err(AkaibuError::Custom(format!(
+                    "Invalid AKB magic {:X?}",
+                    header.magic
+                ))
+                .into())
+            }
+        };
         let pixels = Self::transform(
             bitmap_to_png(
-                Self::decompress(&buf[0x20..], &header),
+                Self::decompress(&buf[data_offset..], &header),
                 header.width as usize,
             ),
             &header,
