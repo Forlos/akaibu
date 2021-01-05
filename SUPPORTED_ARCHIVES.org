@@ -54,3 +54,11 @@
 |             |           |                 | [[https://vndb.org/v18172][Fall in Love x 4 Tune(フォーリンラブ×４tune)]]                                                                            |
 | MALIE/LIBP  | *.dat     | [[https://vndb.org/p5457][Campus]]          | [[https://vndb.org/v17978][Haru Uso -Passing Memories-(ハルウソ -Passing Memories-)]]                                                                |
 |             |           |                 | [[https://vndb.org/v18873][Natsu Uso -Ahead of the Reminiscence-(ナツウソ -Ahead of the reminiscence-)]]                                             |
+| SILKY       | *.arc     | [[https://vndb.org/p4449][Silky's Plus]]    | [[https://vndb.org/v21857][Hikari no Umi no Apeiria ~Casablanca no Kishi~(景の海のアペイリア ～カサブランカの騎士～)]]                               |
+|             |           |                 | [[https://vndb.org/v18495][Akeiro Kaikitan(あけいろ怪奇譚)]]                                                                                         |
+|             |           |                 | [[https://vndb.org/v20860][Hikari no Umi no Apeiria(景の海のアペイリア)]]                                                                            |
+|             |           |                 | [[https://vndb.org/v22027][Butterfly Seeker(バタフライシーカー)]]                                                                                    |
+|             |           |                 | [[https://vndb.org/v23223][Butterfly Seeker ~Chaos Nightmare~(バタフライシーカー ～カオス・ナイトメア～)]]                                           |
+|             |           |                 | [[https://vndb.org/v25135][Kanzume Shoujo no Shuumatsu Sekai(缶詰少女ノ終末世界)]]                                                                   |
+|             |           |                 | [[https://vndb.org/v26000][Kimagure Temptation(きまぐれテンプテーション)]]                                                                           |
+|             |           |                 | [[https://vndb.org/v16563][Neyuki no Gen'ei -Shirahanasou no Hitobito-(根雪の幻影 -白花荘の人々-)]]                                                                     |
