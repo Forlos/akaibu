@@ -5,6 +5,7 @@ mod ycg;
 
 use crate::error::AkaibuError;
 use image::RgbaImage;
+use std::{fs::File, io::Read, path::PathBuf};
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
 
 #[derive(Debug)]
@@ -35,6 +36,15 @@ impl ResourceMagic {
             [65, 75, 66, 32, ..] | [65, 75, 66, 43, ..] => Self::AKB,
             _ => Self::Unrecognized,
         }
+    }
+    pub fn parse_from_filename(
+        &self,
+        file_name: &PathBuf,
+    ) -> anyhow::Result<ResourceType> {
+        let mut file = File::open(file_name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        self.parse(buf)
     }
     pub fn parse(&self, buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         match self {

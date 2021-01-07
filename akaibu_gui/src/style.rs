@@ -1,6 +1,6 @@
 use iced::{
-    button, checkbox, container, progress_bar, text_input, Background, Color,
-    Vector,
+    button, checkbox, container, pick_list, progress_bar, text_input,
+    Background, Color, Vector,
 };
 
 pub const DARK: Color = Color::from_rgb(
@@ -172,6 +172,41 @@ impl checkbox::StyleSheet for Dark {
             border_radius: 0.0,
             border_width: self.border_width,
             border_color: Color::BLACK,
+        }
+    }
+}
+
+impl pick_list::StyleSheet for Dark {
+    fn menu(&self) -> pick_list::Menu {
+        pick_list::Menu {
+            background: self.background,
+            border_width: self.border_width,
+            border_color: BORDER_COLOR,
+            text_color: TEXT_COLOR,
+            selected_text_color: Color::BLACK,
+            selected_background: Background::Color(DARK_SELECTION),
+        }
+    }
+
+    fn active(&self) -> pick_list::Style {
+        pick_list::Style {
+            background: self.background,
+            border_radius: 0.0,
+            border_width: self.border_width,
+            border_color: Color::BLACK,
+            text_color: TEXT_COLOR,
+            icon_size: 0.0,
+        }
+    }
+
+    fn hovered(&self) -> pick_list::Style {
+        pick_list::Style {
+            background: Background::Color(DARK_FOCUSED),
+            border_radius: 0.0,
+            border_width: self.border_width,
+            border_color: Color::BLACK,
+            text_color: TEXT_COLOR,
+            icon_size: 0.0,
         }
     }
 }

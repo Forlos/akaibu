@@ -1,9 +1,10 @@
-use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
-
+use crate::ui::resource::ConvertFormat;
 use akaibu::{
     archive::Archive, archive::FileEntry, resource::ResourceMagic,
     resource::ResourceType,
 };
+use image::ImageFormat;
+use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
 
 pub async fn convert_resource(
     archive: Arc<Box<dyn Archive>>,
@@ -63,6 +64,34 @@ fn write_resource(
         ResourceType::Other => Err(akaibu::error::AkaibuError::Custom(
             format!("Convert not available for: {}", entry.file_name),
         )
+        .into()),
+    }
+}
+
+pub fn write_resource_with_format(
+    resource: ResourceType,
+    mut file_name: PathBuf,
+    format: ConvertFormat,
+) -> anyhow::Result<PathBuf> {
+    match resource {
+        ResourceType::RgbaImage { image } => {
+            file_name.set_extension(format!("{}", format));
+            image.save_with_format(
+                &file_name,
+                match format {
+                    ConvertFormat::PNG => ImageFormat::Png,
+                    ConvertFormat::JPEG => ImageFormat::Jpeg,
+                    ConvertFormat::BMP => ImageFormat::Bmp,
+                    ConvertFormat::TIFF => ImageFormat::Tiff,
+                    ConvertFormat::ICO => ImageFormat::Ico,
+                },
+            )?;
+            Ok(file_name)
+        }
+        _ => Err(akaibu::error::AkaibuError::Custom(format!(
+            "Convert not available for: {:?}",
+            file_name
+        ))
         .into()),
     }
 }

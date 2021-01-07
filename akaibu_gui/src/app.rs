@@ -1,9 +1,12 @@
 use crate::{
     message::Message,
-    ui::{archive::ArchiveContent, content::Content, scheme::SchemeContent},
+    ui::{
+        archive::ArchiveContent, content::Content, resource::ResourceContent,
+        scheme::SchemeContent,
+    },
     update, Opt,
 };
-use akaibu::magic;
+use akaibu::{magic, resource::ResourceMagic};
 use iced::{executor, Application, Command};
 use std::{fs::File, io::Read};
 use structopt::StructOpt;
@@ -29,7 +32,9 @@ impl Application for App {
         let archive = magic::Archive::parse(&magic);
 
         if let magic::Archive::NotRecognized = archive {
-            return (
+            let resource = ResourceMagic::parse_magic(&magic);
+            if let ResourceMagic::Unrecognized = resource {
+                return (
                 Self {
                     opt,
                     content: Content::SchemeView(SchemeContent::new(
@@ -40,6 +45,21 @@ impl Application for App {
                 },
                 Command::none(),
             );
+            } else {
+                let file_name = opt.file.clone();
+                let resource = resource
+                    .parse_from_filename(&file_name)
+                    .expect("Could not parse resource");
+                return (
+                    Self {
+                        opt,
+                        content: Content::ResourceView(ResourceContent::new(
+                            resource, file_name,
+                        )),
+                    },
+                    Command::none(),
+                );
+            }
         }
 
         let schemes = archive.get_schemes();

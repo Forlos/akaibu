@@ -1,3 +1,4 @@
+use crate::ui::resource::ConvertFormat;
 use akaibu::{archive::FileEntry, resource::ResourceType, scheme::Scheme};
 
 #[allow(dead_code)]
@@ -16,6 +17,8 @@ pub enum Message {
     ClosePreview,
     ConvertAllToggle(bool),
     PatternChanged(String),
+    FormatChanged(ConvertFormat),
+    SaveResource,
     Error(String),
 }
 

@@ -153,11 +153,17 @@ pub(crate) fn handle_message(
                 ));
             }
         },
-        Message::SetStatus(status) => {
-            if let Content::ArchiveView(ref mut content) = app.content {
+        Message::SetStatus(status) => match app.content {
+            Content::ArchiveView(ref mut content) => {
                 content.set_status(status);
             }
-        }
+            Content::SchemeView(ref mut content) => {
+                content.set_status(status);
+            }
+            Content::ResourceView(ref mut content) => {
+                content.set_status(status);
+            }
+        },
         Message::OpenPreview(resource, file_name) => {
             if let Content::ArchiveView(ref mut content) = app.content {
                 content.preview.set_resource(resource, file_name);
@@ -179,20 +185,44 @@ pub(crate) fn handle_message(
                 content.pattern = pattern;
             }
         }
-        Message::Error(err) => {
-            match app.content {
-                Content::ArchiveView(ref mut content) => {
-                    content.set_status(Status::Error(err));
-                }
-                Content::SchemeView(ref mut content) => {
-                    content.set_status(Status::Error(err));
-                }
+        Message::FormatChanged(format) => {
+            if let Content::ResourceView(ref mut content) = app.content {
+                content.format = format;
             }
-            // }
-            // if let Content::ArchiveView(ref mut content) = app.content {
-            //     content.set_status(Status::Error(err));
-            // }
         }
+        Message::SaveResource => {
+            if let Content::ResourceView(ref mut content) = app.content {
+                return Ok(Command::perform(
+                    iced::futures::future::ready(
+                        convert::write_resource_with_format(
+                            content.resource.clone(),
+                            content.file_name.clone(),
+                            content.format,
+                        ),
+                    ),
+                    |result| match result {
+                        Ok(path) => Message::SetStatus(Status::Success(
+                            format!("Saved: {:?}", path),
+                        )),
+                        Err(err) => Message::SetStatus(Status::Error(format!(
+                            "{}",
+                            err
+                        ))),
+                    },
+                ));
+            }
+        }
+        Message::Error(err) => match app.content {
+            Content::ArchiveView(ref mut content) => {
+                content.set_status(Status::Error(err));
+            }
+            Content::SchemeView(ref mut content) => {
+                content.set_status(Status::Error(err));
+            }
+            Content::ResourceView(ref mut content) => {
+                content.set_status(Status::Error(err));
+            }
+        },
     };
     Ok(Command::none())
 }
