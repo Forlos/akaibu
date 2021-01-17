@@ -9,3 +9,4 @@
 | YCG  | Image | *.png, *.ycg | 1         | PNG                |
 | AKB  | Image | *.AKB        | N/A       | PNG                |
 | AKB+ | Image | *.AKB        | N/A       | PNG                |
+| GYU  | Image | *.gyu        | 1,2,4,8   | PNG                |
