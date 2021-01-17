@@ -4,6 +4,7 @@ use akaibu::{
     archive::Archive, archive::FileEntry, resource::ResourceMagic,
     resource::ResourceType,
 };
+use anyhow::Context;
 
 pub async fn get_resource_type(
     archive: Arc<Box<dyn Archive>>,
@@ -11,7 +12,12 @@ pub async fn get_resource_type(
 ) -> anyhow::Result<ResourceType> {
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
-    let resource = resource_magic.parse(contents.to_vec())?;
+    let resource = resource_magic
+        .get_schemes()
+        .get(0)
+        .context("Expected universal scheme")?
+        .convert_from_bytes(&entry.full_path, contents.to_vec())?;
+
     Ok(match resource {
         ResourceType::Other => PreviewableResourceMagic::parse(&contents)?,
         _ => resource,

@@ -1,18 +1,57 @@
+use super::{jbp1::jbp1_decompress, ResourceScheme, ResourceType};
 use crate::error::AkaibuError;
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
+use std::{fs::File, io::Read, path::PathBuf};
 
-use super::jbp1::jbp1_decompress;
-
-#[derive(Debug)]
-pub(crate) struct Pb3b {
-    header: Header,
-    pub(crate) image: RgbaImage,
+#[derive(Debug, Clone)]
+pub(crate) enum Pb3bScheme {
+    Universal,
 }
 
-impl Pb3b {
-    pub(crate) fn from_bytes(mut buf: Vec<u8>) -> anyhow::Result<Self> {
+#[derive(Debug, Pread)]
+struct Header {
+    sub_type: u32,
+    main_type: u16,
+    width: u16,
+    height: u16,
+    depth: u16,
+}
+
+impl ResourceScheme for Pb3bScheme {
+    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+        let mut buf = Vec::with_capacity(1 << 20);
+        let mut file = File::open(file_path)?;
+        file.read_to_end(&mut buf)?;
+        self.from_bytes(buf)
+    }
+    fn convert_from_bytes(
+        &self,
+        _file_path: &PathBuf,
+        buf: Vec<u8>,
+    ) -> anyhow::Result<ResourceType> {
+        self.from_bytes(buf)
+    }
+    fn get_name(&self) -> String {
+        format!(
+            "[PB3B] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
+    }
+
+    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
+    where
+        Self: Sized,
+    {
+        vec![Box::new(Self::Universal)]
+    }
+}
+
+impl Pb3bScheme {
+    fn from_bytes(&self, mut buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         Self::decrypt(&mut buf)?;
         let header = buf.pread_with::<Header>(0x18, LE)?;
         let image = match header.main_type {
@@ -28,7 +67,7 @@ impl Pb3b {
                 .into())
             }
         }?;
-        Ok(Self { header, image })
+        Ok(ResourceType::RgbaImage { image })
     }
     fn decrypt(buf: &mut [u8]) -> anyhow::Result<()> {
         let tail_key = &buf
@@ -446,13 +485,4 @@ impl Pb3b {
 
         Ok(output)
     }
-}
-
-#[derive(Debug, Pread)]
-struct Header {
-    sub_type: u32,
-    main_type: u16,
-    width: u16,
-    height: u16,
-    depth: u16,
 }

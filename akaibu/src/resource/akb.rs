@@ -1,11 +1,15 @@
-use crate::error::AkaibuError;
+use std::{fs::File, io::Read, path::PathBuf};
+
+use crate::{error::AkaibuError, util::image::bitmap_to_png};
 use anyhow::Context;
-use image::{buffer::ConvertBuffer, ImageBuffer, Pixel, RgbaImage};
+use image::{buffer::ConvertBuffer, ImageBuffer, Pixel};
 use scroll::Pread;
 
-#[derive(Debug)]
-pub(crate) struct Akb {
-    pub(crate) image: RgbaImage,
+use super::{ResourceScheme, ResourceType};
+
+#[derive(Debug, Clone)]
+pub(crate) enum AkbScheme {
+    Universal,
 }
 
 #[derive(Debug, Pread)]
@@ -21,8 +25,41 @@ struct AkbHeader {
     bottom: u32,
 }
 
-impl Akb {
-    pub(crate) fn from_bytes(buf: Vec<u8>) -> anyhow::Result<Self> {
+impl ResourceScheme for AkbScheme {
+    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+        let mut buf = Vec::with_capacity(1 << 20);
+        let mut file = File::open(file_path)?;
+        file.read_to_end(&mut buf)?;
+        self.from_bytes(buf)
+    }
+
+    fn convert_from_bytes(
+        &self,
+        _file_path: &PathBuf,
+        buf: Vec<u8>,
+    ) -> anyhow::Result<ResourceType> {
+        self.from_bytes(buf)
+    }
+
+    fn get_name(&self) -> String {
+        format!(
+            "[AKB] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
+    }
+
+    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
+    where
+        Self: Sized,
+    {
+        vec![Box::new(Self::Universal)]
+    }
+}
+
+impl AkbScheme {
+    fn from_bytes(&self, buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         let header = buf.pread::<AkbHeader>(0)?;
         let data_offset = match &header.magic {
             b"AKB " => 32,
@@ -38,7 +75,7 @@ impl Akb {
         let pixels = Self::transform(
             bitmap_to_png(
                 Self::decompress(&buf[data_offset..], &header),
-                header.width as usize,
+                header.width as usize * 4,
             ),
             &header,
             header.left as usize * 4
@@ -52,7 +89,7 @@ impl Akb {
             )
             .context("Invalid image resolution")?;
         Self::apply_filters(&mut image, &header);
-        Ok(Self {
+        Ok(ResourceType::RgbaImage {
             image: image.convert(),
         })
     }
@@ -309,12 +346,4 @@ impl Akb {
             }
         }
     }
-}
-
-fn bitmap_to_png(buf: Vec<u8>, width_in_pixels: usize) -> Vec<u8> {
-    buf.chunks_exact(width_in_pixels * 4)
-        .rev()
-        .flatten()
-        .copied()
-        .collect()
 }

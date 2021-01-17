@@ -67,9 +67,8 @@ impl ResourceContent {
         }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
-        let mut header = Row::new()
-            .push(Space::new(Length::Units(5), Length::Units(0)))
-            .push(Text::new(format!("{:?}", self.file_name)));
+        let mut header =
+            Row::new().push(Space::new(Length::Units(5), Length::Units(0)));
         let resource = match &self.resource {
             ResourceType::RgbaImage { image } => {
                 let bgra: ImageBuffer<image::Bgra<u8>, Vec<u8>> =

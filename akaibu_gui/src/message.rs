@@ -1,5 +1,10 @@
 use crate::ui::resource::ConvertFormat;
-use akaibu::{archive::FileEntry, resource::ResourceType, scheme::Scheme};
+use akaibu::{
+    archive::FileEntry,
+    resource::{ResourceScheme, ResourceType},
+    scheme::Scheme,
+};
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
@@ -26,6 +31,7 @@ pub enum Message {
 #[derive(Debug, Clone)]
 pub enum Scene {
     ArchiveView(Box<dyn Scheme>),
+    ResourceView(Box<dyn ResourceScheme>, PathBuf),
 }
 
 #[allow(dead_code)]

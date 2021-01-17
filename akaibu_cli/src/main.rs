@@ -10,7 +10,7 @@
 use akaibu::{
     archive::FileEntry,
     magic::Archive,
-    resource::{ResourceMagic, ResourceType},
+    resource::{ResourceMagic, ResourceScheme, ResourceType},
     scheme::Scheme,
 };
 use anyhow::Context;
@@ -37,7 +37,7 @@ struct Opt {
     )]
     output_dir: PathBuf,
 
-    /// Convert resource files to commonly used formats
+    /// Convert resource files to commonly used formats only one try of resource can converted at the time
     #[structopt(short, long)]
     convert: bool,
 }
@@ -57,6 +57,32 @@ fn main() {
 }
 
 fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
+    let not_universal = opt.files.iter().find(|f| {
+        let mut magic = vec![0; 16];
+        File::open(&f)
+            .expect("Could not open file")
+            .read_exact(&mut magic)
+            .expect("Could not read file");
+        let resource = ResourceMagic::parse_magic(&magic);
+        !resource.is_universal()
+    });
+    let scheme = if let Some(file) = not_universal {
+        let mut magic = vec![0; 16];
+        File::open(&file)?.read_exact(&mut magic)?;
+        let resource = ResourceMagic::parse_magic(&magic);
+        let mut schemes = resource.get_schemes();
+        schemes.remove(prompt_for_resource_scheme(&schemes, &file))
+    } else {
+        let file = opt.files.get(0).expect("Could not get first file");
+        let mut magic = vec![0; 16];
+        File::open(&file)?.read_exact(&mut magic)?;
+        let resource = ResourceMagic::parse_magic(&magic);
+        let mut schemes = resource.get_schemes();
+        schemes.remove(0)
+    };
+
+    log::debug!("Scheme {:?}", scheme);
+
     let progress_bar =
         init_progressbar("Converting...", opt.files.len() as u64);
 
@@ -65,20 +91,8 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
         .progress_with(progress_bar)
         .filter(|file| file.is_file())
         .try_for_each(|file| {
-            let mut magic = vec![0; 16];
-            File::open(&file)?.read_exact(&mut magic)?;
-
-            let resource_magic = ResourceMagic::parse_magic(&magic);
-            let mut contents = Vec::with_capacity(1 << 20);
             log::debug!("Converting: {:?}", file);
-            File::open(&file)?.read_to_end(&mut contents)?;
-            match resource_magic.parse(contents) {
-                Ok(r) => write_resource(r, file),
-                Err(err) => {
-                    log::error!("{:?}: {}", file, err);
-                    Ok(())
-                }
-            }
+            write_resource(scheme.convert(&file)?, file)
         })
 }
 
@@ -107,7 +121,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
                 schemes.get(0).context("Scheme list is empty")?
             } else {
                 schemes
-                    .get(prompt_for_game(&schemes, &file))
+                    .get(prompt_for_archive_scheme(&schemes, &file))
                     .context("Could no get scheme from scheme list")?
             };
             log::debug!("Scheme {:?}", scheme);
@@ -152,7 +166,37 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
         })
 }
 
-fn prompt_for_game(schemes: &[Box<dyn Scheme>], file_name: &PathBuf) -> usize {
+fn prompt_for_archive_scheme(
+    schemes: &[Box<dyn Scheme>],
+    file_name: &PathBuf,
+) -> usize {
+    use read_input::prelude::*;
+
+    let msg = schemes
+        .iter()
+        .enumerate()
+        .map(|s| format!(" {}: {}\n", s.0, s.1.get_name()))
+        .fold(
+            format!("{:?}\nSelect game by typing number:\n", file_name),
+            |mut v, s| {
+                v += &s;
+                v
+            },
+        );
+    input::<usize>()
+        .repeat_msg(msg)
+        .err("Invalid input value".red())
+        .inside_err(
+            0..schemes.len(),
+            format!("Please input value from 0 to {}", schemes.len() - 1).red(),
+        )
+        .get()
+}
+
+fn prompt_for_resource_scheme(
+    schemes: &[Box<dyn ResourceScheme>],
+    file_name: &PathBuf,
+) -> usize {
     use read_input::prelude::*;
 
     let msg = schemes

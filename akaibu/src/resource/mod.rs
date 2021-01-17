@@ -1,14 +1,17 @@
 mod akb;
+mod gyu;
 mod jbp1;
 mod pb3b;
+mod tlg;
 mod ycg;
 
-use crate::error::AkaibuError;
+use dyn_clone::DynClone;
+use enum_iterator::IntoEnumIterator;
 use image::RgbaImage;
-use std::{fs::File, io::Read, path::PathBuf};
-use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
+use scroll::{Pread, LE};
+use std::{fmt::Debug, path::PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, IntoEnumIterator)]
 pub enum ResourceMagic {
     TLG0,
     TLG5,
@@ -16,8 +19,25 @@ pub enum ResourceMagic {
     PB3B,
     YCG,
     AKB,
+    GYU,
+    GYUUniversal,
     Unrecognized,
 }
+
+pub trait ResourceScheme: Debug + Send + Sync + DynClone {
+    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType>;
+    fn convert_from_bytes(
+        &self,
+        file_path: &PathBuf,
+        buf: Vec<u8>,
+    ) -> anyhow::Result<ResourceType>;
+    fn get_name(&self) -> String;
+    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
+    where
+        Self: Sized;
+}
+
+dyn_clone::clone_trait_object!(ResourceScheme);
 
 impl ResourceMagic {
     pub fn parse_magic(buf: &[u8]) -> Self {
@@ -34,46 +54,53 @@ impl ResourceMagic {
             [89, 67, 71, 0, ..] => Self::YCG,
             // AKB or AKB+
             [65, 75, 66, 32, ..] | [65, 75, 66, 43, ..] => Self::AKB,
+            // GYU\x1a
+            [71, 89, 85, 26, ..] => match buf.pread_with::<u32>(8, LE) {
+                Ok(mt_seed) => {
+                    if mt_seed == 0 {
+                        Self::GYU
+                    } else {
+                        Self::GYUUniversal
+                    }
+                }
+                Err(_) => Self::Unrecognized,
+            },
             _ => Self::Unrecognized,
         }
     }
-    pub fn parse_from_filename(
-        &self,
-        file_name: &PathBuf,
-    ) -> anyhow::Result<ResourceType> {
-        let mut file = File::open(file_name)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        self.parse(buf)
-    }
-    pub fn parse(&self, buf: Vec<u8>) -> anyhow::Result<ResourceType> {
+    pub fn is_universal(&self) -> bool {
         match self {
-            Self::TLG0 => {
-                let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::RgbaImage { image })
-            }
-            Self::TLG5 => Err(AkaibuError::Unimplemented(String::from(
-                "TLG5 is not supported",
-            ))
-            .into()),
-            Self::TLG6 => {
-                let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
-                Ok(ResourceType::RgbaImage { image })
-            }
-            Self::PB3B => {
-                let pb3b = pb3b::Pb3b::from_bytes(buf)?;
-                Ok(ResourceType::RgbaImage { image: pb3b.image })
-            }
-            Self::YCG => {
-                let ycg = ycg::Ycg::from_bytes(buf)?;
-                Ok(ResourceType::RgbaImage { image: ycg.image })
-            }
-            Self::AKB => {
-                let akb = akb::Akb::from_bytes(buf)?;
-                Ok(ResourceType::RgbaImage { image: akb.image })
-            }
-            Self::Unrecognized => Ok(ResourceType::Other),
+            Self::TLG0 => true,
+            Self::TLG5 => true,
+            Self::TLG6 => true,
+            Self::PB3B => true,
+            Self::YCG => true,
+            Self::AKB => true,
+            Self::GYU => false,
+            Self::GYUUniversal => true,
+            Self::Unrecognized => true,
         }
+    }
+    pub fn get_schemes(&self) -> Vec<Box<dyn ResourceScheme>> {
+        match self {
+            ResourceMagic::TLG0 => tlg::Tlg0Scheme::get_schemes(),
+            ResourceMagic::TLG5 => tlg::Tlg5Scheme::get_schemes(),
+            ResourceMagic::TLG6 => tlg::Tlg6Scheme::get_schemes(),
+            ResourceMagic::PB3B => pb3b::Pb3bScheme::get_schemes(),
+            ResourceMagic::YCG => ycg::YcgScheme::get_schemes(),
+            ResourceMagic::AKB => akb::AkbScheme::get_schemes(),
+            ResourceMagic::GYU => gyu::GyuScheme::get_schemes(),
+            ResourceMagic::GYUUniversal => {
+                vec![Box::new(gyu::GyuScheme::Universal)]
+            }
+            ResourceMagic::Unrecognized => vec![],
+        }
+    }
+    pub fn get_all_schemes() -> Vec<Box<dyn ResourceScheme>> {
+        ResourceMagic::into_enum_iter()
+            .map(|arc| arc.get_schemes())
+            .flatten()
+            .collect()
     }
 }
 

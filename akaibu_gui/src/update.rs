@@ -6,7 +6,7 @@ use crate::{
     message::Status,
     message::{Message, Scene},
     ui::archive::ArchiveContent,
-    ui::content::Content,
+    ui::{content::Content, resource::ResourceContent},
 };
 use extract::extract_all;
 use iced::Command;
@@ -152,6 +152,12 @@ pub(crate) fn handle_message(
                     ArchiveContent::new(archive, dir),
                 ));
             }
+            Scene::ResourceView(scheme, file_path) => {
+                let resource = scheme.convert(&app.opt.file)?;
+                app.content = Content::ResourceView(ResourceContent::new(
+                    resource, file_path,
+                ));
+            }
         },
         Message::SetStatus(status) => match app.content {
             Content::ArchiveView(ref mut content) => {
@@ -161,6 +167,9 @@ pub(crate) fn handle_message(
                 content.set_status(status);
             }
             Content::ResourceView(ref mut content) => {
+                content.set_status(status);
+            }
+            Content::ResourceSchemeView(ref mut content) => {
                 content.set_status(status);
             }
         },
@@ -220,6 +229,9 @@ pub(crate) fn handle_message(
                 content.set_status(Status::Error(err));
             }
             Content::ResourceView(ref mut content) => {
+                content.set_status(Status::Error(err));
+            }
+            Content::ResourceSchemeView(ref mut content) => {
                 content.set_status(Status::Error(err));
             }
         },

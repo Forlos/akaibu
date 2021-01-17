@@ -1,20 +1,50 @@
+use crate::{error::AkaibuError, util::zlib_decompress};
 use anyhow::Context;
-use image::buffer::ConvertBuffer;
-use image::ImageBuffer;
-use image::RgbaImage;
-use scroll::Pread;
-use scroll::LE;
+use image::{buffer::ConvertBuffer, ImageBuffer};
+use scroll::{Pread, LE};
+use std::{fs::File, io::Read, path::PathBuf};
 
-use crate::error::AkaibuError;
-use crate::util::zlib_decompress;
+use super::{ResourceScheme, ResourceType};
 
-#[derive(Debug)]
-pub(crate) struct Ycg {
-    pub(crate) image: RgbaImage,
+#[derive(Debug, Clone)]
+pub(crate) enum YcgScheme {
+    Universal,
 }
 
-impl Ycg {
-    pub(crate) fn from_bytes(buf: Vec<u8>) -> anyhow::Result<Self> {
+impl ResourceScheme for YcgScheme {
+    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+        let mut buf = Vec::with_capacity(1 << 20);
+        let mut file = File::open(file_path)?;
+        file.read_to_end(&mut buf)?;
+        self.from_bytes(buf)
+    }
+    fn convert_from_bytes(
+        &self,
+        _file_path: &PathBuf,
+        buf: Vec<u8>,
+    ) -> anyhow::Result<ResourceType> {
+        self.from_bytes(buf)
+    }
+
+    fn get_name(&self) -> String {
+        format!(
+            "[YCG] {}",
+            match self {
+                Self::Universal => "Universal",
+            }
+        )
+    }
+
+    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
+    where
+        Self: Sized,
+    {
+        vec![Box::new(Self::Universal)]
+    }
+}
+
+impl YcgScheme {
+    fn from_bytes(&self, buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         let width = buf.pread_with::<u32>(4, LE)?;
         let height = buf.pread_with::<u32>(8, LE)?;
         let version = buf.pread_with::<u32>(16, LE)?;
@@ -35,7 +65,7 @@ impl Ycg {
                 let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
                     ImageBuffer::from_vec(width, height, result)
                         .context("Invalid image resolution")?;
-                Ok(Self {
+                Ok(ResourceType::RgbaImage {
                     image: image.convert(),
                 })
             }

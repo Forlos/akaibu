@@ -3,6 +3,7 @@ use akaibu::{
     archive::Archive, archive::FileEntry, resource::ResourceMagic,
     resource::ResourceType,
 };
+use anyhow::Context;
 use image::ImageFormat;
 use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
 
@@ -17,7 +18,11 @@ pub async fn convert_resource(
     let mut converted_path = file_path;
     converted_path.set_file_name(&entry.file_name);
     write_resource(
-        resource_magic.parse(contents.to_vec())?,
+        resource_magic
+            .get_schemes()
+            .get(0)
+            .context("Expected universal scheme")?
+            .convert_from_bytes(&converted_path, contents.to_vec())?,
         &entry,
         &converted_path,
     )?;
@@ -36,7 +41,11 @@ pub fn convert_resource_blocking(
     let mut converted_path = file_path.clone();
     converted_path.set_file_name(&entry.file_name);
     write_resource_entry(
-        resource_magic.parse(contents.to_vec())?,
+        resource_magic
+            .get_schemes()
+            .get(0)
+            .context("Expected universal scheme")?
+            .convert_from_bytes(&converted_path, contents.to_vec())?,
         &entry,
         file_path,
     )?;

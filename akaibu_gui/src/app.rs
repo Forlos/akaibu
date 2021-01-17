@@ -2,7 +2,7 @@ use crate::{
     message::Message,
     ui::{
         archive::ArchiveContent, content::Content, resource::ResourceContent,
-        scheme::SchemeContent,
+        resource_scheme::ResourceSchemeContent, scheme::SchemeContent,
     },
     update, Opt,
 };
@@ -47,18 +47,37 @@ impl Application for App {
             );
             } else {
                 let file_name = opt.file.clone();
-                let resource = resource
-                    .parse_from_filename(&file_name)
-                    .expect("Could not parse resource");
-                return (
-                    Self {
-                        opt,
-                        content: Content::ResourceView(ResourceContent::new(
-                            resource, file_name,
-                        )),
-                    },
-                    Command::none(),
-                );
+                if resource.is_universal() {
+                    let resource = resource
+                        .get_schemes()
+                        .get(0)
+                        .expect("Expected universal scheme")
+                        .convert(&file_name)
+                        .expect("Could not convert resource");
+                    return (
+                        Self {
+                            opt,
+                            content: Content::ResourceView(
+                                ResourceContent::new(resource, file_name),
+                            ),
+                        },
+                        Command::none(),
+                    );
+                } else {
+                    return (
+                        Self {
+                            opt,
+                            content: Content::ResourceSchemeView(
+                                ResourceSchemeContent::new(
+                                    resource.get_schemes(),
+                                    "Select convert scheme:".to_string(),
+                                    file_name,
+                                ),
+                            ),
+                        },
+                        Command::none(),
+                    );
+                }
             }
         }
 
