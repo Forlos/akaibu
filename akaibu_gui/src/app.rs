@@ -32,7 +32,10 @@ impl Application for App {
         let archive = magic::Archive::parse(&magic);
 
         if let magic::Archive::NotRecognized = archive {
-            let resource = ResourceMagic::parse_magic(&magic);
+            let mut resource = ResourceMagic::parse_magic(&magic);
+            if let ResourceMagic::Unrecognized = resource {
+                resource = ResourceMagic::parse_file_extension(&opt.file);
+            }
             if let ResourceMagic::Unrecognized = resource {
                 return (
                 Self {

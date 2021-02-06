@@ -24,6 +24,9 @@ pub enum Message {
     PatternChanged(String),
     FormatChanged(ConvertFormat),
     SaveResource,
+    NextSprite,
+    PrevSprite,
+    SaveSprite(usize),
     Error(String),
 }
 

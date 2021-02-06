@@ -1,4 +1,5 @@
 mod akb;
+mod g00;
 mod gyu;
 mod jbp1;
 mod pb3b;
@@ -21,6 +22,7 @@ pub enum ResourceMagic {
     AKB,
     GYU,
     GYUUniversal,
+    G00,
     Unrecognized,
 }
 
@@ -68,6 +70,18 @@ impl ResourceMagic {
             _ => Self::Unrecognized,
         }
     }
+    pub fn parse_file_extension(file_path: &PathBuf) -> Self {
+        match file_path.extension() {
+            Some(extension) => match extension.to_str() {
+                Some(extension) => match extension {
+                    "g00" => Self::G00,
+                    _ => Self::Unrecognized,
+                },
+                None => Self::Unrecognized,
+            },
+            None => Self::Unrecognized,
+        }
+    }
     pub fn is_universal(&self) -> bool {
         match self {
             Self::TLG0 => true,
@@ -78,6 +92,7 @@ impl ResourceMagic {
             Self::AKB => true,
             Self::GYU => false,
             Self::GYUUniversal => true,
+            Self::G00 => true,
             Self::Unrecognized => true,
         }
     }
@@ -93,6 +108,7 @@ impl ResourceMagic {
             ResourceMagic::GYUUniversal => {
                 vec![Box::new(gyu::GyuScheme::Universal)]
             }
+            ResourceMagic::G00 => g00::G00Scheme::get_schemes(),
             ResourceMagic::Unrecognized => vec![],
         }
     }
@@ -106,6 +122,7 @@ impl ResourceMagic {
 
 #[derive(Debug, Clone)]
 pub enum ResourceType {
+    SpriteSheet { sprites: Vec<RgbaImage> },
     RgbaImage { image: RgbaImage },
     Text(String),
     Other,

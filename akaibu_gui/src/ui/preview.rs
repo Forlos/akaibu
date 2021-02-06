@@ -1,5 +1,5 @@
 use crate::{message::Message, style};
-use akaibu::resource;
+use akaibu::resource::{self, ResourceType};
 use iced::{
     button, Button, Column, Container, Element, HorizontalAlignment, Image,
     Length, Row, Space, Text, VerticalAlignment,
@@ -11,6 +11,9 @@ pub struct Preview {
     is_visible: bool,
     file_name: String,
     close_button_state: button::State,
+    prev_sprite_button_state: button::State,
+    next_sprite_button_state: button::State,
+    sprite_index: usize,
 }
 
 impl Preview {
@@ -20,6 +23,9 @@ impl Preview {
             is_visible: false,
             file_name: String::new(),
             close_button_state: button::State::new(),
+            prev_sprite_button_state: button::State::new(),
+            next_sprite_button_state: button::State::new(),
+            sprite_index: 0,
         }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
@@ -32,6 +38,28 @@ impl Preview {
             .push(Space::new(Length::Units(5), Length::Units(0)))
             .push(Text::new(&self.file_name));
         let preview = match &self.resource {
+            resource::ResourceType::SpriteSheet { sprites } => {
+                let bgra: ImageBuffer<image::Bgra<u8>, Vec<u8>> = sprites
+                    .get(self.sprite_index)
+                    .expect("Could not get sprite")
+                    .convert();
+                header = header
+                    .push(Space::new(Length::Units(5), Length::Units(0)))
+                    .push(Text::new(format!(
+                        "Sprite {}x{}px",
+                        bgra.width(),
+                        bgra.height()
+                    )));
+                Container::new(Image::new(iced::image::Handle::from_pixels(
+                    bgra.width(),
+                    bgra.height(),
+                    bgra.into_vec(),
+                )))
+                .center_x()
+                .center_y()
+                .width(Length::Fill)
+                .height(Length::Fill)
+            }
             resource::ResourceType::RgbaImage { image } => {
                 let bgra: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
                     image.convert();
@@ -71,6 +99,34 @@ impl Preview {
             .width(Length::Fill)
             .height(Length::Fill),
         };
+        if let ResourceType::SpriteSheet { sprites } = &self.resource {
+            let mut prev = Button::new(
+                &mut self.prev_sprite_button_state,
+                Container::new(Text::new(" < ").size(16))
+                    .center_x()
+                    .center_y(),
+            )
+            .style(style::Dark::default());
+            if self.sprite_index > 0 {
+                prev = prev.on_press(Message::PrevSprite);
+            }
+            let mut next = Button::new(
+                &mut self.next_sprite_button_state,
+                Container::new(Text::new(" > ").size(16))
+                    .center_x()
+                    .center_y(),
+            )
+            .style(style::Dark::default());
+            if self.sprite_index < sprites.len() - 1 {
+                next = next.on_press(Message::NextSprite);
+            }
+            header = header
+                .push(Space::new(Length::Fill, Length::Units(0)))
+                .push(prev)
+                .push(Space::new(Length::Units(5), Length::Units(0)))
+                .push(next)
+                .push(Space::new(Length::Units(5), Length::Units(0)));
+        }
         header = header
             .push(Space::new(Length::Fill, Length::Units(0)))
             .push(
@@ -101,5 +157,12 @@ impl Preview {
     ) {
         self.resource = resource;
         self.file_name = file_name;
+        self.sprite_index = 0;
+    }
+    pub fn inc_sprite_index(&mut self) {
+        self.sprite_index += 1;
+    }
+    pub fn dec_sprite_index(&mut self) {
+        self.sprite_index -= 1;
     }
 }

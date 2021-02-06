@@ -76,9 +76,22 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
         let file = opt.files.get(0).expect("Could not get first file");
         let mut magic = vec![0; 16];
         File::open(&file)?.read_exact(&mut magic)?;
-        let resource = ResourceMagic::parse_magic(&magic);
-        let mut schemes = resource.get_schemes();
-        schemes.remove(0)
+        let mut resource = ResourceMagic::parse_magic(&magic);
+        if let ResourceMagic::Unrecognized = resource {
+            resource = ResourceMagic::parse_file_extension(&file);
+        }
+        if let ResourceMagic::Unrecognized = resource {
+            println!(
+                    "{}",
+                    "Archive type could not be guessed. Please enter scheme manually:"
+                        .yellow()
+                );
+            let mut schemes = ResourceMagic::get_all_schemes();
+            schemes.remove(prompt_for_resource_scheme(&schemes, &file))
+        } else {
+            let mut schemes = resource.get_schemes();
+            schemes.remove(0)
+        }
     };
 
     log::debug!("Scheme {:?}", scheme);
@@ -248,5 +261,29 @@ fn write_resource(
             Ok(())
         }
         ResourceType::Other => Ok(()),
+        ResourceType::SpriteSheet { mut sprites } => {
+            if sprites.len() == 1 {
+                let image = sprites.remove(0);
+                let mut new_file_name = file_name.clone();
+                new_file_name.set_extension("png");
+                image.save(new_file_name)?;
+            } else {
+                for (i, sprite) in sprites.iter().enumerate() {
+                    let mut new_file_name = file_name.clone();
+                    new_file_name.set_file_name(format!(
+                        "{}_{}",
+                        new_file_name
+                            .file_stem()
+                            .context("Could not get file name")?
+                            .to_str()
+                            .context("Not valid UTF-8")?,
+                        i
+                    ));
+                    new_file_name.set_extension("png");
+                    sprite.save(&new_file_name)?;
+                }
+            }
+            Ok(())
+        }
     }
 }

@@ -1,11 +1,9 @@
-use std::{fs::File, io::Read, path::PathBuf};
-
+use super::{ResourceScheme, ResourceType};
 use crate::{error::AkaibuError, util::image::bitmap_to_png};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, Pixel};
 use scroll::Pread;
-
-use super::{ResourceScheme, ResourceType};
+use std::{fs::File, io::Read, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub(crate) enum AkbScheme {

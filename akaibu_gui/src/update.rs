@@ -8,8 +8,11 @@ use crate::{
     ui::archive::ArchiveContent,
     ui::{content::Content, resource::ResourceContent},
 };
+use akaibu::{error::AkaibuError, resource::ResourceType};
+use anyhow::Context;
 use extract::extract_all;
 use iced::Command;
+use image::buffer::ConvertBuffer;
 
 pub(crate) fn handle_message(
     app: &mut App,
@@ -205,6 +208,62 @@ pub(crate) fn handle_message(
                     iced::futures::future::ready(
                         convert::write_resource_with_format(
                             content.resource.clone(),
+                            content.file_name.clone(),
+                            content.format,
+                        ),
+                    ),
+                    |result| match result {
+                        Ok(path) => Message::SetStatus(Status::Success(
+                            format!("Saved: {:?}", path),
+                        )),
+                        Err(err) => Message::SetStatus(Status::Error(format!(
+                            "{}",
+                            err
+                        ))),
+                    },
+                ));
+            }
+        }
+        Message::PrevSprite => match app.content {
+            Content::ResourceView(ref mut content) => {
+                content.dec_sprite_index()
+            }
+            Content::ArchiveView(ref mut content) => {
+                content.preview.dec_sprite_index()
+            }
+            _ => (),
+        },
+        Message::NextSprite => match app.content {
+            Content::ResourceView(ref mut content) => {
+                content.inc_sprite_index()
+            }
+            Content::ArchiveView(ref mut content) => {
+                content.preview.inc_sprite_index()
+            }
+            _ => (),
+        },
+        Message::SaveSprite(sprite_index) => {
+            if let Content::ResourceView(ref mut content) = app.content {
+                let resource = match content.resource {
+                    ResourceType::SpriteSheet { ref sprites } => {
+                        ResourceType::RgbaImage {
+                            image: sprites
+                                .get(sprite_index)
+                                .context("Could not get sprite")?
+                                .convert(),
+                        }
+                    }
+                    _ => {
+                        return Err(AkaibuError::Custom(
+                            "Invalid resource type".to_string(),
+                        )
+                        .into())
+                    }
+                };
+                return Ok(Command::perform(
+                    iced::futures::future::ready(
+                        convert::write_resource_with_format(
+                            resource,
                             content.file_name.clone(),
                             content.format,
                         ),

@@ -58,6 +58,30 @@ fn write_resource(
     file_name: &PathBuf,
 ) -> anyhow::Result<()> {
     match resource {
+        ResourceType::SpriteSheet { mut sprites } => {
+            if sprites.len() == 1 {
+                let image = sprites.remove(0);
+                let mut new_file_name = file_name.clone();
+                new_file_name.set_extension("png");
+                image.save(new_file_name)?;
+            } else {
+                for (i, sprite) in sprites.iter().enumerate() {
+                    let mut new_file_name = file_name.clone();
+                    new_file_name.set_file_name(format!(
+                        "{}_{}",
+                        new_file_name
+                            .file_stem()
+                            .context("Could not get file name")?
+                            .to_str()
+                            .context("Not valid UTF-8")?,
+                        i
+                    ));
+                    new_file_name.set_extension("png");
+                    sprite.save(&new_file_name)?;
+                }
+            }
+            Ok(())
+        }
         ResourceType::RgbaImage { image } => {
             let mut new_file_name = file_name.clone();
             new_file_name.set_extension("png");
@@ -111,6 +135,30 @@ fn write_resource_entry(
     file_path: &PathBuf,
 ) -> anyhow::Result<()> {
     match resource {
+        ResourceType::SpriteSheet { mut sprites } => {
+            if sprites.len() == 1 {
+                let image = sprites.remove(0);
+                let mut new_file_name = file_path.clone();
+                new_file_name.set_extension("png");
+                image.save(new_file_name)?;
+            } else {
+                for (i, sprite) in sprites.iter().enumerate() {
+                    let mut new_file_name = file_path.clone();
+                    new_file_name.set_file_name(format!(
+                        "{}_{}",
+                        new_file_name
+                            .file_stem()
+                            .context("Could not get file name")?
+                            .to_str()
+                            .context("Not valid UTF-8")?,
+                        i
+                    ));
+                    new_file_name.set_extension("png");
+                    sprite.save(&new_file_name)?;
+                }
+            }
+            Ok(())
+        }
         ResourceType::RgbaImage { image } => {
             let mut new_file_name = file_path.clone();
             new_file_name.push(entry.full_path.clone());
