@@ -105,7 +105,13 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
         .filter(|file| file.is_file())
         .try_for_each(|file| {
             log::debug!("Converting: {:?}", file);
-            write_resource(scheme.convert(&file)?, file)
+            match scheme.convert(&file) {
+                Ok(resource) => write_resource(resource, file),
+                Err(err) => {
+                    log::error!("Error while converting: {:?} {}", file, err);
+                    Ok(())
+                }
+            }
         })
 }
 

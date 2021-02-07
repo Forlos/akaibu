@@ -22,3 +22,18 @@ pub fn bitmap_to_png_with_padding(
             .collect()
     }
 }
+
+pub fn resolve_color_table(
+    color_index_table: &[u8],
+    color_table: &[u8],
+) -> Vec<u8> {
+    color_index_table.iter().fold(
+        Vec::with_capacity(color_index_table.len() * 4),
+        |mut v, b| {
+            v.extend_from_slice(
+                &color_table[*b as usize * 4..*b as usize * 4 + 4],
+            );
+            v
+        },
+    )
+}

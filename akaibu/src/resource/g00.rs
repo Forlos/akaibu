@@ -1,5 +1,5 @@
 use super::{ResourceScheme, ResourceType};
-use crate::error::AkaibuError;
+use crate::{error::AkaibuError, util::image::resolve_color_table};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use scroll::{Pread, LE};
@@ -55,6 +55,7 @@ impl G00Scheme {
         let header = buf.pread::<G00Header>(0)?;
         match header.version {
             0 => Self::version0(&buf[5..], header),
+            1 => Self::version1(&buf[5..], header),
             2 => Self::version2(&buf[5..]),
             _ => Err(AkaibuError::Custom(format!(
                 "Not supported version {}",
@@ -66,6 +67,25 @@ impl G00Scheme {
     fn version0(buf: &[u8], header: G00Header) -> anyhow::Result<ResourceType> {
         let uncompressed_size = buf.pread_with::<u32>(4, LE)?;
         let pixels = Self::decompress0(&buf[8..], uncompressed_size as usize)?;
+        let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+            ImageBuffer::from_vec(
+                header.width as u32,
+                header.height as u32,
+                pixels,
+            )
+            .context("Invalid image resolution")?;
+        Ok(ResourceType::RgbaImage {
+            image: image.convert(),
+        })
+    }
+    fn version1(buf: &[u8], header: G00Header) -> anyhow::Result<ResourceType> {
+        let uncompressed_size = buf.pread_with::<u32>(4, LE)?;
+        let data = Self::decompress2(&buf[8..], uncompressed_size as usize)?;
+        let color_table_size = data.pread_with::<u16>(0, LE)? as usize;
+        let color_table = &data[2..color_table_size * 4 + 2];
+        let color_index_table = &data[color_table_size * 4 + 2..];
+        let pixels = resolve_color_table(color_index_table, color_table);
+        println!("{}", pixels.len());
         let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
             ImageBuffer::from_vec(
                 header.width as u32,
