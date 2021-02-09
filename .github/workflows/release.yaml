@@ -93,7 +93,7 @@ jobs:
 
       - name: Create release body
         run: |
-          git log --oneline $(git describe --tags --abbrev=0 @^)..@ --oneline > body.md
+          git log --oneline $(git describe --tags --abbrev=0 @^)..@ --oneline | tail -n +1 | head -n -1 > body.md
           pwd
           cat body.md
 
