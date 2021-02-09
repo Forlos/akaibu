@@ -10,3 +10,4 @@
 | AKB  | Image | *.AKB        | N/A       | PNG                |
 | AKB+ | Image | *.AKB        | N/A       | PNG                |
 | GYU  | Image | *.gyu        | 1,2,4,8   | PNG                |
+| G00  | Image | *.g00        | 0,1,2     | PNG                |
