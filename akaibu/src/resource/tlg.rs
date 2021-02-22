@@ -1,14 +1,15 @@
 use super::{ResourceScheme, ResourceType};
 use crate::error::AkaibuError;
+use scroll::Pread;
 use std::{fs::File, io::Read};
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
 
 #[derive(Debug, Clone)]
-pub(crate) enum Tlg0Scheme {
+pub(crate) enum TlgScheme {
     Universal,
 }
 
-impl ResourceScheme for Tlg0Scheme {
+impl ResourceScheme for TlgScheme {
     fn convert(
         &self,
         file_path: &std::path::PathBuf,
@@ -16,8 +17,7 @@ impl ResourceScheme for Tlg0Scheme {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
-        let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
-        Ok(ResourceType::RgbaImage { image })
+        parse_tlg(buf)
     }
 
     fn convert_from_bytes(
@@ -25,13 +25,12 @@ impl ResourceScheme for Tlg0Scheme {
         _file_path: &std::path::PathBuf,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
-        let image = Tlg0::from_bytes(&buf)?.to_rgba_image()?;
-        Ok(ResourceType::RgbaImage { image })
+        parse_tlg(buf)
     }
 
     fn get_name(&self) -> String {
         format!(
-            "[TLG0] {}",
+            "[TLG] {}",
             match self {
                 Self::Universal => "Universal",
             }
@@ -46,87 +45,17 @@ impl ResourceScheme for Tlg0Scheme {
     }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) enum Tlg5Scheme {
-    Universal,
-}
-
-impl ResourceScheme for Tlg5Scheme {
-    fn convert(
-        &self,
-        _file_path: &std::path::PathBuf,
-    ) -> anyhow::Result<ResourceType> {
-        Err(
-            AkaibuError::Unimplemented(String::from("TLG5 is not supported"))
-                .into(),
-        )
-    }
-    fn convert_from_bytes(
-        &self,
-        _file_path: &std::path::PathBuf,
-        _buf: Vec<u8>,
-    ) -> anyhow::Result<ResourceType> {
-        Err(
-            AkaibuError::Unimplemented(String::from("TLG5 is not supported"))
-                .into(),
-        )
-    }
-
-    fn get_name(&self) -> String {
-        format!(
-            "[TLG5] {}",
-            match self {
-                Self::Universal => "Universal",
-            }
-        )
-    }
-
-    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
-    where
-        Self: Sized,
-    {
-        vec![Box::new(Self::Universal)]
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) enum Tlg6Scheme {
-    Universal,
-}
-
-impl ResourceScheme for Tlg6Scheme {
-    fn convert(
-        &self,
-        file_path: &std::path::PathBuf,
-    ) -> anyhow::Result<super::ResourceType> {
-        let mut buf = Vec::with_capacity(1 << 20);
-        let mut file = File::open(file_path)?;
-        file.read_to_end(&mut buf)?;
-        let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
-        Ok(ResourceType::RgbaImage { image })
-    }
-    fn convert_from_bytes(
-        &self,
-        _file_path: &std::path::PathBuf,
-        buf: Vec<u8>,
-    ) -> anyhow::Result<ResourceType> {
-        let image = Tlg6::from_bytes(&buf)?.to_rgba_image()?;
-        Ok(ResourceType::RgbaImage { image })
-    }
-
-    fn get_name(&self) -> String {
-        format!(
-            "[TLG6] {}",
-            match self {
-                Self::Universal => "Universal",
-            }
-        )
-    }
-
-    fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
-    where
-        Self: Sized,
-    {
-        vec![Box::new(Self::Universal)]
-    }
+fn parse_tlg(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
+    let image = match buf.pread::<u8>(3)? {
+        0x30 => Tlg0::from_bytes(&buf)?.to_rgba_image()?,
+        0x36 => Tlg6::from_bytes(&buf)?.to_rgba_image()?,
+        ver => {
+            return Err(AkaibuError::Unimplemented(format!(
+                "Version: {} is not supported",
+                ver
+            ))
+            .into())
+        }
+    };
+    Ok(ResourceType::RgbaImage { image })
 }
