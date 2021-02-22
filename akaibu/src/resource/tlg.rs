@@ -46,9 +46,9 @@ impl ResourceScheme for TlgScheme {
 }
 
 fn parse_tlg(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
-    let image = match buf.pread::<u8>(3)? {
-        0x30 => Tlg0::from_bytes(&buf)?.to_rgba_image()?,
-        0x36 => Tlg6::from_bytes(&buf)?.to_rgba_image()?,
+    let image = match buf.pread::<u8>(3)? - 0x30 {
+        0 => Tlg0::from_bytes(&buf)?.to_rgba_image()?,
+        6 => Tlg6::from_bytes(&buf)?.to_rgba_image()?,
         ver => {
             return Err(AkaibuError::Unimplemented(format!(
                 "Version: {} is not supported",
