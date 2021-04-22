@@ -10,7 +10,25 @@ use iced::{
     Element, Image, Length, Row, Scrollable, Space, Text, TextInput,
 };
 use itertools::Itertools;
+use once_cell::sync::Lazy;
 use std::sync::Arc;
+
+static FILE_ICON_IMAGE_HANDLE: Lazy<iced::image::Handle> = Lazy::new(|| {
+    image::Handle::from_memory(
+        crate::Resources::get("icons/file.png")
+            .expect("Could not embedded resource")
+            .into(),
+    )
+});
+
+static DIRECTORY_ICON_IMAGE_HANDLE: Lazy<iced::image::Handle> =
+    Lazy::new(|| {
+        image::Handle::from_memory(
+            crate::Resources::get("icons/folder.png")
+                .expect("Could not embedded resource")
+                .into(),
+        )
+    });
 
 pub struct ArchiveContent {
     entries: Vec<Entry>,
@@ -243,11 +261,6 @@ impl Entry {
                 file_count,
                 open_button_state,
             } => {
-                let image_handle = image::Handle::from_memory(
-                    crate::Resources::get("icons/folder.png")
-                        .expect("Could not embedded resource")
-                        .into(),
-                );
                 let content = Row::new()
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .push(
@@ -257,7 +270,9 @@ impl Entry {
                                     Length::Units(5),
                                     Length::Units(0),
                                 ))
-                                .push(Image::new(image_handle))
+                                .push(Image::new(
+                                    DIRECTORY_ICON_IMAGE_HANDLE.clone(),
+                                ))
                                 .push(Space::new(
                                     Length::Units(5),
                                     Length::Units(0),
@@ -308,11 +323,6 @@ impl Entry {
                 extract_button_state,
                 preview_button_state,
             } => {
-                let image_handle = image::Handle::from_memory(
-                    crate::Resources::get("icons/file.png")
-                        .expect("Could not get embedded resource")
-                        .into(),
-                );
                 let content = Row::new()
                     .push(Space::new(Length::Units(5), Length::Units(0)))
                     .push(
@@ -322,7 +332,9 @@ impl Entry {
                                     Length::Units(5),
                                     Length::Units(0),
                                 ))
-                                .push(Image::new(image_handle))
+                                .push(Image::new(
+                                    FILE_ICON_IMAGE_HANDLE.clone(),
+                                ))
                                 .push(Space::new(
                                     Length::Units(5),
                                     Length::Units(0),

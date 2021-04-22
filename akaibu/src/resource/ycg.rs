@@ -2,7 +2,7 @@ use crate::{error::AkaibuError, util::zlib_decompress};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use scroll::{Pread, LE};
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, io::Read, path::Path};
 
 use super::{ResourceScheme, ResourceType};
 
@@ -12,7 +12,7 @@ pub(crate) enum YcgScheme {
 }
 
 impl ResourceScheme for YcgScheme {
-    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+    fn convert(&self, file_path: &Path) -> anyhow::Result<ResourceType> {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
@@ -20,7 +20,7 @@ impl ResourceScheme for YcgScheme {
     }
     fn convert_from_bytes(
         &self,
-        _file_path: &PathBuf,
+        _file_path: &Path,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)

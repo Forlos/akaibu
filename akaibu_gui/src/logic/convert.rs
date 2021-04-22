@@ -5,7 +5,12 @@ use akaibu::{
 };
 use anyhow::Context;
 use image::ImageFormat;
-use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 pub async fn convert_resource(
     archive: Arc<Box<dyn Archive>>,
@@ -33,12 +38,12 @@ pub async fn convert_resource(
 pub fn convert_resource_blocking(
     archive: &Box<dyn Archive>,
     entry: &FileEntry,
-    file_path: &PathBuf,
+    file_path: &Path,
 ) -> anyhow::Result<PathBuf> {
     let contents = archive.extract(&entry)?;
     let resource_magic = ResourceMagic::parse_magic(&contents);
     log::info!("Converting resource {:?}", resource_magic);
-    let mut converted_path = file_path.clone();
+    let mut converted_path = file_path.to_path_buf();
     converted_path.set_file_name(&entry.file_name);
     write_resource_entry(
         resource_magic
@@ -55,18 +60,18 @@ pub fn convert_resource_blocking(
 fn write_resource(
     resource: ResourceType,
     entry: &FileEntry,
-    file_name: &PathBuf,
+    file_name: &Path,
 ) -> anyhow::Result<()> {
     match resource {
         ResourceType::SpriteSheet { mut sprites } => {
             if sprites.len() == 1 {
                 let image = sprites.remove(0);
-                let mut new_file_name = file_name.clone();
+                let mut new_file_name = file_name.to_path_buf();
                 new_file_name.set_extension("png");
                 image.save(new_file_name)?;
             } else {
                 for (i, sprite) in sprites.iter().enumerate() {
-                    let mut new_file_name = file_name.clone();
+                    let mut new_file_name = file_name.to_path_buf();
                     new_file_name.set_file_name(format!(
                         "{}_{}",
                         new_file_name
@@ -83,13 +88,13 @@ fn write_resource(
             Ok(())
         }
         ResourceType::RgbaImage { image } => {
-            let mut new_file_name = file_name.clone();
+            let mut new_file_name = file_name.to_path_buf();
             new_file_name.set_extension("png");
             image.save(new_file_name)?;
             Ok(())
         }
         ResourceType::Text(s) => {
-            let mut new_file_name = file_name.clone();
+            let mut new_file_name = file_name.to_path_buf();
             new_file_name.set_extension("txt");
             File::create(new_file_name)?.write_all(s.as_bytes())?;
             Ok(())
@@ -112,11 +117,11 @@ pub fn write_resource_with_format(
             image.save_with_format(
                 &file_name,
                 match format {
-                    ConvertFormat::PNG => ImageFormat::Png,
-                    ConvertFormat::JPEG => ImageFormat::Jpeg,
-                    ConvertFormat::BMP => ImageFormat::Bmp,
-                    ConvertFormat::TIFF => ImageFormat::Tiff,
-                    ConvertFormat::ICO => ImageFormat::Ico,
+                    ConvertFormat::Png => ImageFormat::Png,
+                    ConvertFormat::Jpeg => ImageFormat::Jpeg,
+                    ConvertFormat::Bmp => ImageFormat::Bmp,
+                    ConvertFormat::Tiff => ImageFormat::Tiff,
+                    ConvertFormat::Ico => ImageFormat::Ico,
                 },
             )?;
             Ok(file_name)
@@ -132,18 +137,18 @@ pub fn write_resource_with_format(
 fn write_resource_entry(
     resource: ResourceType,
     entry: &FileEntry,
-    file_path: &PathBuf,
+    file_path: &Path,
 ) -> anyhow::Result<()> {
     match resource {
         ResourceType::SpriteSheet { mut sprites } => {
             if sprites.len() == 1 {
                 let image = sprites.remove(0);
-                let mut new_file_name = file_path.clone();
+                let mut new_file_name = file_path.to_path_buf();
                 new_file_name.set_extension("png");
                 image.save(new_file_name)?;
             } else {
                 for (i, sprite) in sprites.iter().enumerate() {
-                    let mut new_file_name = file_path.clone();
+                    let mut new_file_name = file_path.to_path_buf();
                     new_file_name.set_file_name(format!(
                         "{}_{}",
                         new_file_name
@@ -160,14 +165,14 @@ fn write_resource_entry(
             Ok(())
         }
         ResourceType::RgbaImage { image } => {
-            let mut new_file_name = file_path.clone();
+            let mut new_file_name = file_path.to_path_buf();
             new_file_name.push(entry.full_path.clone());
             new_file_name.set_extension("png");
             image.save(new_file_name)?;
             Ok(())
         }
         ResourceType::Text(s) => {
-            let mut new_file_name = file_path.clone();
+            let mut new_file_name = file_path.to_path_buf();
             new_file_name.push(entry.full_path.clone());
             new_file_name.set_extension("txt");
             File::create(new_file_name)?.write_all(s.as_bytes())?;

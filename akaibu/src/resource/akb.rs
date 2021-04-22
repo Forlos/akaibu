@@ -3,7 +3,7 @@ use crate::{error::AkaibuError, util::image::bitmap_to_png};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, Pixel};
 use scroll::Pread;
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, io::Read, path::Path};
 
 #[derive(Debug, Clone)]
 pub(crate) enum AkbScheme {
@@ -24,7 +24,7 @@ struct AkbHeader {
 }
 
 impl ResourceScheme for AkbScheme {
-    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+    fn convert(&self, file_path: &Path) -> anyhow::Result<ResourceType> {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
@@ -33,7 +33,7 @@ impl ResourceScheme for AkbScheme {
 
     fn convert_from_bytes(
         &self,
-        _file_path: &PathBuf,
+        _file_path: &Path,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)

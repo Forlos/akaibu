@@ -27,7 +27,7 @@ pub enum BurikoScheme {
 impl Scheme for BurikoScheme {
     fn extract(
         &self,
-        file_path: &std::path::PathBuf,
+        file_path: &std::path::Path,
     ) -> anyhow::Result<(
         Box<dyn crate::archive::Archive + Sync>,
         crate::archive::NavigableDirectory,
@@ -85,10 +85,7 @@ impl archive::Archive for BurikoArchive {
             .context("File not found")?
     }
 
-    fn extract_all(
-        &self,
-        output_path: &std::path::PathBuf,
-    ) -> anyhow::Result<()> {
+    fn extract_all(&self, output_path: &std::path::Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
             let buf = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);

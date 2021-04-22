@@ -38,16 +38,16 @@ impl Application for App {
             }
             if let ResourceMagic::Unrecognized = resource {
                 return (
-                Self {
-                    opt,
-                    content: Content::SchemeView(SchemeContent::new(
-                        magic::Archive::get_all_schemes(),
-                        "Archive type could not be guessed. Please enter scheme manually:"
-                            .to_string(),
-                    )),
-                },
-                Command::none(),
-            );
+                    Self {
+                        opt,
+                        content: Content::SchemeView(SchemeContent::new(
+                            magic::Archive::get_all_schemes(),
+                            "Archive type could not be guessed. Please enter scheme manually:"
+                                .to_string(),
+                        )),
+                    },
+                    Command::none(),
+                );
             } else {
                 let file_name = opt.file.clone();
                 if resource.is_universal() {

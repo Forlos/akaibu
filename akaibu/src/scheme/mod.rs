@@ -1,7 +1,7 @@
 use crate::archive;
 use archive::NavigableDirectory;
 use dyn_clone::DynClone;
-use std::{fmt::Debug, path::PathBuf};
+use std::{fmt::Debug, path::Path};
 
 pub mod acv1;
 pub mod buriko;
@@ -16,7 +16,7 @@ pub mod ypf;
 pub trait Scheme: Debug + Send + DynClone {
     fn extract(
         &self,
-        file_path: &PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<(Box<dyn archive::Archive + Sync>, NavigableDirectory)>;
     fn get_name(&self) -> String;
     fn get_schemes() -> Vec<Box<dyn Scheme>>

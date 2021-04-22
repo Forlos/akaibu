@@ -1,10 +1,21 @@
 use crate::{message::Message, style};
 use akaibu::resource::{self, ResourceType};
 use iced::{
-    button, Button, Column, Container, Element, HorizontalAlignment, Image,
-    Length, Row, Space, Text, VerticalAlignment,
+    button,
+    image::{viewer, Viewer},
+    Button, Column, Container, Element, HorizontalAlignment, Image, Length,
+    Row, Space, Text, VerticalAlignment,
 };
 use image::{buffer::ConvertBuffer, ImageBuffer};
+use once_cell::sync::Lazy;
+
+static X_IMAGE_HANDLE: Lazy<iced::image::Handle> = Lazy::new(|| {
+    iced::image::Handle::from_memory(
+        crate::Resources::get("icons/x.png")
+            .expect("Could not embedded resource")
+            .into(),
+    )
+});
 
 pub struct Preview {
     resource: resource::ResourceType,
@@ -13,6 +24,7 @@ pub struct Preview {
     close_button_state: button::State,
     prev_sprite_button_state: button::State,
     next_sprite_button_state: button::State,
+    image_viewer_state: viewer::State,
     sprite_index: usize,
 }
 
@@ -25,15 +37,11 @@ impl Preview {
             close_button_state: button::State::new(),
             prev_sprite_button_state: button::State::new(),
             next_sprite_button_state: button::State::new(),
+            image_viewer_state: viewer::State::new(),
             sprite_index: 0,
         }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
-        let x_image = iced::image::Handle::from_memory(
-            crate::Resources::get("icons/x.png")
-                .expect("Could not embedded resource")
-                .into(),
-        );
         let mut header = Row::new()
             .push(Space::new(Length::Units(5), Length::Units(0)))
             .push(Text::new(&self.file_name));
@@ -50,11 +58,14 @@ impl Preview {
                         bgra.width(),
                         bgra.height()
                     )));
-                Container::new(Image::new(iced::image::Handle::from_pixels(
-                    bgra.width(),
-                    bgra.height(),
-                    bgra.into_vec(),
-                )))
+                Container::new(Viewer::new(
+                    &mut self.image_viewer_state,
+                    iced::image::Handle::from_pixels(
+                        bgra.width(),
+                        bgra.height(),
+                        bgra.into_vec(),
+                    ),
+                ))
                 .center_x()
                 .center_y()
                 .width(Length::Fill)
@@ -70,11 +81,14 @@ impl Preview {
                         bgra.width(),
                         bgra.height()
                     )));
-                Container::new(Image::new(iced::image::Handle::from_pixels(
-                    bgra.width(),
-                    bgra.height(),
-                    bgra.into_vec(),
-                )))
+                Container::new(Viewer::new(
+                    &mut self.image_viewer_state,
+                    iced::image::Handle::from_pixels(
+                        bgra.width(),
+                        bgra.height(),
+                        bgra.into_vec(),
+                    ),
+                ))
                 .center_x()
                 .center_y()
                 .width(Length::Fill)
@@ -132,7 +146,7 @@ impl Preview {
             .push(
                 Button::new(
                     &mut self.close_button_state,
-                    iced::image::Image::new(x_image),
+                    Image::new(X_IMAGE_HANDLE.clone()),
                 )
                 .style(style::Dark::default())
                 .on_press(Message::ClosePreview),

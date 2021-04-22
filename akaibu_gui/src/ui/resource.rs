@@ -5,24 +5,26 @@ use crate::{
 };
 use akaibu::resource::ResourceType;
 use iced::{
-    button, pick_list, Button, Column, Container, Element, HorizontalAlignment,
-    Image, Length, PickList, Row, Space, Text, VerticalAlignment,
+    button,
+    image::{viewer, Viewer},
+    pick_list, Button, Column, Container, Element, HorizontalAlignment, Length,
+    PickList, Row, Space, Text, VerticalAlignment,
 };
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConvertFormat {
-    PNG,
-    JPEG,
-    BMP,
-    TIFF,
-    ICO,
+    Png,
+    Jpeg,
+    Bmp,
+    Tiff,
+    Ico,
 }
 
 impl ConvertFormat {
     const ALL: [ConvertFormat; 5] =
-        [Self::PNG, Self::JPEG, Self::BMP, Self::TIFF, Self::ICO];
+        [Self::Png, Self::Jpeg, Self::Bmp, Self::Tiff, Self::Ico];
 }
 
 impl std::fmt::Display for ConvertFormat {
@@ -31,11 +33,11 @@ impl std::fmt::Display for ConvertFormat {
             f,
             "{}",
             match self {
-                Self::PNG => "PNG",
-                Self::JPEG => "JPEG",
-                Self::BMP => "BMP",
-                Self::TIFF => "TIFF",
-                Self::ICO => "ICO",
+                Self::Png => "PNG",
+                Self::Jpeg => "JPEG",
+                Self::Bmp => "BMP",
+                Self::Tiff => "TIFF",
+                Self::Ico => "ICO",
             }
         )
     }
@@ -50,6 +52,7 @@ pub struct ResourceContent {
     convert_button_state: button::State,
     prev_sprite_button_state: button::State,
     next_sprite_button_state: button::State,
+    image_viewer_state: viewer::State,
     sprite_index: usize,
 }
 
@@ -58,7 +61,7 @@ impl ResourceContent {
         let mut footer = Footer::new();
         footer.set_current_dir(format!("{:?}", file_name));
         let format_list = pick_list::State::default();
-        let format = ConvertFormat::PNG;
+        let format = ConvertFormat::Png;
         let convert_button_state = button::State::new();
         Self {
             file_name,
@@ -69,6 +72,7 @@ impl ResourceContent {
             convert_button_state,
             prev_sprite_button_state: button::State::new(),
             next_sprite_button_state: button::State::new(),
+            image_viewer_state: viewer::State::new(),
             sprite_index: 0,
         }
     }
@@ -88,11 +92,14 @@ impl ResourceContent {
                         bgra.width(),
                         bgra.height()
                     )));
-                Container::new(Image::new(iced::image::Handle::from_pixels(
-                    bgra.width(),
-                    bgra.height(),
-                    bgra.into_vec(),
-                )))
+                Container::new(Viewer::new(
+                    &mut self.image_viewer_state,
+                    iced::image::Handle::from_pixels(
+                        bgra.width(),
+                        bgra.height(),
+                        bgra.into_vec(),
+                    ),
+                ))
                 .center_x()
                 .center_y()
                 .width(Length::Fill)
@@ -108,11 +115,14 @@ impl ResourceContent {
                         bgra.width(),
                         bgra.height()
                     )));
-                Container::new(Image::new(iced::image::Handle::from_pixels(
-                    bgra.width(),
-                    bgra.height(),
-                    bgra.into_vec(),
-                )))
+                Container::new(Viewer::new(
+                    &mut self.image_viewer_state,
+                    iced::image::Handle::from_pixels(
+                        bgra.width(),
+                        bgra.height(),
+                        bgra.into_vec(),
+                    ),
+                ))
                 .center_x()
                 .center_y()
                 .width(Length::Fill)

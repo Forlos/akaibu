@@ -7,7 +7,11 @@ use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 const KEY: u32 = 0x65AC9365;
 const FILE_ENTRY_SIZE: usize = 12;
@@ -20,7 +24,7 @@ pub enum EscArc2Scheme {
 impl Scheme for EscArc2Scheme {
     fn extract(
         &self,
-        file_path: &std::path::PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<(
         Box<dyn crate::archive::Archive + Sync>,
         crate::archive::NavigableDirectory,
@@ -92,7 +96,7 @@ impl archive::Archive for EscArc2Archive {
             .context("File not found")?
     }
 
-    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+    fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(
             |entry| -> Result<(), anyhow::Error> {
                 let buf = self.extract(entry)?;

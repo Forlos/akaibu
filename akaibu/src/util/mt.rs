@@ -1,6 +1,6 @@
 #![allow(clippy::unreadable_literal)]
 
-//! An MT19937 Mersenne Twister rng implementation, with the goal of being
+//! An Mt19937 Mersenne Twister rng implementation, with the goal of being
 //! compatible with CPython's `_random` module.
 //!
 //! This crate was translated from the original
@@ -11,7 +11,7 @@
 //! # mt19937ar.c header
 
 /*!
-   A C-program for MT19937, with initialization improved 2002/1/26.
+   A C-program for Mt19937, with initialization improved 2002/1/26.
    Coded by Takuji Nishimura and Makoto Matsumoto.
 
    Before using, initialize the state by using init_genrand(seed)
@@ -66,25 +66,25 @@ const UPPER_MASK: u32 = 0x80000000u32; /* most significant w-r bits */
 const LOWER_MASK: u32 = 0x7fffffffu32; /* least significant r bits */
 
 /// rand::Rng instance implementing the mt19937 mersenne twister algorithm
-pub struct MT19937 {
+pub struct Mt19937 {
     mt: [u32; N], /* the array for the state vector  */
     mti: usize,   /* mti==N+1 means mt[N] is not initialized */
 }
-impl Default for MT19937 {
+impl Default for Mt19937 {
     fn default() -> Self {
-        MT19937 {
+        Mt19937 {
             mt: [0; N],
             mti: N + 1,
         }
     }
 }
-impl std::fmt::Debug for MT19937 {
+impl std::fmt::Debug for Mt19937 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.pad("MT19937")
+        f.pad("Mt19937")
     }
 }
 
-impl MT19937 {
+impl Mt19937 {
     pub fn new_with_slice_seed(init_key: &[u32]) -> Self {
         let mut state = Self::default();
         state.seed_slice(init_key);

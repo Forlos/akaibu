@@ -3,12 +3,12 @@ use enum_iterator::IntoEnumIterator;
 
 #[derive(Debug, IntoEnumIterator)]
 pub enum Archive {
-    ACV1,
-    CPZ7,
-    GXP,
-    PF8,
-    YPF,
-    BURIKO,
+    Acv1,
+    Cpz7,
+    Gxp,
+    Pf8,
+    Ypf,
+    Buriko,
     EscArc2,
     Malie,
     Silky,
@@ -20,18 +20,18 @@ impl Archive {
     pub fn parse(buf: &[u8]) -> Self {
         match buf {
             // ACV1
-            [0x41, 0x43, 0x56, 0x31, ..] => Self::ACV1,
+            [0x41, 0x43, 0x56, 0x31, ..] => Self::Acv1,
             // CPZ7
-            [0x43, 0x50, 0x5A, 0x37, ..] => Self::CPZ7,
+            [0x43, 0x50, 0x5A, 0x37, ..] => Self::Cpz7,
             // GXP\x00
-            [0x47, 0x58, 0x50, 0x00, ..] => Self::GXP,
+            [0x47, 0x58, 0x50, 0x00, ..] => Self::Gxp,
             // pf8
-            [0x70, 0x66, 0x38, ..] => Self::PF8,
+            [0x70, 0x66, 0x38, ..] => Self::Pf8,
             // YFP\x00
-            [0x59, 0x50, 0x46, 0x00, ..] => Self::YPF,
+            [0x59, 0x50, 0x46, 0x00, ..] => Self::Ypf,
             // BURIKO ARC20
             [0x42, 0x55, 0x52, 0x49, 0x4b, 0x4f, 0x20, 0x41, 0x52, 0x43, 0x32, 0x30, ..] => {
-                Self::BURIKO
+                Self::Buriko
             }
             // ESC-ARC2
             [0x45, 0x53, 0x43, 0x2D, 0x41, 0x52, 0x43, 0x32, ..] => {
@@ -47,12 +47,12 @@ impl Archive {
     /// Is archive extraction scheme not game dependent
     pub fn is_universal(&self) -> bool {
         match self {
-            Self::ACV1 => false,
-            Self::CPZ7 => false,
-            Self::GXP => true,
-            Self::PF8 => true,
-            Self::YPF => true,
-            Self::BURIKO => true,
+            Self::Acv1 => false,
+            Self::Cpz7 => false,
+            Self::Gxp => true,
+            Self::Pf8 => true,
+            Self::Ypf => true,
+            Self::Buriko => true,
             Self::EscArc2 => true,
             Self::Malie => false,
             Self::Silky => true,
@@ -62,12 +62,12 @@ impl Archive {
     /// Get list of all schemes for given archive type
     pub fn get_schemes(&self) -> Vec<Box<dyn Scheme>> {
         match self {
-            Self::ACV1 => scheme::acv1::Acv1Scheme::get_schemes(),
-            Self::CPZ7 => scheme::cpz7::Cpz7Scheme::get_schemes(),
-            Self::GXP => scheme::gxp::GxpScheme::get_schemes(),
-            Self::PF8 => scheme::pf8::Pf8Scheme::get_schemes(),
-            Self::YPF => scheme::ypf::YpfScheme::get_schemes(),
-            Self::BURIKO => scheme::buriko::BurikoScheme::get_schemes(),
+            Self::Acv1 => scheme::acv1::Acv1Scheme::get_schemes(),
+            Self::Cpz7 => scheme::cpz7::Cpz7Scheme::get_schemes(),
+            Self::Gxp => scheme::gxp::GxpScheme::get_schemes(),
+            Self::Pf8 => scheme::pf8::Pf8Scheme::get_schemes(),
+            Self::Ypf => scheme::ypf::YpfScheme::get_schemes(),
+            Self::Buriko => scheme::buriko::BurikoScheme::get_schemes(),
             Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
             Self::Malie => scheme::malie::MalieScheme::get_schemes(),
             Self::Silky => scheme::silky::SilkyScheme::get_schemes(),

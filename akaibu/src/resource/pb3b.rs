@@ -3,7 +3,7 @@ use crate::error::AkaibuError;
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, io::Read, path::Path};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Pb3bScheme {
@@ -20,7 +20,7 @@ struct Header {
 }
 
 impl ResourceScheme for Pb3bScheme {
-    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+    fn convert(&self, file_path: &Path) -> anyhow::Result<ResourceType> {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
@@ -28,7 +28,7 @@ impl ResourceScheme for Pb3bScheme {
     }
     fn convert_from_bytes(
         &self,
-        _file_path: &PathBuf,
+        _file_path: &Path,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)
@@ -114,10 +114,8 @@ impl Pb3bScheme {
             data_sizes.push(buf.gread_with::<u32>(off, LE)? as usize);
         }
 
-        let mut main_offsets = Vec::new();
-        main_offsets.push(main_sizes_offset + 4 * channel_count);
-        let mut data_offsets = Vec::new();
-        data_offsets.push(data_sizes_offset + 4 * channel_count);
+        let mut main_offsets = vec![main_sizes_offset + 4 * channel_count];
+        let mut data_offsets = vec![data_sizes_offset + 4 * channel_count];
         for channel in 1..channel_count {
             main_offsets.push(
                 main_offsets

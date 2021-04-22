@@ -5,7 +5,11 @@ use bytes::{Bytes, BytesMut};
 use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 const PASSWORD: &[u8] = &[
     0x40, 0x21, 0x28, 0x38, 0xA6, 0x6E, 0x43, 0xA5, 0x40, 0x21, 0x28, 0x38,
@@ -20,7 +24,7 @@ pub enum GxpScheme {
 impl Scheme for GxpScheme {
     fn extract(
         &self,
-        file_path: &PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<(
         Box<dyn archive::Archive + Sync>,
         archive::NavigableDirectory,
@@ -71,7 +75,7 @@ impl archive::Archive for GxpArchive {
             .map(|e| self.extract(e))
             .context("File not found")?
     }
-    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+    fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
             let buf = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);

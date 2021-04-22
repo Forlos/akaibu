@@ -1,7 +1,7 @@
 use super::{ResourceScheme, ResourceType};
 use crate::error::AkaibuError;
 use scroll::Pread;
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, path::Path};
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
 
 #[derive(Debug, Clone)]
@@ -10,10 +10,7 @@ pub(crate) enum TlgScheme {
 }
 
 impl ResourceScheme for TlgScheme {
-    fn convert(
-        &self,
-        file_path: &std::path::PathBuf,
-    ) -> anyhow::Result<super::ResourceType> {
+    fn convert(&self, file_path: &Path) -> anyhow::Result<super::ResourceType> {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
@@ -22,7 +19,7 @@ impl ResourceScheme for TlgScheme {
 
     fn convert_from_bytes(
         &self,
-        _file_path: &std::path::PathBuf,
+        _file_path: &Path,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
         parse_tlg(buf)

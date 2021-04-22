@@ -6,7 +6,11 @@ use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
 use scroll::{ctx, Pread, LE};
 use std::{
-    collections::HashMap, convert::TryInto, fs::File, io::Write, path::PathBuf,
+    collections::HashMap,
+    convert::TryInto,
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
 };
 
 /// Used to decrypt header fields
@@ -36,7 +40,7 @@ pub enum Cpz7Scheme {
 impl Scheme for Cpz7Scheme {
     fn extract(
         &self,
-        file_path: &PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<(
         Box<dyn archive::Archive + Sync>,
         archive::NavigableDirectory,
@@ -139,7 +143,7 @@ impl archive::Archive for Cpz7Archive {
             .context("File not found")?
     }
 
-    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+    fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         // TODO parallelize that
         self.archive
             .file_data

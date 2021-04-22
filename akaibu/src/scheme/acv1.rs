@@ -9,7 +9,12 @@ use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
-use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 const MASTER_KEY: u32 = 0x8B6A4E5F;
 
@@ -24,7 +29,7 @@ pub enum Acv1Scheme {
 impl Scheme for Acv1Scheme {
     fn extract(
         &self,
-        file_path: &PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<(
         Box<dyn archive::Archive + Sync>,
         archive::NavigableDirectory,
@@ -121,7 +126,7 @@ impl archive::Archive for Acv1Archive {
             .context("File not found")?
     }
 
-    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()> {
+    fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
             let buf = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);

@@ -17,8 +17,11 @@ use anyhow::Context;
 use colored::*;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use std::io::{Read, Write};
 use std::{fs::File, path::PathBuf};
+use std::{
+    io::{Read, Write},
+    path::Path,
+};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -187,7 +190,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
 
 fn prompt_for_archive_scheme(
     schemes: &[Box<dyn Scheme>],
-    file_name: &PathBuf,
+    file_name: &Path,
 ) -> usize {
     use read_input::prelude::*;
 
@@ -214,7 +217,7 @@ fn prompt_for_archive_scheme(
 
 fn prompt_for_resource_scheme(
     schemes: &[Box<dyn ResourceScheme>],
-    file_name: &PathBuf,
+    file_name: &Path,
 ) -> usize {
     use read_input::prelude::*;
 
@@ -251,17 +254,17 @@ fn init_progressbar(prefix: &str, size: u64) -> ProgressBar {
 
 fn write_resource(
     resource: ResourceType,
-    file_name: &PathBuf,
+    file_name: &Path,
 ) -> anyhow::Result<()> {
     match resource {
         ResourceType::RgbaImage { image } => {
-            let mut new_file_name = file_name.clone();
+            let mut new_file_name = file_name.to_path_buf();
             new_file_name.set_extension("png");
             image.save(new_file_name)?;
             Ok(())
         }
         ResourceType::Text(s) => {
-            let mut new_file_name = file_name.clone();
+            let mut new_file_name = file_name.to_path_buf();
             new_file_name.set_extension("txt");
             File::create(new_file_name)?.write_all(s.as_bytes())?;
             Ok(())
@@ -270,12 +273,12 @@ fn write_resource(
         ResourceType::SpriteSheet { mut sprites } => {
             if sprites.len() == 1 {
                 let image = sprites.remove(0);
-                let mut new_file_name = file_name.clone();
+                let mut new_file_name = file_name.to_path_buf();
                 new_file_name.set_extension("png");
                 image.save(new_file_name)?;
             } else {
                 for (i, sprite) in sprites.iter().enumerate() {
-                    let mut new_file_name = file_name.clone();
+                    let mut new_file_name = file_name.to_path_buf();
                     new_file_name.set_file_name(format!(
                         "{}_{}",
                         new_file_name

@@ -1,13 +1,13 @@
 use super::{ResourceScheme, ResourceType};
 use crate::{
     error::AkaibuError,
-    util::{image::bitmap_to_png_with_padding, mt::MT19937},
+    util::{image::bitmap_to_png_with_padding, mt::Mt19937},
 };
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use once_cell::sync::Lazy;
 use scroll::{Pread, BE, LE};
-use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
+use std::{collections::HashMap, fs::File, io::Read, path::Path};
 
 const SEEDS_PATH: &str = "gyu/seeds.json";
 
@@ -57,7 +57,7 @@ pub(crate) enum GyuScheme {
 }
 
 impl ResourceScheme for GyuScheme {
-    fn convert(&self, file_path: &PathBuf) -> anyhow::Result<ResourceType> {
+    fn convert(&self, file_path: &Path) -> anyhow::Result<ResourceType> {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
@@ -65,7 +65,7 @@ impl ResourceScheme for GyuScheme {
     }
     fn convert_from_bytes(
         &self,
-        file_path: &PathBuf,
+        file_path: &Path,
         buf: Vec<u8>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf, file_path)
@@ -126,7 +126,7 @@ impl GyuScheme {
     fn from_bytes(
         &self,
         mut buf: Vec<u8>,
-        file_path: &PathBuf,
+        file_path: &Path,
     ) -> anyhow::Result<ResourceType> {
         let mut header = buf.pread::<GyuHeader>(0)?;
         if header.mt_seed == 0 {
@@ -188,9 +188,9 @@ impl GyuScheme {
         })
     }
     fn get_seeds(&self) -> anyhow::Result<&Vec<u32>> {
-        Ok(SEEDS_TABLE
+        SEEDS_TABLE
             .get(self.get_key())
-            .context(format!("Unsupported game key {}", self.get_key()))?)
+            .context(format!("Unsupported game key {}", self.get_key()))
     }
     fn get_key(&self) -> &str {
         match self {
@@ -408,7 +408,7 @@ fn decompress0(buf: &[u8], dest_len: usize) -> Vec<u8> {
 
 fn decrypt_with_mt(buf: &mut [u8], mt_seed: u32) {
     if mt_seed != 0xFFFF_FFFF {
-        let mut mt = MT19937::default();
+        let mut mt = Mt19937::default();
         mt.seed_gyu(mt_seed);
         for _ in 0..10 {
             let a = mt.gen_u32() % buf.len() as u32;

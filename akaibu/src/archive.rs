@@ -1,11 +1,16 @@
 use bytes::Bytes;
 use itertools::Itertools;
-use std::{collections::HashMap, ffi::OsStr, fmt::Debug, path::PathBuf};
+use std::{
+    collections::HashMap,
+    ffi::OsStr,
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 // Workaround until it is possible to return impl Trait in traits
 pub trait Archive: Sync + Send + Debug {
     fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes>;
-    fn extract_all(&self, output_path: &PathBuf) -> anyhow::Result<()>;
+    fn extract_all(&self, output_path: &Path) -> anyhow::Result<()>;
 }
 
 // pub trait FileEntry: Debug {
