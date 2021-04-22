@@ -9,7 +9,7 @@ publish = false
 path = "../akaibu"
 
 [dependencies]
-iced = { version = "0.2", features = ["image"] }
+iced = { version = "0.3", features = ["image"] }
 bytesize = "1.0.1"
 structopt = { version = "0.3", default_features = false }
 log = "0.4"

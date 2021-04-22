@@ -7,7 +7,7 @@ use crate::{
     update, Opt,
 };
 use akaibu::{magic, resource::ResourceMagic};
-use iced::{executor, Application, Command};
+use iced::{executor, Application, Clipboard, Command};
 use std::{fs::File, io::Read};
 use structopt::StructOpt;
 
@@ -115,7 +115,11 @@ impl Application for App {
     fn title(&self) -> String {
         format!("Akaibu {}", env!("CARGO_PKG_VERSION"))
     }
-    fn update(&mut self, message: Self::Message) -> Command<Message> {
+    fn update(
+        &mut self,
+        message: Self::Message,
+        _clipboard: &mut Clipboard,
+    ) -> Command<Message> {
         match update::handle_message(self, message) {
             Ok(command) => command,
             Err(err) => {
