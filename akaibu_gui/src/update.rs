@@ -42,10 +42,9 @@ pub(crate) fn handle_message(
                         Ok(path) => Message::SetStatus(Status::Success(
                             format!("Converted: {:?}", path),
                         )),
-                        Err(err) => Message::SetStatus(Status::Error(format!(
-                            "{}",
-                            err
-                        ))),
+                        Err(err) => {
+                            Message::SetStatus(Status::Error(err.to_string()))
+                        }
                     },
                 ));
             };
@@ -82,10 +81,9 @@ pub(crate) fn handle_message(
                             resource,
                             file_entry.file_name.clone(),
                         ),
-                        Err(err) => Message::SetStatus(Status::Error(format!(
-                            "{}",
-                            err
-                        ))),
+                        Err(err) => {
+                            Message::SetStatus(Status::Error(err.to_string()))
+                        }
                     },
                 ));
             }
@@ -216,10 +214,9 @@ pub(crate) fn handle_message(
                         Ok(path) => Message::SetStatus(Status::Success(
                             format!("Saved: {:?}", path),
                         )),
-                        Err(err) => Message::SetStatus(Status::Error(format!(
-                            "{}",
-                            err
-                        ))),
+                        Err(err) => {
+                            Message::SetStatus(Status::Error(err.to_string()))
+                        }
                     },
                 ));
             }
@@ -244,22 +241,24 @@ pub(crate) fn handle_message(
         },
         Message::SaveSprite(sprite_index) => {
             if let Content::ResourceView(ref mut content) = app.content {
-                let resource = match content.resource {
-                    ResourceType::SpriteSheet { ref sprites } => {
+                let resource =
+                    if let ResourceType::SpriteSheet { ref sprites } =
+                        content.resource
+                    {
                         ResourceType::RgbaImage {
                             image: sprites
                                 .get(sprite_index)
                                 .context("Could not get sprite")?
                                 .convert(),
                         }
-                    }
-                    _ => {
-                        return Err(AkaibuError::Custom(
-                            "Invalid resource type".to_string(),
-                        )
-                        .into())
-                    }
-                };
+                    } else {
+                        {
+                            return Err(AkaibuError::Custom(
+                                "Invalid resource type".to_string(),
+                            )
+                            .into());
+                        }
+                    };
                 return Ok(Command::perform(
                     iced::futures::future::ready(
                         convert::write_resource_with_format(
@@ -272,10 +271,9 @@ pub(crate) fn handle_message(
                         Ok(path) => Message::SetStatus(Status::Success(
                             format!("Saved: {:?}", path),
                         )),
-                        Err(err) => Message::SetStatus(Status::Error(format!(
-                            "{}",
-                            err
-                        ))),
+                        Err(err) => {
+                            Message::SetStatus(Status::Error(err.to_string()))
+                        }
                     },
                 ));
             }

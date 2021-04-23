@@ -69,116 +69,105 @@ impl ArchiveContent {
         }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
-        let mut column = Column::new()
+        let top = Column::new()
+            .push(Space::new(Length::Units(0), Length::Units(5)))
             .push(
-                Column::new()
-                    .height(Length::FillPortion(2))
-                    .push(Space::new(Length::Units(0), Length::Units(5)))
+                Row::new()
+                    .height(Length::Units(30))
+                    .spacing(5)
+                    .push(Space::new(Length::Units(0), Length::Units(0)))
                     .push(
-                        Row::new()
-                            .height(Length::Units(30))
-                            .spacing(5)
-                            .push(Space::new(
-                                Length::Units(0),
-                                Length::Units(0),
-                            ))
-                            .push(
-                                Button::new(
-                                    &mut self.extract_all_button_state,
-                                    Text::new("Extract all"),
-                                )
-                                .on_press(Message::ExtractAll)
-                                .style(style::Dark::default()),
-                            )
-                            .push(
-                                Container::new(
-                                    Checkbox::new(
-                                        self.convert_all,
-                                        "Convert all",
-                                        Message::ConvertAllToggle,
-                                    )
-                                    .text_size(16)
-                                    .spacing(3)
-                                    .style(style::Dark::default()),
-                                )
-                                .height(Length::Fill)
-                                .center_y()
-                                .center_x(),
-                            )
-                            .push({
-                                let back_button = Button::new(
-                                    &mut self.back_dir_button_state,
-                                    Text::new("Back dir"),
-                                )
-                                .style(style::Dark::default());
-                                if self.navigable_dir.has_parent() {
-                                    back_button.on_press(Message::BackDirectory)
-                                } else {
-                                    back_button
-                                }
-                            })
-                            .push(
-                                TextInput::new(
-                                    &mut self.pattern_text_input,
-                                    "Search...",
-                                    &self.pattern,
-                                    Message::PatternChanged,
-                                )
-                                .style(style::Dark::default()),
-                            )
-                            .push(Space::new(
-                                Length::Units(0),
-                                Length::Units(0),
-                            )),
+                        Button::new(
+                            &mut self.extract_all_button_state,
+                            Text::new("Extract all"),
+                        )
+                        .on_press(Message::ExtractAll)
+                        .style(style::Dark::default()),
                     )
                     .push(
-                        Row::new()
-                            .push(Space::new(
-                                Length::Units(5),
-                                Length::Units(0),
-                            ))
-                            .push(
-                                Container::new(Text::new("Name").size(18))
-                                    .width(Length::FillPortion(1)),
+                        Container::new(
+                            Checkbox::new(
+                                self.convert_all,
+                                "Convert all",
+                                Message::ConvertAllToggle,
                             )
-                            .push(
-                                Container::new(Text::new("Size").size(18))
-                                    .width(Length::Units(80)),
-                            )
-                            .push(
-                                Container::new(Text::new("Actions").size(18))
-                                    .width(Length::Units(210)),
-                            ),
+                            .text_size(16)
+                            .spacing(3)
+                            .style(style::Dark::default()),
+                        )
+                        .height(Length::Fill)
+                        .center_y()
+                        .center_x(),
+                    )
+                    .push({
+                        let back_button = Button::new(
+                            &mut self.back_dir_button_state,
+                            Text::new("Back dir"),
+                        )
+                        .style(style::Dark::default());
+                        if self.navigable_dir.has_parent() {
+                            back_button.on_press(Message::BackDirectory)
+                        } else {
+                            back_button
+                        }
+                    })
+                    .push(
+                        TextInput::new(
+                            &mut self.pattern_text_input,
+                            "Search...",
+                            &self.pattern,
+                            Message::PatternChanged,
+                        )
+                        .style(style::Dark::default()),
+                    )
+                    .push(Space::new(Length::Units(0), Length::Units(0))),
+            );
+        let mut column = Column::new()
+            .height(Length::Fill)
+            .push(
+                Row::new()
+                    .push(Space::new(Length::Units(5), Length::Units(0)))
+                    .push(
+                        Container::new(Text::new("Name").size(18))
+                            .width(Length::FillPortion(1)),
                     )
                     .push(
-                        Scrollable::new(&mut self.entries_scrollable_state)
-                            .push({
-                                let matcher = &self.fuzzy_matcher;
-                                let pattern = &self.pattern;
-                                self.entries
-                                    .iter_mut()
-                                    .filter(|entry| {
-                                        matcher
-                                            .fuzzy_match(
-                                                entry.get_name(),
-                                                pattern,
-                                            )
-                                            .is_some()
-                                    })
-                                    .fold(Column::new(), |col, entry| {
-                                        col.push(entry.view())
-                                    })
-                            }),
+                        Container::new(Text::new("Size").size(18))
+                            .width(Length::Units(80)),
+                    )
+                    .push(
+                        Container::new(Text::new("Actions").size(18))
+                            .width(Length::Units(210)),
                     ),
             )
-            .height(Length::Fill);
+            .push(
+                Scrollable::new(&mut self.entries_scrollable_state)
+                    .height(Length::FillPortion(2))
+                    .push({
+                        let matcher = &self.fuzzy_matcher;
+                        let pattern = &self.pattern;
+                        self.entries
+                            .iter_mut()
+                            .filter(|entry| {
+                                matcher
+                                    .fuzzy_match(entry.get_name(), pattern)
+                                    .is_some()
+                            })
+                            .fold(Column::new(), |col, entry| {
+                                col.push(entry.view())
+                            })
+                    }),
+            );
         if self.preview.is_visible() {
             column = column.push(
                 Container::new(self.preview.view())
                     .height(Length::FillPortion(3)),
             );
         }
-        let content = Column::new().push(column).push(self.footer.view());
+        let content = Column::new()
+            .push(top)
+            .push(column)
+            .push(self.footer.view());
         Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)

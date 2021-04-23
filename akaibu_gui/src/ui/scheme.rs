@@ -4,10 +4,14 @@ use crate::{
     ui::footer::Footer,
 };
 use akaibu::scheme::Scheme;
-use iced::{button, Button, Column, Container, Element, Length, Row, Text};
+use iced::{
+    button, scrollable, Button, Column, Container, Element, Length, Row,
+    Scrollable, Text,
+};
 
 pub struct SchemeContent {
     schemes: Vec<(Box<dyn Scheme>, button::State)>,
+    scrollable_state: scrollable::State,
     message: String,
     footer: Footer,
 }
@@ -21,38 +25,54 @@ impl SchemeContent {
         let footer = Footer::new();
         Self {
             schemes,
+            scrollable_state: scrollable::State::new(),
             message,
             footer,
         }
     }
     pub fn view(&mut self) -> Element<'_, Message> {
-        let schemes = Container::new(
-            self.schemes.iter_mut().fold(
-                Column::new()
-                    .spacing(5)
-                    .push(Text::new(&self.message).size(30)),
-                |col, (scheme, button_state)| {
-                    col.push(
-                        Row::new().push(
-                            Button::new(
-                                button_state,
-                                Text::new(scheme.get_name()),
-                            )
-                            .on_press(Message::MoveScene(Scene::ArchiveView(
-                                scheme.clone(),
-                            )))
-                            .style(style::Dark::default()),
-                        ),
-                    )
-                },
-            ),
-        )
-        .center_x()
-        .center_y()
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .style(style::Dark::default());
-        Column::new().push(schemes).push(self.footer.view()).into()
+        let schemes =
+            Container::new(Scrollable::new(&mut self.scrollable_state).push(
+                self.schemes.iter_mut().fold(
+                    Column::new().spacing(5),
+                    |col, (scheme, button_state)| {
+                        col.push(
+                            Row::new().push(
+                                Button::new(
+                                    button_state,
+                                    Text::new(scheme.get_name()),
+                                )
+                                .on_press(Message::MoveScene(
+                                    Scene::ArchiveView(scheme.clone()),
+                                ))
+                                .style(style::Dark::default()),
+                            ),
+                        )
+                    },
+                ),
+            ))
+            .center_x()
+            .center_y()
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(style::Dark {
+                border_width: 0.0,
+                ..Default::default()
+            });
+        let header = Container::new(Text::new(&self.message).size(30))
+            .center_x()
+            .center_y()
+            .width(Length::Fill)
+            .height(Length::Units(40))
+            .style(style::Dark {
+                border_width: 0.0,
+                ..Default::default()
+            });
+        Column::new()
+            .push(header)
+            .push(schemes)
+            .push(self.footer.view())
+            .into()
     }
     pub fn set_status(&mut self, status: Status) {
         self.footer.set_status(status);
