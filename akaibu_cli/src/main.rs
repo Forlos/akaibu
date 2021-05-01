@@ -100,7 +100,7 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
     log::debug!("Scheme {:?}", scheme);
 
     let progress_bar =
-        init_progressbar("Converting...", opt.files.len() as u64);
+        init_progressbar("Converting...".to_string(), opt.files.len() as u64);
 
     opt.files
         .par_iter()
@@ -161,7 +161,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
                 .cloned()
                 .collect::<Vec<FileEntry>>();
             let progress_bar = init_progressbar(
-                &format!("Extracting: {:?}", file),
+                format!("Extracting: {:?}", file),
                 files.len() as u64,
             );
 
@@ -242,7 +242,7 @@ fn prompt_for_resource_scheme(
         .get()
 }
 
-fn init_progressbar(prefix: &str, size: u64) -> ProgressBar {
+fn init_progressbar(prefix: String, size: u64) -> ProgressBar {
     let progress_bar = ProgressBar::new(size).with_style(
         ProgressStyle::default_bar().template(
             " {spinner} {prefix} {wide_bar:} {pos:>6}/{len:6} ETA:[{eta}]",
