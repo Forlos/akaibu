@@ -1,6 +1,6 @@
 [package]
 name = "akaibu_gui"
-version = "0.1.11-alpha.0"
+version = "0.1.11"
 authors = ["forlos <forlos@disroot.org>"]
 edition = "2018"
 publish = false
