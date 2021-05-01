@@ -1,8 +1,8 @@
-use crate::archive;
+use crate::archive::{self, FileContents};
 
 use super::Scheme;
 use anyhow::Context;
-use bytes::{Bytes, BytesMut};
+use bytes::BytesMut;
 use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -87,7 +87,7 @@ impl archive::Archive for EscArc2Archive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -99,7 +99,7 @@ impl archive::Archive for EscArc2Archive {
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(
             |entry| -> Result<(), anyhow::Error> {
-                let buf = self.extract(entry)?;
+                let file_contents = self.extract(entry)?;
                 let mut output_file_name = PathBuf::from(output_path);
                 output_file_name.push(&entry.full_path);
                 std::fs::create_dir_all(
@@ -112,7 +112,8 @@ impl archive::Archive for EscArc2Archive {
                     output_file_name,
                     entry
                 );
-                File::create(output_file_name)?.write_all(&buf)?;
+                File::create(output_file_name)?
+                    .write_all(&file_contents.contents)?;
                 Ok(())
             },
         )
@@ -137,12 +138,18 @@ impl EscArc2Archive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &EscArc2FileEntry) -> anyhow::Result<Bytes> {
+    fn extract(
+        &self,
+        entry: &EscArc2FileEntry,
+    ) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
         self.file
             .read_exact_at(entry.file_offset as u64, &mut buf)?;
-        Ok(buf.freeze())
+        Ok(FileContents {
+            contents: buf.freeze(),
+            type_hint: None,
+        })
     }
 }
 

@@ -1,6 +1,6 @@
 use super::Scheme;
 use crate::{
-    archive,
+    archive::{self, FileContents},
     util::{crc64, zlib_decompress},
 };
 use anyhow::Context;
@@ -116,7 +116,7 @@ impl archive::Archive for Acv1Archive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -128,7 +128,7 @@ impl archive::Archive for Acv1Archive {
 
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -141,7 +141,8 @@ impl archive::Archive for Acv1Archive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -173,13 +174,19 @@ impl Acv1Archive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &Acv1Entry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &Acv1Entry) -> anyhow::Result<FileContents> {
         if entry.flags == 6 {
             log::debug!("Extracting script: {:X?}", entry);
-            Ok(entry.dump_script(&self.file, self.script_key)?)
+            Ok(FileContents {
+                contents: entry.dump_script(&self.file, self.script_key)?,
+                type_hint: None,
+            })
         } else {
             log::debug!("Extracting resource: {:X?}", entry);
-            Ok(entry.dump_entry(&self.file)?)
+            Ok(FileContents {
+                contents: entry.dump_entry(&self.file)?,
+                type_hint: None,
+            })
         }
     }
 }

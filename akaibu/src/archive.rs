@@ -7,9 +7,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::resource::ResourceMagic;
+
 // Workaround until it is possible to return impl Trait in traits
 pub trait Archive: Sync + Send + Debug {
-    fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes>;
+    fn extract(&self, entry: &FileEntry) -> anyhow::Result<FileContents>;
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()>;
 }
 
@@ -18,6 +20,13 @@ pub trait Archive: Sync + Send + Debug {
 //     fn file_offset(&self) -> usize;
 //     fn file_size(&self) -> usize;
 // }
+//
+
+#[derive(Debug)]
+pub struct FileContents {
+    pub contents: Bytes,
+    pub type_hint: Option<ResourceMagic>,
+}
 
 #[derive(Debug, Clone)]
 pub struct FileEntry {

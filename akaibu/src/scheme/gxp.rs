@@ -1,7 +1,7 @@
 use super::Scheme;
-use crate::archive;
+use crate::archive::{self, FileContents};
 use anyhow::Context;
-use bytes::{Bytes, BytesMut};
+use bytes::BytesMut;
 use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
@@ -67,7 +67,10 @@ struct GxpArchive {
 }
 
 impl archive::Archive for GxpArchive {
-    fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
+    fn extract(
+        &self,
+        entry: &archive::FileEntry,
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -77,7 +80,7 @@ impl archive::Archive for GxpArchive {
     }
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -90,7 +93,8 @@ impl archive::Archive for GxpArchive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -121,7 +125,7 @@ impl GxpArchive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &GxpFileEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &GxpFileEntry) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
         let buf_len = buf.len();
@@ -132,7 +136,10 @@ impl GxpArchive {
             &mut buf,
         )?;
         xor_data_with_password(&mut buf, buf_len, 0)?;
-        Ok(buf.freeze())
+        Ok(FileContents {
+            contents: buf.freeze(),
+            type_hint: None,
+        })
     }
 }
 

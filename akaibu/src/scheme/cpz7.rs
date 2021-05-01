@@ -1,5 +1,8 @@
 use super::Scheme;
-use crate::{archive, util::md5};
+use crate::{
+    archive::{self, FileContents},
+    util::md5,
+};
 use anyhow::Context;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use encoding_rs::SHIFT_JIS;
@@ -133,7 +136,10 @@ struct Cpz7Archive {
 }
 
 impl archive::Archive for Cpz7Archive {
-    fn extract(&self, entry: &archive::FileEntry) -> anyhow::Result<Bytes> {
+    fn extract(
+        &self,
+        entry: &archive::FileEntry,
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_data
             .values()
@@ -150,7 +156,7 @@ impl archive::Archive for Cpz7Archive {
             .values()
             .flatten()
             .try_for_each(|entry| {
-                let buf = self.extract(entry)?;
+                let file_contents = self.extract(entry)?;
                 let mut output_file_name = PathBuf::from(output_path);
                 output_file_name.push(&entry.full_path);
                 std::fs::create_dir_all(
@@ -163,7 +169,8 @@ impl archive::Archive for Cpz7Archive {
                     output_file_name,
                     entry
                 );
-                File::create(output_file_name)?.write_all(&buf)?;
+                File::create(output_file_name)?
+                    .write_all(&file_contents.contents)?;
                 Ok(())
             })
     }
@@ -196,7 +203,7 @@ impl Cpz7Archive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &FileEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &FileEntry) -> anyhow::Result<FileContents> {
         let mut contents = vec![0; entry.file_size as usize];
         let raw_file_data_off = self.archive.header.archive_data_size
             + self.archive.header.file_data_size
@@ -213,14 +220,18 @@ impl Cpz7Archive {
             self.game_keys[2],
             self.game_keys[3],
         );
-        decrypt_file(
+        let contents = decrypt_file(
             &contents,
             entry.file_size as usize,
             &self.archive.md5_cpz7,
             file_key,
             &self.archive.files_decrypt_table,
             &PASSWORD,
-        )
+        )?;
+        Ok(FileContents {
+            contents,
+            type_hint: None,
+        })
     }
 }
 

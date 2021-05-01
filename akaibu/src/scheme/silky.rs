@@ -1,4 +1,4 @@
-use crate::archive;
+use crate::archive::{self, FileContents};
 
 use super::Scheme;
 use anyhow::Context;
@@ -74,7 +74,7 @@ impl archive::Archive for SilkyArchive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .entries
             .iter()
@@ -85,7 +85,7 @@ impl archive::Archive for SilkyArchive {
 
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -98,7 +98,8 @@ impl archive::Archive for SilkyArchive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -122,15 +123,19 @@ impl SilkyArchive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &SilkyEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &SilkyEntry) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
         self.file.read_exact_at(entry.file_offset, &mut buf)?;
-        if entry.uncompressed_file_size > entry.file_size {
-            Ok(decompress(&buf, entry.uncompressed_file_size as usize))
+        let contents = if entry.uncompressed_file_size > entry.file_size {
+            decompress(&buf, entry.uncompressed_file_size as usize)
         } else {
-            Ok(buf.freeze())
-        }
+            buf.freeze()
+        };
+        Ok(FileContents {
+            contents,
+            type_hint: None,
+        })
     }
 }
 

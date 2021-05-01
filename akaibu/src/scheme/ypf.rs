@@ -1,5 +1,5 @@
-use crate::util::zlib_decompress;
 use crate::{archive, error::AkaibuError, scheme::Scheme};
+use crate::{archive::FileContents, util::zlib_decompress};
 use anyhow::Context;
 use bytes::Bytes;
 use bytes::BytesMut;
@@ -73,7 +73,7 @@ impl archive::Archive for YpfArchive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -84,7 +84,7 @@ impl archive::Archive for YpfArchive {
 
     fn extract_all(&self, output_path: &std::path::Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -97,7 +97,8 @@ impl archive::Archive for YpfArchive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -128,17 +129,21 @@ impl YpfArchive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &YpfFileEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &YpfFileEntry) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
-        if entry.flags == 1 {
+        let contents = if entry.flags == 1 {
             buf.resize(entry.compressed_file_size as usize, 0);
             self.file.read_exact_at(entry.file_offset, &mut buf)?;
-            Ok(Bytes::from(zlib_decompress(&buf)?))
+            Bytes::from(zlib_decompress(&buf)?)
         } else {
             buf.resize(entry.file_size as usize, 0);
             self.file.read_exact_at(entry.file_offset, &mut buf)?;
-            Ok(buf.freeze())
-        }
+            buf.freeze()
+        };
+        Ok(FileContents {
+            contents,
+            type_hint: None,
+        })
     }
 }
 

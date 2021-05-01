@@ -1,5 +1,5 @@
 use super::Scheme;
-use crate::archive;
+use crate::archive::{self, FileContents};
 use anyhow::Context;
 use bytes::BytesMut;
 use positioned_io::{RandomAccessFile, ReadAt};
@@ -78,7 +78,7 @@ impl archive::Archive for Pf8Archive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -89,7 +89,7 @@ impl archive::Archive for Pf8Archive {
 
     fn extract_all(&self, output_path: &Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -102,7 +102,8 @@ impl archive::Archive for Pf8Archive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -133,14 +134,17 @@ impl Pf8Archive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &Pf8FileEntry) -> anyhow::Result<bytes::Bytes> {
+    fn extract(&self, entry: &Pf8FileEntry) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
 
         self.file
             .read_exact_at(entry.file_offset as u64, &mut buf)?;
         self.decrypt_file(&mut buf)?;
-        Ok(buf.freeze())
+        Ok(FileContents {
+            contents: buf.freeze(),
+            type_hint: None,
+        })
     }
     fn decrypt_file(&self, data: &mut [u8]) -> anyhow::Result<()> {
         data.iter_mut().enumerate().try_for_each(|(i, b)| {

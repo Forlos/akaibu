@@ -1,5 +1,8 @@
 use super::Scheme;
-use crate::{archive, error::AkaibuError};
+use crate::{
+    archive::{self, FileContents},
+    error::AkaibuError,
+};
 use anyhow::Context;
 use bytes::{BufMut, Bytes, BytesMut};
 use camellia_rs::{Block, CamelliaCipher};
@@ -168,7 +171,7 @@ impl archive::Archive for MalieArchive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -180,7 +183,7 @@ impl archive::Archive for MalieArchive {
     fn extract_all(&self, output_path: &std::path::Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(
             |entry| -> Result<(), anyhow::Error> {
-                let buf = self.extract(entry)?;
+                let file_contents = self.extract(entry)?;
                 let mut output_file_name = PathBuf::from(output_path);
                 output_file_name.push(&entry.full_path);
                 std::fs::create_dir_all(
@@ -193,7 +196,8 @@ impl archive::Archive for MalieArchive {
                     output_file_name,
                     entry
                 );
-                File::create(output_file_name)?.write_all(&buf)?;
+                File::create(output_file_name)?
+                    .write_all(&file_contents.contents)?;
                 Ok(())
             },
         )
@@ -218,7 +222,7 @@ impl MalieArchive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &MalieEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &MalieEntry) -> anyhow::Result<FileContents> {
         let aligned = align_size(entry.file_size as usize);
         let offset =
             (entry.file_offset as usize + self.file_data_offset as usize) << 10;
@@ -227,7 +231,10 @@ impl MalieArchive {
         self.file.read_exact_at(offset as u64, &mut buf)?;
         decrypt_file(&mut buf, offset, &self.camellia)?;
         buf.resize(entry.file_size as usize, 0);
-        Ok(buf.freeze())
+        Ok(FileContents {
+            contents: buf.freeze(),
+            type_hint: None,
+        })
     }
 }
 

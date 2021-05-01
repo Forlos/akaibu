@@ -1,19 +1,12 @@
 use super::Scheme;
-use crate::archive;
+use crate::archive::{self, FileContents};
 use anyhow::Context;
-use bytes::Bytes;
 use bytes::BytesMut;
 use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
-use rayon::iter::IntoParallelRefIterator;
-use rayon::iter::ParallelIterator;
-use scroll::ctx;
-use scroll::Pread;
-use scroll::LE;
-use std::convert::TryInto;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use scroll::{ctx, Pread, LE};
+use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 
 const BURIKO_ENTRY_SIZE: usize = 0x80;
 const BURIKO_ENTRY_NAME_SIZE: usize = 0x60;
@@ -76,7 +69,7 @@ impl archive::Archive for BurikoArchive {
     fn extract(
         &self,
         entry: &archive::FileEntry,
-    ) -> anyhow::Result<bytes::Bytes> {
+    ) -> anyhow::Result<FileContents> {
         self.archive
             .file_entries
             .iter()
@@ -87,7 +80,7 @@ impl archive::Archive for BurikoArchive {
 
     fn extract_all(&self, output_path: &std::path::Path) -> anyhow::Result<()> {
         self.archive.file_entries.par_iter().try_for_each(|entry| {
-            let buf = self.extract(entry)?;
+            let file_contents = self.extract(entry)?;
             let mut output_file_name = PathBuf::from(output_path);
             output_file_name.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -100,7 +93,8 @@ impl archive::Archive for BurikoArchive {
                 output_file_name,
                 entry
             );
-            File::create(output_file_name)?.write_all(&buf)?;
+            File::create(output_file_name)?
+                .write_all(&file_contents.contents)?;
             Ok(())
         })
     }
@@ -131,7 +125,7 @@ impl BurikoArchive {
                 .collect(),
         )
     }
-    fn extract(&self, entry: &BurikoFileEntry) -> anyhow::Result<Bytes> {
+    fn extract(&self, entry: &BurikoFileEntry) -> anyhow::Result<FileContents> {
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
         self.file.read_exact_at(
@@ -141,7 +135,10 @@ impl BurikoArchive {
         if buf.get(4..8).context("Out of bounds access")? == SOUND_FILE_MAGIC {
             buf = buf.split_off(0x40);
         }
-        Ok(buf.freeze())
+        Ok(FileContents {
+            contents: buf.freeze(),
+            type_hint: None,
+        })
     }
 }
 
