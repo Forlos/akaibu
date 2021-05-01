@@ -10,17 +10,17 @@
 use akaibu::{
     archive::FileEntry,
     magic::Archive,
-    resource::{ResourceMagic, ResourceScheme, ResourceType},
+    resource::{ResourceMagic, ResourceScheme},
     scheme::Scheme,
 };
 use anyhow::Context;
 use colored::*;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use std::{fs::File, path::PathBuf};
 use std::{
-    io::{Read, Write},
-    path::Path,
+    fs::File,
+    io::Read,
+    path::{Path, PathBuf},
 };
 use structopt::StructOpt;
 
@@ -109,7 +109,7 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
         .try_for_each(|file| {
             log::debug!("Converting: {:?}", file);
             match scheme.convert(&file) {
-                Ok(resource) => write_resource(resource, file),
+                Ok(resource) => resource.write_resource(file),
                 Err(err) => {
                     log::error!("Error while converting: {:?} {}", file, err);
                     Ok(())
@@ -169,7 +169,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
                 .par_iter()
                 .progress_with(progress_bar)
                 .try_for_each(|entry| {
-                    let buf = archive.extract(entry)?;
+                    let file_contents = archive.extract(entry)?;
                     let mut output_file_name = PathBuf::from(&opt.output_dir);
                     output_file_name.push(&entry.full_path);
                     std::fs::create_dir_all(
@@ -182,7 +182,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
                         output_file_name,
                         entry
                     );
-                    File::create(output_file_name)?.write_all(&buf)?;
+                    file_contents.write_contents(&output_file_name)?;
                     Ok(())
                 })
         })
@@ -250,49 +250,4 @@ fn init_progressbar(prefix: &str, size: u64) -> ProgressBar {
     );
     progress_bar.set_prefix(prefix);
     progress_bar
-}
-
-fn write_resource(
-    resource: ResourceType,
-    file_name: &Path,
-) -> anyhow::Result<()> {
-    match resource {
-        ResourceType::RgbaImage { image } => {
-            let mut new_file_name = file_name.to_path_buf();
-            new_file_name.set_extension("png");
-            image.save(new_file_name)?;
-            Ok(())
-        }
-        ResourceType::Text(s) => {
-            let mut new_file_name = file_name.to_path_buf();
-            new_file_name.set_extension("txt");
-            File::create(new_file_name)?.write_all(s.as_bytes())?;
-            Ok(())
-        }
-        ResourceType::Other => Ok(()),
-        ResourceType::SpriteSheet { mut sprites } => {
-            if sprites.len() == 1 {
-                let image = sprites.remove(0);
-                let mut new_file_name = file_name.to_path_buf();
-                new_file_name.set_extension("png");
-                image.save(new_file_name)?;
-            } else {
-                for (i, sprite) in sprites.iter().enumerate() {
-                    let mut new_file_name = file_name.to_path_buf();
-                    new_file_name.set_file_name(format!(
-                        "{}_{}",
-                        new_file_name
-                            .file_stem()
-                            .context("Could not get file name")?
-                            .to_str()
-                            .context("Not valid UTF-8")?,
-                        i
-                    ));
-                    new_file_name.set_extension("png");
-                    sprite.save(&new_file_name)?;
-                }
-            }
-            Ok(())
-        }
-    }
 }

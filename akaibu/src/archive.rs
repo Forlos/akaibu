@@ -1,9 +1,11 @@
 use bytes::Bytes;
 use itertools::Itertools;
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     ffi::OsStr,
     fmt::Debug,
+    fs::File,
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -28,6 +30,32 @@ pub struct FileContents {
     pub type_hint: Option<ResourceMagic>,
 }
 
+impl FileContents {
+    pub fn get_resource_type(&self) -> ResourceMagic {
+        if let Some(resource_type) = &self.type_hint {
+            resource_type.clone()
+        } else {
+            ResourceMagic::parse_magic(&self.contents)
+        }
+    }
+    pub fn write_contents(
+        &self,
+        output_file_name: &Path,
+    ) -> anyhow::Result<()> {
+        if let Some(resource_type) = &self.type_hint {
+            let resource = resource_type
+                .get_schemes()
+                .get(0)
+                .expect("Expected universal scheme")
+                .convert_from_bytes(&PathBuf::new(), self.contents.to_vec())?;
+            resource.write_resource(&output_file_name)?;
+        } else {
+            File::create(output_file_name)?.write_all(&self.contents)?;
+        };
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct FileEntry {
     pub file_name: String,
@@ -39,14 +67,14 @@ pub struct FileEntry {
 #[derive(Debug, Clone)]
 pub struct Directory {
     pub files: Vec<FileEntry>,
-    pub directories: HashMap<String, Directory>,
+    pub directories: BTreeMap<String, Directory>,
 }
 
 impl Directory {
     pub fn new(files: Vec<FileEntry>) -> Self {
         let mut root_dir = Directory {
             files: Vec::new(),
-            directories: HashMap::new(),
+            directories: BTreeMap::new(),
         };
         for entry in files
             .into_iter()
@@ -65,7 +93,7 @@ impl Directory {
                         ))
                         .or_insert(Directory {
                             files: Vec::new(),
-                            directories: HashMap::new(),
+                            directories: BTreeMap::new(),
                         });
                 }
                 current.files.push(entry);

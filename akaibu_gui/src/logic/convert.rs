@@ -1,8 +1,5 @@
 use crate::ui::resource::ConvertFormat;
-use akaibu::{
-    archive::Archive, archive::FileEntry, resource::ResourceMagic,
-    resource::ResourceType,
-};
+use akaibu::{archive::Archive, archive::FileEntry, resource::ResourceType};
 use anyhow::Context;
 use image::ImageFormat;
 use std::{
@@ -17,8 +14,8 @@ pub async fn convert_resource(
     entry: FileEntry,
     file_path: PathBuf,
 ) -> anyhow::Result<PathBuf> {
-    let contents = archive.extract(&entry)?;
-    let resource_magic = ResourceMagic::parse_magic(&contents);
+    let file_contents = archive.extract(&entry)?;
+    let resource_magic = file_contents.get_resource_type();
     log::info!("Converting resource {:?}", resource_magic);
     let mut converted_path = file_path;
     converted_path.set_file_name(&entry.file_name);
@@ -27,7 +24,10 @@ pub async fn convert_resource(
             .get_schemes()
             .get(0)
             .context("Expected universal scheme")?
-            .convert_from_bytes(&converted_path, contents.to_vec())?,
+            .convert_from_bytes(
+                &converted_path,
+                file_contents.contents.to_vec(),
+            )?,
         &entry,
         &converted_path,
     )?;
@@ -40,8 +40,8 @@ pub fn convert_resource_blocking(
     entry: &FileEntry,
     file_path: &Path,
 ) -> anyhow::Result<PathBuf> {
-    let contents = archive.extract(&entry)?;
-    let resource_magic = ResourceMagic::parse_magic(&contents);
+    let file_contents = archive.extract(&entry)?;
+    let resource_magic = file_contents.get_resource_type();
     log::info!("Converting resource {:?}", resource_magic);
     let mut converted_path = file_path.to_path_buf();
     converted_path.set_file_name(&entry.file_name);
@@ -50,7 +50,10 @@ pub fn convert_resource_blocking(
             .get_schemes()
             .get(0)
             .context("Expected universal scheme")?
-            .convert_from_bytes(&converted_path, contents.to_vec())?,
+            .convert_from_bytes(
+                &converted_path,
+                file_contents.contents.to_vec(),
+            )?,
         &entry,
         file_path,
     )?;

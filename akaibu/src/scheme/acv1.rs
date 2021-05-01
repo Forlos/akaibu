@@ -10,7 +10,7 @@ use positioned_io::{RandomAccessFile, ReadAt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use scroll::{ctx, Pread, LE};
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs::File,
     io::Write,
     path::{Path, PathBuf},
@@ -39,7 +39,7 @@ impl Scheme for Acv1Scheme {
         let (sjis_file_names, _encoding_used, _any_errors) =
             SHIFT_JIS.decode(&file_names);
 
-        let mut hashes = HashMap::new();
+        let mut hashes = BTreeMap::new();
         sjis_file_names.lines().for_each(|l| {
             hashes.insert(crc64(&SHIFT_JIS.encode(&l).0), l);
         });
@@ -196,12 +196,12 @@ struct Acv1 {
     file_entries: Vec<Acv1Entry>,
 }
 
-impl<'a> ctx::TryFromCtx<'a, (u32, &HashMap<u64, &str>)> for Acv1 {
+impl<'a> ctx::TryFromCtx<'a, (u32, &BTreeMap<u64, &str>)> for Acv1 {
     type Error = anyhow::Error;
     #[inline]
     fn try_from_ctx(
         buf: &'a [u8],
-        (entry_count, hashes): (u32, &HashMap<u64, &str>),
+        (entry_count, hashes): (u32, &BTreeMap<u64, &str>),
     ) -> Result<(Self, usize), Self::Error> {
         let off = &mut 0;
         let mut file_entries = Vec::with_capacity(entry_count as usize);
@@ -226,12 +226,12 @@ struct Acv1Entry {
     extractable: bool,
 }
 
-impl<'a> ctx::TryFromCtx<'a, &HashMap<u64, &str>> for Acv1Entry {
+impl<'a> ctx::TryFromCtx<'a, &BTreeMap<u64, &str>> for Acv1Entry {
     type Error = anyhow::Error;
     #[inline]
     fn try_from_ctx(
         buf: &'a [u8],
-        hashes: &HashMap<u64, &str>,
+        hashes: &BTreeMap<u64, &str>,
     ) -> Result<(Self, usize), Self::Error> {
         let off = &mut 0;
         let crc64 = buf.gread_with::<u64>(off, LE)?;

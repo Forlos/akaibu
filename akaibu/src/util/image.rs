@@ -23,6 +23,18 @@ pub fn bitmap_to_png_with_padding(
     }
 }
 
+pub fn remove_bitmap_padding(
+    buf: Vec<u8>,
+    width_in_bytes: usize,
+    padding: usize,
+) -> Vec<u8> {
+    buf.chunks_exact(width_in_bytes)
+        .map(|c| &c[..width_in_bytes - padding])
+        .flatten()
+        .copied()
+        .collect()
+}
+
 pub fn resolve_color_table(
     color_index_table: &[u8],
     color_table: &[u8],

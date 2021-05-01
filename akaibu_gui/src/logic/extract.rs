@@ -2,14 +2,14 @@ use super::convert;
 use akaibu::archive::{Archive, FileEntry};
 use anyhow::Context;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
 
 pub async fn extract_single_file(
     archive: Arc<Box<dyn Archive>>,
     entry: FileEntry,
     file_path: PathBuf,
 ) -> anyhow::Result<PathBuf> {
-    let buf = archive.extract(&entry)?;
+    let file_contents = archive.extract(&entry)?;
     let mut output_file_name = PathBuf::from(
         file_path
             .parent()
@@ -17,7 +17,7 @@ pub async fn extract_single_file(
     );
     output_file_name.push(&entry.file_name);
     log::info!("Extracting resource: {:?} {:X?}", output_file_name, entry);
-    File::create(&output_file_name)?.write_all(&buf)?;
+    file_contents.write_contents(&output_file_name)?;
     Ok(output_file_name)
 }
 
@@ -40,7 +40,7 @@ pub async fn extract_all(
     files
         .par_iter()
         .try_for_each::<_, anyhow::Result<()>>(|entry| {
-            let buf = archive.extract(entry)?;
+            let file_contents = archive.extract(entry)?;
             let mut output_file_path = output_path.clone();
             output_file_path.push(&entry.full_path);
             std::fs::create_dir_all(
@@ -53,7 +53,7 @@ pub async fn extract_all(
                 output_file_path,
                 entry
             );
-            File::create(output_file_path)?.write_all(&buf)?;
+            file_contents.write_contents(&output_file_path)?;
             Ok(())
         })?;
     Ok(output_path)
@@ -85,7 +85,7 @@ pub async fn extract_all_with_convert(
             ) {
                 Ok(_) => Ok(()),
                 Err(_) => {
-                    let buf = archive.extract(entry)?;
+                    let file_contents = archive.extract(entry)?;
                     let mut output_file_path = output_path.clone();
                     output_file_path.push(&entry.full_path);
                     std::fs::create_dir_all(
@@ -98,7 +98,7 @@ pub async fn extract_all_with_convert(
                         output_file_path,
                         entry
                     );
-                    File::create(output_file_path)?.write_all(&buf)?;
+                    file_contents.write_contents(&output_file_path)?;
                     Ok(())
                 }
             }

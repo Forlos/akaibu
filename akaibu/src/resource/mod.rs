@@ -2,20 +2,22 @@ mod akb;
 mod common;
 mod g00;
 mod gyu;
+mod iar;
 mod jbp1;
 mod pb3b;
 mod tlg;
 mod ycg;
 
+use anyhow::Context;
 use dyn_clone::DynClone;
 use enum_iterator::IntoEnumIterator;
 use image::RgbaImage;
 use scroll::{Pread, LE};
-use std::fmt::Debug;
-use std::path::Path;
+use std::{fmt::Debug, fs::File};
+use std::{io::Write, path::Path};
 use tlg::TlgScheme;
 
-#[derive(Debug, IntoEnumIterator)]
+#[derive(Debug, IntoEnumIterator, Clone)]
 pub enum ResourceMagic {
     Tlg,
     Pb3b,
@@ -24,6 +26,8 @@ pub enum ResourceMagic {
     Gyu,
     GyuUniversal,
     G00,
+    Iar,
+
     Png,
     Jpg,
     Bmp,
@@ -100,6 +104,8 @@ impl ResourceMagic {
             Self::Gyu => false,
             Self::GyuUniversal => true,
             Self::G00 => true,
+            Self::Iar => true,
+
             Self::Png => true,
             Self::Jpg => true,
             Self::Bmp => true,
@@ -119,6 +125,8 @@ impl ResourceMagic {
                 vec![Box::new(gyu::GyuScheme::Universal)]
             }
             ResourceMagic::G00 => g00::G00Scheme::get_schemes(),
+            ResourceMagic::Iar => iar::IarScheme::get_schemes(),
+
             Self::Png | Self::Jpg | Self::Bmp | Self::Ico | Self::Riff => {
                 vec![Box::new(common::Common)]
             }
@@ -139,4 +147,48 @@ pub enum ResourceType {
     RgbaImage { image: RgbaImage },
     Text(String),
     Other,
+}
+
+impl ResourceType {
+    pub fn write_resource(self, file_name: &Path) -> anyhow::Result<()> {
+        match self {
+            ResourceType::RgbaImage { image } => {
+                let mut new_file_name = file_name.to_path_buf();
+                new_file_name.set_extension("png");
+                image.save(new_file_name)?;
+                Ok(())
+            }
+            ResourceType::Text(s) => {
+                let mut new_file_name = file_name.to_path_buf();
+                new_file_name.set_extension("txt");
+                File::create(new_file_name)?.write_all(s.as_bytes())?;
+                Ok(())
+            }
+            ResourceType::Other => Ok(()),
+            ResourceType::SpriteSheet { mut sprites } => {
+                if sprites.len() == 1 {
+                    let image = sprites.remove(0);
+                    let mut new_file_name = file_name.to_path_buf();
+                    new_file_name.set_extension("png");
+                    image.save(new_file_name)?;
+                } else {
+                    for (i, sprite) in sprites.iter().enumerate() {
+                        let mut new_file_name = file_name.to_path_buf();
+                        new_file_name.set_file_name(format!(
+                            "{}_{}",
+                            new_file_name
+                                .file_stem()
+                                .context("Could not get file name")?
+                                .to_str()
+                                .context("Not valid UTF-8")?,
+                            i
+                        ));
+                        new_file_name.set_extension("png");
+                        sprite.save(&new_file_name)?;
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
 }

@@ -8,6 +8,7 @@ pub mod buriko;
 pub mod cpz7;
 pub mod esc_arc2;
 pub mod gxp;
+pub mod iar;
 pub mod malie;
 pub mod pf8;
 pub mod silky;

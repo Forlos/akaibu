@@ -9,7 +9,7 @@ use encoding_rs::SHIFT_JIS;
 use positioned_io::{RandomAccessFile, ReadAt};
 use scroll::{ctx, Pread, LE};
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     convert::TryInto,
     fs::File,
     io::Write,
@@ -238,7 +238,7 @@ impl Cpz7Archive {
 #[derive(Debug)]
 struct Cpz7 {
     header: Cpz7Header,
-    file_data: HashMap<ArchiveDataEntry, Vec<FileEntry>>,
+    file_data: BTreeMap<ArchiveDataEntry, Vec<FileEntry>>,
     files_decrypt_table: Bytes,
     md5_cpz7: [u8; 16],
     encryption_data: EncryptionData,
@@ -317,7 +317,7 @@ impl<'a> ctx::TryFromCtx<'a, (Cpz7Header, &[u32; 4])> for Cpz7 {
             md5_cpz7.pread_with(12, LE)?,
             header.archive_data_key,
         )?;
-        let mut file_data = HashMap::new();
+        let mut file_data = BTreeMap::new();
         let off = &mut 0;
         for archive in archive_data {
             let mut file_entries =
@@ -409,7 +409,7 @@ impl<'a> ctx::TryFromCtx<'a, scroll::Endian> for Cpz7Header {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 struct ArchiveDataEntry {
     entry_size: u32,
     file_count: u32,

@@ -12,6 +12,7 @@ pub enum Archive {
     EscArc2,
     Malie,
     Silky,
+    Iar,
     NotRecognized,
 }
 
@@ -41,6 +42,8 @@ impl Archive {
             [0xc1, 0xf2, 0x5e, 0x79, ..] | [0x7f, 0x4d, 0x8f, 0xe9, ..] => {
                 Self::Malie
             }
+            // iar
+            [0x69, 0x61, 0x72, 0x20, ..] => Self::Iar,
             _ => Self::NotRecognized,
         }
     }
@@ -56,6 +59,7 @@ impl Archive {
             Self::EscArc2 => true,
             Self::Malie => false,
             Self::Silky => true,
+            Self::Iar => true,
             Self::NotRecognized => false,
         }
     }
@@ -71,6 +75,7 @@ impl Archive {
             Self::EscArc2 => scheme::esc_arc2::EscArc2Scheme::get_schemes(),
             Self::Malie => scheme::malie::MalieScheme::get_schemes(),
             Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
+            Self::Iar => scheme::iar::IarScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
