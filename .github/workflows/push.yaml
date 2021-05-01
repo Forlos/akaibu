@@ -50,7 +50,7 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [check, test, clippy]
+    needs: [check, test]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
