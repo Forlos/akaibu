@@ -199,7 +199,7 @@ fn prompt_for_archive_scheme(
         .enumerate()
         .map(|s| format!(" {}: {}\n", s.0, s.1.get_name()))
         .fold(
-            format!("{:?}\nSelect game by typing number:\n", file_name),
+            format!("{:?}\nSelect scheme by typing number:\n", file_name),
             |mut v, s| {
                 v += &s;
                 v
@@ -226,7 +226,7 @@ fn prompt_for_resource_scheme(
         .enumerate()
         .map(|s| format!(" {}: {}\n", s.0, s.1.get_name()))
         .fold(
-            format!("{:?}\nSelect game by typing number:\n", file_name),
+            format!("{:?}\nSelect scheme by typing number:\n", file_name),
             |mut v, s| {
                 v += &s;
                 v

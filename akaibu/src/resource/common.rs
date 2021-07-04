@@ -3,7 +3,7 @@ use std::{fs::File, io::Read, path::Path};
 use super::{ResourceScheme, ResourceType};
 
 #[derive(Debug, Clone)]
-pub(crate) struct Common;
+pub(crate) struct Common(pub(crate) String);
 
 impl ResourceScheme for Common {
     fn convert(&self, file_path: &Path) -> anyhow::Result<ResourceType> {
@@ -24,13 +24,13 @@ impl ResourceScheme for Common {
     }
 
     fn get_name(&self) -> String {
-        String::from("Common")
+        format!("[Common File Formats] {}", self.0)
     }
 
     fn get_schemes() -> Vec<Box<dyn ResourceScheme>>
     where
         Self: Sized,
     {
-        vec![Box::new(Self)]
+        vec![Box::new(Self("".to_string()))]
     }
 }

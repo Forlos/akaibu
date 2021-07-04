@@ -134,7 +134,7 @@ impl ResourceMagic {
             ResourceMagic::Crxg => crxg::CrxgScheme::get_schemes(),
 
             Self::Png | Self::Jpg | Self::Bmp | Self::Ico | Self::Riff => {
-                vec![Box::new(common::Common)]
+                vec![Box::new(common::Common(format!("{:?}", self)))]
             }
             ResourceMagic::Unrecognized => vec![],
         }

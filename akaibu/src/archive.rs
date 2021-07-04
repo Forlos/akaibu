@@ -82,7 +82,7 @@ impl Directory {
         {
             let dirs = entry.full_path.iter().collect::<Vec<&OsStr>>();
             let mut current = &mut root_dir;
-            if dirs.len() == 1 {
+            if dirs.len() <= 1 {
                 current.files.push(entry);
             } else {
                 for dir in &dirs[..dirs.len() - 1] {

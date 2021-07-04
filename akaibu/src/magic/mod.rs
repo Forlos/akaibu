@@ -13,6 +13,7 @@ pub enum Archive {
     Malie,
     Silky,
     Iar,
+    WillplusArc,
     NotRecognized,
 }
 
@@ -60,6 +61,7 @@ impl Archive {
             Self::Malie => false,
             Self::Silky => true,
             Self::Iar => true,
+            Self::WillplusArc => true,
             Self::NotRecognized => false,
         }
     }
@@ -76,6 +78,7 @@ impl Archive {
             Self::Malie => scheme::malie::MalieScheme::get_schemes(),
             Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
             Self::Iar => scheme::iar::IarScheme::get_schemes(),
+            Self::WillplusArc => scheme::willplus_arc::ArcScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }

@@ -12,6 +12,7 @@ pub mod iar;
 pub mod malie;
 pub mod pf8;
 pub mod silky;
+pub mod willplus_arc;
 pub mod ypf;
 
 pub trait Scheme: Debug + Send + DynClone {
