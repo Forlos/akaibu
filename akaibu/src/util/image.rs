@@ -49,3 +49,18 @@ pub fn resolve_color_table(
         },
     )
 }
+
+pub fn resolve_color_table_without_alpha(
+    color_index_table: &[u8],
+    color_table: &[u8],
+) -> Vec<u8> {
+    color_index_table.iter().fold(
+        Vec::with_capacity(color_index_table.len() * 3),
+        |mut v, b| {
+            v.extend_from_slice(
+                &color_table[*b as usize * 3..*b as usize * 3 + 3],
+            );
+            v
+        },
+    )
+}

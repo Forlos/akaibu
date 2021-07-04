@@ -2,13 +2,14 @@
 #+author: Forlos
 #+description: Table of supported resource formats
 
-| Name | Type  | Extension    | Versions       | Destination format |
-|------+-------+--------------+----------------+--------------------|
-| TLG  | Image | *.tlg        | 0,6            | PNG                |
-| PB3  | Image | *.pb3        | 1,2,3,5,6      | PNG                |
-| YCG  | Image | *.png, *.ycg | 1              | PNG                |
-| AKB  | Image | *.AKB        | N/A            | PNG                |
-| AKB+ | Image | *.AKB        | N/A            | PNG                |
-| GYU  | Image | *.gyu        | 1,2,4,8        | PNG                |
-| G00  | Image | *.g00        | 0,1,2          | PNG                |
-| IAR  | Image | N/A          | 0x3c,0x1c,0x2  | PNG                |
+| Name | Type  | Extension    | Versions      | Destination format |
+|------+-------+--------------+---------------+--------------------|
+| TLG  | Image | *.tlg        | 0,6           | PNG                |
+| PB3  | Image | *.pb3        | 1,2,3,5,6     | PNG                |
+| YCG  | Image | *.png, *.ycg | 1             | PNG                |
+| AKB  | Image | *.AKB        | N/A           | PNG                |
+| AKB+ | Image | *.AKB        | N/A           | PNG                |
+| GYU  | Image | *.gyu        | 1,2,4,8       | PNG                |
+| G00  | Image | *.g00        | 0,1,2         | PNG                |
+| IAR  | Image | N/A          | 0x3c,0x1c,0x2 | PNG                |
+| CRXG | Image | *.CRX        | 0x3c,0x1c,0x2 | PNG                |

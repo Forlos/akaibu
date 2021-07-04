@@ -1,5 +1,6 @@
 mod akb;
 mod common;
+mod crxg;
 mod g00;
 mod gyu;
 mod iar;
@@ -27,6 +28,7 @@ pub enum ResourceMagic {
     GyuUniversal,
     G00,
     Iar,
+    Crxg,
 
     Png,
     Jpg,
@@ -73,6 +75,8 @@ impl ResourceMagic {
                 }
                 Err(_) => Self::Unrecognized,
             },
+            // CRXG
+            [0x43, 0x52, 0x58, 0x47, ..] => Self::Crxg,
             [137, 80, 78, 71, 13, 10, 26, 10, ..]
             | [135, 80, 78, 71, 13, 10, 26, 10, ..] => Self::Png,
             [255, 216, 255, ..] => Self::Jpg,
@@ -105,6 +109,7 @@ impl ResourceMagic {
             Self::GyuUniversal => true,
             Self::G00 => true,
             Self::Iar => true,
+            Self::Crxg => true,
 
             Self::Png => true,
             Self::Jpg => true,
@@ -126,6 +131,7 @@ impl ResourceMagic {
             }
             ResourceMagic::G00 => g00::G00Scheme::get_schemes(),
             ResourceMagic::Iar => iar::IarScheme::get_schemes(),
+            ResourceMagic::Crxg => crxg::CrxgScheme::get_schemes(),
 
             Self::Png | Self::Jpg | Self::Bmp | Self::Ico | Self::Riff => {
                 vec![Box::new(common::Common)]
