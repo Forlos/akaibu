@@ -27,7 +27,12 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Install required libraries
+        run: |
+          sudo apt-get install libxkbcommon-dev
       - uses: actions-rs/cargo@v1
+        env:
+          LD_DEBUG: all
         with:
           command: test
 
@@ -41,6 +46,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Install required libraries
+        run: |
+          sudo apt-get install libxkbcommon-dev
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
@@ -59,6 +67,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Install required libraries
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get install libxkbcommon-dev
       - uses: actions-rs/cargo@v1
         with:
           command: build
