@@ -113,6 +113,7 @@ impl Preview {
             .width(Length::Fill)
             .height(Length::Fill),
         };
+        header = header.push(Space::new(Length::Fill, Length::Units(0)));
         if let ResourceType::SpriteSheet { sprites } = &self.resource {
             let mut prev = Button::new(
                 &mut self.prev_sprite_button_state,
@@ -135,22 +136,19 @@ impl Preview {
                 next = next.on_press(Message::NextSprite);
             }
             header = header
-                .push(Space::new(Length::Fill, Length::Units(0)))
                 .push(prev)
                 .push(Space::new(Length::Units(5), Length::Units(0)))
                 .push(next)
                 .push(Space::new(Length::Units(5), Length::Units(0)));
         }
-        header = header
-            .push(Space::new(Length::Fill, Length::Units(0)))
-            .push(
-                Button::new(
-                    &mut self.close_button_state,
-                    Image::new(X_IMAGE_HANDLE.clone()),
-                )
-                .style(style::Dark::default())
-                .on_press(Message::ClosePreview),
-            );
+        header = header.push(
+            Button::new(
+                &mut self.close_button_state,
+                Image::new(X_IMAGE_HANDLE.clone()),
+            )
+            .style(style::Dark::default())
+            .on_press(Message::ClosePreview),
+        );
 
         Container::new(Column::new().push(header).push(preview))
             .height(Length::Fill)

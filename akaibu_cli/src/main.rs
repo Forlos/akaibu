@@ -63,6 +63,10 @@ fn convert_resource(opt: &Opt) -> anyhow::Result<()> {
     let not_universal = opt.files.iter().find(|f| {
         let mut magic = vec![0; 16];
         File::open(&f)
+            .map_err(|e| {
+                log::error!("Could not find file: {:?}. {}", f, e);
+                e
+            })
             .expect("Could not open file")
             .read_exact(&mut magic)
             .expect("Could not read file");

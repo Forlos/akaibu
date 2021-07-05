@@ -13,3 +13,4 @@
 | G00  | Image | *.g00        | 0,1,2         | PNG                |
 | IAR  | Image | N/A          | 0x3c,0x1c,0x2 | PNG                |
 | CRXG | Image | *.CRX        | N/A           | PNG                |
+| PNA  | Image | *.pna        | N/A           | PNG                |
