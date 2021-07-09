@@ -1,10 +1,9 @@
-use crate::error::AkaibuError;
-
 use super::{ResourceScheme, ResourceType};
+use crate::error::AkaibuError;
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use scroll::{Pread, LE};
-use std::{fs::File, io::Read, path::Path};
+use std::{convert::TryInto, fs::File, io::Read, path::Path};
 
 #[derive(Debug, Clone)]
 pub(crate) enum BgScheme {
@@ -269,17 +268,18 @@ fn fill_third_buf(
     for i in 0..data_size {
         if d == 1 {
             loop {
-                d = if (src[src_index] & a) != 0 { 1 } else { 0 };
-                d = d * 4 + 16;
+                d = 16;
+                if (src[src_index] & a) != 0 {
+                    d += 4;
+                }
                 b = second_buf
                     .pread_with::<u32>(d as usize + b as usize * 24, LE)?;
                 a >>= 1;
-                d = a as u32;
+                if a == 0 {
+                    src_index += 1;
+                }
                 if a == 0 {
                     a = 0x80;
-                }
-                if d == 0 {
-                    src_index += 1;
                 }
                 if second_buf.pread_with::<u32>(b as usize * 24 + 8, LE)? != 1 {
                     break;
@@ -324,8 +324,6 @@ fn fill_pixel_data(data_size: usize, src: &[u8]) -> anyhow::Result<Vec<u8>> {
     Ok(dest)
 }
 
-// TODO: This thing is hideous. The performance sucks.
-// Either find a way to access prev_line without copying or use simd.
 fn parse_pixel_data(
     src: &[u8],
     width: usize,
@@ -346,11 +344,11 @@ fn parse_pixel_data(
         dest_index += 4;
     }
 
+    let mut prev_line_index = 0;
     for _ in 0..height - 1 {
-        let mut prev_line_index = 0;
-        let prev_line = dest[dest_index - width * 4..].to_vec();
         let p = &src[*src_index..*src_index + bytes_per_pixel];
-        let mut x = prev_line[prev_line_index..prev_line_index + 4].to_vec();
+        let mut x: [u8; 4] =
+            dest[prev_line_index..prev_line_index + 4].try_into()?;
         *src_index += bytes_per_pixel;
         prev_line_index += 4;
         for i in 0..bytes_per_pixel {
@@ -358,14 +356,16 @@ fn parse_pixel_data(
         }
         dest[dest_index..dest_index + 4].copy_from_slice(&x);
         dest_index += 4;
-        x = punpcklbw(&x, b"\x00\x00\x00\x00");
+        let mut x = punpcklbw0(&x);
         for _ in 0..width - 1 {
-            let mut p2 = src[*src_index..*src_index + bytes_per_pixel].to_vec();
-            let mut x2 =
-                prev_line[prev_line_index..prev_line_index + 4].to_vec();
+            let mut p2 = [0u8; 4];
+            p2[..bytes_per_pixel].copy_from_slice(
+                &src[*src_index..*src_index + bytes_per_pixel],
+            );
+            let x2 = &dest[prev_line_index..prev_line_index + 4];
             prev_line_index += 4;
             *src_index += bytes_per_pixel;
-            x2 = punpcklbw(&x2, b"\x00\x00\x00\x00");
+            let x2 = punpcklbw0(&x2);
             for i in 0..4 {
                 let v =
                     x[i * 2..i * 2 + 2].pread_with::<u16>(0, LE)?.wrapping_add(
@@ -373,12 +373,12 @@ fn parse_pixel_data(
                     ) >> 1;
                 x[i * 2..i * 2 + 2].copy_from_slice(&v.to_le_bytes());
             }
-            p2.push(0);
-            p2 = punpcklbw(&p2, b"\x00\x00\x00\x00");
+            let p2 = punpcklbw0(&p2);
             for i in 0..8 {
                 x[i] = x[i].wrapping_add(p2[i]);
             }
-            dest[dest_index..dest_index + 4].copy_from_slice(&packuswb(&x)?);
+            dest[dest_index..dest_index + 4]
+                .copy_from_slice(&packuswb(&x)?.to_be_bytes());
             dest_index += 4;
         }
     }
@@ -390,26 +390,26 @@ fn parse_pixel_data(
     Ok(dest)
 }
 
-fn punpcklbw(xmm0: &[u8], xmm1: &[u8]) -> Vec<u8> {
-    let mut dest = Vec::with_capacity(8);
+fn punpcklbw0(xmm0: &[u8]) -> [u8; 8] {
+    let mut dest = [0; 8];
     for i in 0..4 {
-        dest.push(xmm0[i]);
-        dest.push(xmm1[i]);
+        dest[i * 2] = xmm0[i];
     }
     dest
 }
 
-fn packuswb(xmm0: &[u8]) -> anyhow::Result<Vec<u8>> {
-    let mut result = Vec::with_capacity(4);
+fn packuswb(xmm0: &[u8]) -> anyhow::Result<u32> {
+    let mut result = 0u32;
     for i in 0..4 {
+        result <<= 8;
         let b = xmm0.pread_with::<i16>(i * 2, LE)?;
-        result.push(if b > 0xFF {
+        result |= if b > 0xFF {
             0xFF
         } else if b < 0 {
             0
         } else {
-            b as u8
-        });
+            (b & 0xFF) as u32
+        };
     }
     Ok(result)
 }
