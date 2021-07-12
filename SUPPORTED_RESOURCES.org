@@ -15,3 +15,4 @@
 | CRXG         | Image | *.CRX        | N/A           | PNG                |
 | PNA          | Image | *.pna        | N/A           | PNG                |
 | CompressedBg | Image | N/A          | N/A           | PNG                |
+| DPNG         | Image | *.png        | N/A           | PNG                |
