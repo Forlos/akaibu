@@ -8,7 +8,10 @@ use crate::{
 };
 use akaibu::{magic, resource::ResourceMagic};
 use iced::{executor, Application, Clipboard, Command};
-use std::{fs::File, io::Read};
+use std::{
+    fs::File,
+    io::{Read, Seek, SeekFrom},
+};
 use structopt::StructOpt;
 
 pub(crate) struct App {
@@ -29,7 +32,14 @@ impl Application for App {
             .expect("Could not open file")
             .read_exact(&mut magic)
             .expect("Could not read file");
-        let archive = magic::Archive::parse(&magic);
+        let mut archive = magic::Archive::parse(&magic);
+        if let magic::Archive::NotRecognized = archive {
+            let mut magic = vec![0; 32];
+            let mut f = File::open(&opt.file).expect("Could not open file");
+            f.seek(SeekFrom::End(-32)).expect("Could not seek file");
+            f.read_exact(&mut magic).expect("Could not read file");
+            archive = magic::Archive::parse_end(&magic);
+        };
 
         if let magic::Archive::NotRecognized = archive {
             let mut resource = ResourceMagic::parse_magic(&magic);

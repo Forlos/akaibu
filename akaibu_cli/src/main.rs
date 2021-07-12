@@ -19,7 +19,7 @@ use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::{
     fs::File,
-    io::Read,
+    io::{Read, Seek, SeekFrom},
     path::{Path, PathBuf},
 };
 use structopt::StructOpt;
@@ -130,7 +130,14 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
             let mut magic = vec![0; 32];
             File::open(&file)?.read_exact(&mut magic)?;
 
-            let archive_magic = Archive::parse(&magic);
+            let mut archive_magic = Archive::parse(&magic);
+            if let Archive::NotRecognized = archive_magic {
+                let mut magic = vec![0; 32];
+                let mut f = File::open(&file)?;
+                f.seek(SeekFrom::End(-32))?;
+                f.read_exact(&mut magic)?;
+                archive_magic = Archive::parse_end(&magic);
+            };
             log::debug!("Archive: {:?}", archive_magic);
             let schemes = if let Archive::NotRecognized = archive_magic {
                 println!(

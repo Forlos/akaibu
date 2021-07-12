@@ -11,6 +11,7 @@ pub mod gxp;
 pub mod iar;
 pub mod malie;
 pub mod pf8;
+pub mod qliepack;
 pub mod silky;
 pub mod willplus_arc;
 pub mod ypf;

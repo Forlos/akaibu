@@ -2,6 +2,7 @@ mod akb;
 mod common;
 mod compressedbg;
 mod crxg;
+mod dpng;
 mod g00;
 mod gyu;
 mod iar;
@@ -33,6 +34,7 @@ pub enum ResourceMagic {
     Crxg,
     Pna,
     CompressedBg,
+    Dpng,
 
     Png,
     Jpg,
@@ -89,6 +91,8 @@ impl ResourceMagic {
             [0x43, 0x6f, 0x6d, 0x70, 0x72, 0x65, 0x73, 0x73, 0x65, 0x64, 0x42, 0x47, 0x5f, 0x5f, 0x5f, 0x0, ..] => {
                 Self::CompressedBg
             }
+            // DPNG
+            [0x44, 0x50, 0x4e, 0x47, ..] => Self::Dpng,
 
             [137, 80, 78, 71, 13, 10, 26, 10, ..]
             | [135, 80, 78, 71, 13, 10, 26, 10, ..] => Self::Png,
@@ -125,6 +129,7 @@ impl ResourceMagic {
             Self::Crxg => true,
             Self::Pna => true,
             Self::CompressedBg => true,
+            Self::Dpng => true,
 
             Self::Png => true,
             Self::Jpg => true,
@@ -151,6 +156,7 @@ impl ResourceMagic {
             ResourceMagic::CompressedBg => {
                 compressedbg::BgScheme::get_schemes()
             }
+            ResourceMagic::Dpng => dpng::DpngScheme::get_schemes(),
 
             Self::Png | Self::Jpg | Self::Bmp | Self::Ico | Self::Riff => {
                 vec![Box::new(common::Common(format!("{:?}", self)))]

@@ -356,16 +356,16 @@ fn parse_pixel_data(
         }
         dest[dest_index..dest_index + 4].copy_from_slice(&x);
         dest_index += 4;
-        let mut x = punpcklbw0(&x);
+        let mut x = punpcklbw0(x);
         for _ in 0..width - 1 {
             let mut p2 = [0u8; 4];
             p2[..bytes_per_pixel].copy_from_slice(
                 &src[*src_index..*src_index + bytes_per_pixel],
             );
-            let x2 = &dest[prev_line_index..prev_line_index + 4];
+            let x2 = dest[prev_line_index..prev_line_index + 4].try_into()?;
             prev_line_index += 4;
             *src_index += bytes_per_pixel;
-            let x2 = punpcklbw0(&x2);
+            let x2 = punpcklbw0(x2);
             for i in 0..4 {
                 let v =
                     x[i * 2..i * 2 + 2].pread_with::<u16>(0, LE)?.wrapping_add(
@@ -373,12 +373,11 @@ fn parse_pixel_data(
                     ) >> 1;
                 x[i * 2..i * 2 + 2].copy_from_slice(&v.to_le_bytes());
             }
-            let p2 = punpcklbw0(&p2);
+            let p2 = punpcklbw0(p2);
             for i in 0..8 {
                 x[i] = x[i].wrapping_add(p2[i]);
             }
-            dest[dest_index..dest_index + 4]
-                .copy_from_slice(&packuswb(&x)?.to_be_bytes());
+            dest[dest_index..dest_index + 4].copy_from_slice(&packuswb(x)?);
             dest_index += 4;
         }
     }
@@ -390,7 +389,7 @@ fn parse_pixel_data(
     Ok(dest)
 }
 
-fn punpcklbw0(xmm0: &[u8]) -> [u8; 8] {
+fn punpcklbw0(xmm0: [u8; 4]) -> [u8; 8] {
     let mut dest = [0; 8];
     for i in 0..4 {
         dest[i * 2] = xmm0[i];
@@ -398,17 +397,16 @@ fn punpcklbw0(xmm0: &[u8]) -> [u8; 8] {
     dest
 }
 
-fn packuswb(xmm0: &[u8]) -> anyhow::Result<u32> {
-    let mut result = 0u32;
+fn packuswb(xmm0: [u8; 8]) -> anyhow::Result<[u8; 4]> {
+    let mut result = [0; 4];
     for i in 0..4 {
-        result <<= 8;
         let b = xmm0.pread_with::<i16>(i * 2, LE)?;
-        result |= if b > 0xFF {
+        result[i] = if b > 0xFF {
             0xFF
         } else if b < 0 {
             0
         } else {
-            (b & 0xFF) as u32
+            b as u8
         };
     }
     Ok(result)

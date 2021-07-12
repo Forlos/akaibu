@@ -14,6 +14,7 @@ pub enum Archive {
     Silky,
     Iar,
     WillplusArc,
+    QliePack,
     NotRecognized,
 }
 
@@ -48,6 +49,14 @@ impl Archive {
             _ => Self::NotRecognized,
         }
     }
+    /// Parse last 32 bytes of file to detect archive type
+    pub fn parse_end(buf: &[u8]) -> Self {
+        if &buf[buf.len() - 0x1C..buf.len() - 0x1C + 11] == b"FilePackVer" {
+            Self::QliePack
+        } else {
+            Self::NotRecognized
+        }
+    }
     /// Is archive extraction scheme not game dependent
     pub fn is_universal(&self) -> bool {
         match self {
@@ -62,6 +71,7 @@ impl Archive {
             Self::Silky => true,
             Self::Iar => true,
             Self::WillplusArc => true,
+            Self::QliePack => false,
             Self::NotRecognized => false,
         }
     }
@@ -79,6 +89,7 @@ impl Archive {
             Self::Silky => scheme::silky::SilkyScheme::get_schemes(),
             Self::Iar => scheme::iar::IarScheme::get_schemes(),
             Self::WillplusArc => scheme::willplus_arc::ArcScheme::get_schemes(),
+            Self::QliePack => scheme::qliepack::PackScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
