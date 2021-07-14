@@ -20,6 +20,9 @@ use scroll::{ctx, Pread, LE};
 pub enum PackScheme {
     KoikenOtome,
     KoikenOtomeFD,
+    Biman1,
+    Biman2,
+    Biman2_5,
     Biman3,
     UniversalVer31,
 }
@@ -134,6 +137,9 @@ impl Scheme for PackScheme {
                 Self::KoikenOtomeFD => "KoikenOtomeFD",
                 Self::Biman3 => "Biman3",
                 Self::UniversalVer31 => "Universal",
+                Self::Biman1 => "Biman1",
+                Self::Biman2 => "Biman2",
+                Self::Biman2_5 => "Biman2_5",
             })
             .context(format!("Could not find keys for {:?}", self))?;
         let key1 = keys
@@ -175,6 +181,12 @@ impl Scheme for PackScheme {
             match self {
                 Self::KoikenOtome => "Koiken Otome",
                 Self::KoikenOtomeFD => "Koiken Otome ~Revive~",
+                Self::Biman1 =>
+                    "Bishoujo Mangekyou -Norowareshi Densetsu no Shoujo-",
+                Self::Biman2 =>
+                    "Bishoujo Mangekyou -Wasurenagusa to Eien no Shoujo-",
+                Self::Biman2_5 =>
+                    "Bishoujo Mangekyou -Katsute Shoujo Datta Kimi e-",
                 Self::Biman3 =>
                     "Bishoujo Mangekyou -Kami ga Tsukuritamouta Shoujo-tachi-",
                 Self::UniversalVer31 => "Version 3.1 Universal",
@@ -189,6 +201,9 @@ impl Scheme for PackScheme {
         vec![
             Box::new(Self::KoikenOtome),
             Box::new(Self::KoikenOtomeFD),
+            Box::new(Self::Biman1),
+            Box::new(Self::Biman2),
+            Box::new(Self::Biman2_5),
             Box::new(Self::Biman3),
             Box::new(Self::UniversalVer31),
         ]
@@ -266,7 +281,6 @@ impl PackArchive {
         )
     }
     fn extract(&self, entry: &PackFileEntry) -> anyhow::Result<FileContents> {
-        println!("{:#?}", entry);
         let mut buf = BytesMut::with_capacity(entry.file_size as usize);
         buf.resize(entry.file_size as usize, 0);
 

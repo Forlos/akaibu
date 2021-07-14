@@ -85,7 +85,6 @@ impl G00Scheme {
         let color_table = &data[2..color_table_size * 4 + 2];
         let color_index_table = &data[color_table_size * 4 + 2..];
         let pixels = resolve_color_table(color_index_table, color_table);
-        println!("{}", pixels.len());
         let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
             ImageBuffer::from_vec(
                 header.width as u32,

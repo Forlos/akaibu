@@ -91,7 +91,7 @@ impl BgScheme {
             state = new_state;
             *b = b.wrapping_sub(val as u8);
         });
-        let first_buf = fill_first_buf(&decrypt_data).unwrap();
+        let first_buf = fill_first_buf(&decrypt_data)?;
         let (second_buf, result) = fill_second_buf(&first_buf)?;
         let third_buf = fill_third_buf(
             header.unk3 as usize,
