@@ -10,6 +10,7 @@ pub mod esc_arc2;
 pub mod gxp;
 pub mod iar;
 pub mod malie;
+pub mod nekopack;
 pub mod pf8;
 pub mod qliepack;
 pub mod silky;

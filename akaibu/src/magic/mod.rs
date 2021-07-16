@@ -15,6 +15,7 @@ pub enum Archive {
     Iar,
     WillplusArc,
     QliePack,
+    Nekopack,
     NotRecognized,
 }
 
@@ -46,6 +47,10 @@ impl Archive {
             }
             // iar
             [0x69, 0x61, 0x72, 0x20, ..] => Self::Iar,
+            // NEKOPACK
+            [0x4e, 0x45, 0x4b, 0x4f, 0x50, 0x41, 0x43, 0x4b, ..] => {
+                Self::Nekopack
+            }
             _ => Self::NotRecognized,
         }
     }
@@ -72,6 +77,7 @@ impl Archive {
             Self::Iar => true,
             Self::WillplusArc => true,
             Self::QliePack => false,
+            Self::Nekopack => true,
             Self::NotRecognized => false,
         }
     }
@@ -90,6 +96,7 @@ impl Archive {
             Self::Iar => scheme::iar::IarScheme::get_schemes(),
             Self::WillplusArc => scheme::willplus_arc::ArcScheme::get_schemes(),
             Self::QliePack => scheme::qliepack::PackScheme::get_schemes(),
+            Self::Nekopack => scheme::nekopack::PackScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
