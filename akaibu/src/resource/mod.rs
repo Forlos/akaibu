@@ -8,6 +8,7 @@ mod gyu;
 mod iar;
 mod jbp1;
 mod pb3b;
+mod pgd;
 mod pna;
 mod tlg;
 mod ycg;
@@ -35,6 +36,7 @@ pub enum ResourceMagic {
     Pna,
     CompressedBg,
     Dpng,
+    Pgd,
 
     Png,
     Jpg,
@@ -93,6 +95,8 @@ impl ResourceMagic {
             }
             // DPNG
             [0x44, 0x50, 0x4e, 0x47, ..] => Self::Dpng,
+            // DPNG
+            [0x47, 0x45, ..] => Self::Pgd,
 
             [137, 80, 78, 71, 13, 10, 26, 10, ..]
             | [135, 80, 78, 71, 13, 10, 26, 10, ..] => Self::Png,
@@ -130,6 +134,7 @@ impl ResourceMagic {
             Self::Pna => true,
             Self::CompressedBg => true,
             Self::Dpng => true,
+            Self::Pgd => true,
 
             Self::Png => true,
             Self::Jpg => true,
@@ -157,6 +162,7 @@ impl ResourceMagic {
                 compressedbg::BgScheme::get_schemes()
             }
             ResourceMagic::Dpng => dpng::DpngScheme::get_schemes(),
+            ResourceMagic::Pgd => pgd::PgdScheme::get_schemes(),
 
             Self::Png | Self::Jpg | Self::Bmp | Self::Ico | Self::Riff => {
                 vec![Box::new(common::Common(format!("{:?}", self)))]
