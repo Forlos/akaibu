@@ -4,6 +4,7 @@ use dyn_clone::DynClone;
 use std::{fmt::Debug, path::Path};
 
 pub mod acv1;
+pub mod amusepac;
 pub mod buriko;
 pub mod cpz7;
 pub mod esc_arc2;

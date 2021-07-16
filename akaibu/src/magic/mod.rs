@@ -16,6 +16,7 @@ pub enum Archive {
     WillplusArc,
     QliePack,
     Nekopack,
+    AmusePac,
     NotRecognized,
 }
 
@@ -51,6 +52,7 @@ impl Archive {
             [0x4e, 0x45, 0x4b, 0x4f, 0x50, 0x41, 0x43, 0x4b, ..] => {
                 Self::Nekopack
             }
+            [0x50, 0x41, 0x43, 0x20, ..] => Self::AmusePac,
             _ => Self::NotRecognized,
         }
     }
@@ -78,6 +80,7 @@ impl Archive {
             Self::WillplusArc => true,
             Self::QliePack => false,
             Self::Nekopack => true,
+            Self::AmusePac => true,
             Self::NotRecognized => false,
         }
     }
@@ -97,6 +100,7 @@ impl Archive {
             Self::WillplusArc => scheme::willplus_arc::ArcScheme::get_schemes(),
             Self::QliePack => scheme::qliepack::PackScheme::get_schemes(),
             Self::Nekopack => scheme::nekopack::PackScheme::get_schemes(),
+            Self::AmusePac => scheme::amusepac::PacScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }
