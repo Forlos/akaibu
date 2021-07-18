@@ -1,5 +1,8 @@
 use super::{ResourceScheme, ResourceType};
-use crate::error::AkaibuError;
+use crate::{
+    error::AkaibuError,
+    util::simd::{packuswb0, punpcklbw0},
+};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use scroll::{Pread, LE};
@@ -377,7 +380,7 @@ fn parse_pixel_data(
             for i in 0..8 {
                 x[i] = x[i].wrapping_add(p2[i]);
             }
-            dest[dest_index..dest_index + 4].copy_from_slice(&packuswb(x)?);
+            dest[dest_index..dest_index + 4].copy_from_slice(&packuswb0(x)?);
             dest_index += 4;
         }
     }
@@ -387,27 +390,4 @@ fn parse_pixel_data(
     }
 
     Ok(dest)
-}
-
-fn punpcklbw0(xmm0: [u8; 4]) -> [u8; 8] {
-    let mut dest = [0; 8];
-    for i in 0..4 {
-        dest[i * 2] = xmm0[i];
-    }
-    dest
-}
-
-fn packuswb(xmm0: [u8; 8]) -> anyhow::Result<[u8; 4]> {
-    let mut result = [0; 4];
-    for i in 0..4 {
-        let b = xmm0.pread_with::<i16>(i * 2, LE)?;
-        result[i] = if b > 0xFF {
-            0xFF
-        } else if b < 0 {
-            0
-        } else {
-            b as u8
-        };
-    }
-    Ok(result)
 }

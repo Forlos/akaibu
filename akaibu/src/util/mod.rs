@@ -1,6 +1,7 @@
 pub mod image;
 pub mod md5;
 pub mod mt;
+pub mod simd;
 
 pub fn crc64(buf: &[u8]) -> u64 {
     use crc_any::CRC;
