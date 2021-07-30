@@ -1,5 +1,5 @@
 use super::{ResourceScheme, ResourceType};
-use crate::{error::AkaibuError, util::image::bitmap_to_png};
+use crate::{archive, error::AkaibuError, util::image::bitmap_to_png};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, Pixel};
 use scroll::Pread;
@@ -35,6 +35,7 @@ impl ResourceScheme for AkbScheme {
         &self,
         _file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)
     }

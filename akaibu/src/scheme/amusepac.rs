@@ -17,7 +17,7 @@ impl Scheme for PacScheme {
         &self,
         file_path: &std::path::Path,
     ) -> anyhow::Result<(
-        Box<dyn crate::archive::Archive + Sync>,
+        Box<dyn crate::archive::Archive>,
         crate::archive::NavigableDirectory,
     )> {
         let mut buf = vec![0; 14];

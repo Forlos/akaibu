@@ -1,5 +1,5 @@
 use super::{jbp1::jbp1_decompress, ResourceScheme, ResourceType};
-use crate::error::AkaibuError;
+use crate::{archive, error::AkaibuError};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
@@ -30,6 +30,7 @@ impl ResourceScheme for Pb3bScheme {
         &self,
         _file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)
     }

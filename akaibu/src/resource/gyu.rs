@@ -1,5 +1,6 @@
 use super::{ResourceScheme, ResourceType};
 use crate::{
+    archive,
     error::AkaibuError,
     util::{image::bitmap_to_png_with_padding, mt::Mt19937},
 };
@@ -68,6 +69,7 @@ impl ResourceScheme for GyuScheme {
         &self,
         file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf, file_path)
     }

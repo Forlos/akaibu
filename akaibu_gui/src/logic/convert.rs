@@ -27,6 +27,7 @@ pub async fn convert_resource(
             .convert_from_bytes(
                 &converted_path,
                 file_contents.contents.to_vec(),
+                Some(&archive),
             )?,
         &entry,
         &converted_path,
@@ -53,6 +54,7 @@ pub fn convert_resource_blocking(
             .convert_from_bytes(
                 &converted_path,
                 file_contents.contents.to_vec(),
+                Some(&archive),
             )?,
         &entry,
         file_path,

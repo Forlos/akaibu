@@ -193,7 +193,7 @@ fn extract_archive(opt: &Opt) -> anyhow::Result<()> {
                         output_file_name,
                         entry
                     );
-                    file_contents.write_contents(&output_file_name)?;
+                    file_contents.write_contents(&output_file_name, Some(&archive))?;
                     Ok(())
                 })
         })

@@ -17,7 +17,7 @@ pub async fn extract_single_file(
     );
     output_file_name.push(&entry.file_name);
     log::info!("Extracting resource: {:?} {:X?}", output_file_name, entry);
-    file_contents.write_contents(&output_file_name)?;
+    file_contents.write_contents(&output_file_name, Some(&archive))?;
     Ok(output_file_name)
 }
 
@@ -53,7 +53,7 @@ pub async fn extract_all(
                 output_file_path,
                 entry
             );
-            file_contents.write_contents(&output_file_path)?;
+            file_contents.write_contents(&output_file_path, Some(&archive))?;
             Ok(())
         })?;
     Ok(output_path)
@@ -98,7 +98,8 @@ pub async fn extract_all_with_convert(
                         output_file_path,
                         entry
                     );
-                    file_contents.write_contents(&output_file_path)?;
+                    file_contents
+                        .write_contents(&output_file_path, Some(&archive))?;
                     Ok(())
                 }
             }

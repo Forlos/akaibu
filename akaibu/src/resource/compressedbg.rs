@@ -1,5 +1,6 @@
 use super::{ResourceScheme, ResourceType};
 use crate::{
+    archive,
     error::AkaibuError,
     util::simd::{packuswb0, punpcklbw0},
 };
@@ -43,6 +44,7 @@ impl ResourceScheme for BgScheme {
         &self,
         file_path: &std::path::Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<super::ResourceType> {
         self.from_bytes(buf, file_path)
     }

@@ -1,4 +1,5 @@
 use crate::{
+    archive::{self, FileEntry},
     error::AkaibuError,
     util::simd::{packuswb0, paddw, psrlw, psubb, punpcklbw0},
 };
@@ -31,7 +32,7 @@ struct GeHeader {
 struct Pgd3Header {
     magic: [u8; 4],
     left_offset: u16,
-    bot_offset: u16,
+    top_offset: u16,
     width: u16,
     height: u16,
     bpp: u16,
@@ -46,15 +47,16 @@ impl ResourceScheme for PgdScheme {
         let mut buf = Vec::with_capacity(1 << 20);
         let mut file = File::open(file_path)?;
         file.read_to_end(&mut buf)?;
-        self.from_bytes(buf, file_path)
+        self.from_bytes(buf, file_path, None)
     }
 
     fn convert_from_bytes(
         &self,
         file_path: &std::path::Path,
         buf: Vec<u8>,
+        archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<super::ResourceType> {
-        self.from_bytes(buf, file_path)
+        self.from_bytes(buf, file_path, archive)
     }
 
     fn get_name(&self) -> String {
@@ -78,10 +80,20 @@ impl PgdScheme {
     fn from_bytes(
         &self,
         buf: Vec<u8>,
-        _file_path: &Path,
+        file_path: &Path,
+        archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
+        println!("{:?}", file_path);
         match &buf[..4] {
-            [0x47, 0x45, ..] => ge_image(buf),
+            [0x47, 0x45, ..] => {
+                let (pixels, width, height) = ge_image(buf)?;
+                let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+                    ImageBuffer::from_vec(width, height, pixels)
+                        .context("Invalid image resolution")?;
+                Ok(ResourceType::RgbaImage {
+                    image: image.convert(),
+                })
+            }
             [0x50, 0x47, 0x44, 0x32] => {
                 return Err(AkaibuError::Custom(
                     "Unsupported image format PGD2".to_string(),
@@ -89,10 +101,11 @@ impl PgdScheme {
                 .into())
             }
             [0x50, 0x47, 0x44, 0x33] => {
-                return Err(AkaibuError::Custom(
+                pgd3_image(buf, archive, file_path)
+                /* return Err(AkaibuError::Custom(
                     "Unsupported image format PGD3".to_string(),
                 )
-                .into())
+                .into()) */
             }
             _ => {
                 return Err(AkaibuError::Custom(format!(
@@ -105,9 +118,17 @@ impl PgdScheme {
     }
 }
 
-fn ge_image(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
+fn ge_image(buf: Vec<u8>) -> anyhow::Result<(Vec<u8>, u32, u32)> {
     let off = &mut 0;
     let header = buf.gread::<GeHeader>(off)?;
+    if header.version != 3 {
+        return Err(AkaibuError::Custom(format!(
+            "Unsupported version for GE image {}",
+            header.version
+        ))
+        .into());
+    }
+    println!("{:?}", header);
 
     let pixel_data = &decompress(&buf[header.pixel_data_offset as usize..])?;
     let bytes_per_pixel = pixel_data.pread_with::<u16>(2, LE)? as usize >> 3;
@@ -118,23 +139,67 @@ fn ge_image(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         header.height as usize,
         bytes_per_pixel,
     )?;
-
-    let image: ImageBuffer<image::Bgra<u8>, Vec<u8>> = ImageBuffer::from_vec(
-        header.width as u32,
-        header.height as u32,
-        pixel_data,
-    )
-    .context("Invalid image resolution")?;
-    Ok(ResourceType::RgbaImage {
-        image: image.convert(),
-    })
+    Ok((pixel_data, header.width, header.height))
 }
 
 // TODO: Add possibility for getting parent image from archive/file system so formats like this,
 // expecting child image layering on top of parent image work.
-/* fn pgd3_image(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
+fn pgd3_image(
+    buf: Vec<u8>,
+    archive: Option<&Box<dyn archive::Archive>>,
+    file_path: &Path,
+) -> anyhow::Result<ResourceType> {
     let off = &mut 0;
     let header = buf.gread::<Pgd3Header>(off)?;
+
+    let parent_name = String::from_utf8(
+        header
+            .parent_file_name
+            .iter()
+            .take_while(|b| **b != 0)
+            .map(|b| *b)
+            .collect::<Vec<u8>>(),
+    )?
+    .to_uppercase();
+
+    let parent = match archive {
+        Some(archive) => ge_image(
+            archive
+                .extract(&FileEntry {
+                    file_name: parent_name.clone(),
+                    full_path: parent_name.clone().into(),
+                    file_offset: 0,
+                    file_size: 0,
+                })?
+                .contents
+                .to_vec(),
+        )?,
+        None => {
+            let mut path = file_path
+                .parent()
+                .context("Invalid path: At root dir")?
+                .to_path_buf();
+            path.push(&parent_name);
+            match File::open(path) {
+                Ok(mut file) => {
+                    let mut buf = Vec::with_capacity(1 << 20);
+                    file.read_to_end(&mut buf)?;
+                    ge_image(buf)?
+                }
+                Err(_) => {
+                    return Err(AkaibuError::Custom(format!(
+                        "Could not find parent file: {}",
+                        parent_name
+                    ))
+                    .into())
+                }
+            }
+        }
+    };
+
+    let mut parent_image: ImageBuffer<image::Bgra<u8>, Vec<u8>> =
+        ImageBuffer::from_vec(parent.1, parent.2, parent.0)
+            .context("Invalid image resolution")?;
 
     let pixel_data = parse_pixels(
         &decompress(&buf[*off..])?,
@@ -149,10 +214,28 @@ fn ge_image(buf: Vec<u8>) -> anyhow::Result<ResourceType> {
         pixel_data,
     )
     .context("Invalid image resolution")?;
+
+    for x in header.left_offset as u32
+        ..header.left_offset as u32 + header.width as u32
+    {
+        for y in header.top_offset as u32
+            ..header.top_offset as u32 + header.height as u32
+        {
+            let a = image.get_pixel(
+                x - header.left_offset as u32,
+                y - header.top_offset as u32,
+            );
+            let b = parent_image.get_pixel_mut(x, y);
+            for i in 0..header.bpp as usize >> 3 {
+                b[i] ^= a[i];
+            }
+        }
+    }
+
     Ok(ResourceType::RgbaImage {
-        image: image.convert(),
+        image: parent_image.convert(),
     })
-} */
+}
 
 fn decompress(src: &[u8]) -> anyhow::Result<Vec<u8>> {
     let dest_size = src.pread_with::<u32>(0, LE)? as usize;

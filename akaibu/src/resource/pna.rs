@@ -1,3 +1,5 @@
+use crate::archive;
+
 use super::{ResourceScheme, ResourceType};
 use libwebp_image::webp_load_from_memory;
 use scroll::{Pread, LE};
@@ -46,6 +48,7 @@ impl ResourceScheme for PnaScheme {
         &self,
         file_path: &std::path::Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<super::ResourceType> {
         self.from_bytes(buf, file_path)
     }

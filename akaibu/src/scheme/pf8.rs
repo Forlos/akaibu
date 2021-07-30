@@ -21,7 +21,7 @@ impl Scheme for Pf8Scheme {
         &self,
         file_path: &Path,
     ) -> anyhow::Result<(
-        Box<dyn crate::archive::Archive + Sync>,
+        Box<dyn crate::archive::Archive>,
         archive::NavigableDirectory,
     )> {
         let mut buf = vec![0; 11];

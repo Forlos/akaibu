@@ -1,5 +1,5 @@
 use super::{ResourceScheme, ResourceType};
-use crate::error::AkaibuError;
+use crate::{archive, error::AkaibuError};
 use scroll::Pread;
 use std::{fs::File, io::Read, path::Path};
 use tlg_rs::formats::{tlg0::Tlg0, tlg6::Tlg6};
@@ -21,6 +21,7 @@ impl ResourceScheme for TlgScheme {
         &self,
         _file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         parse_tlg(buf)
     }

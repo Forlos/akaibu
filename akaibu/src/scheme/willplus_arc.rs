@@ -22,10 +22,8 @@ impl Scheme for ArcScheme {
     fn extract(
         &self,
         file_path: &Path,
-    ) -> anyhow::Result<(
-        Box<dyn crate::archive::Archive + Sync>,
-        NavigableDirectory,
-    )> {
+    ) -> anyhow::Result<(Box<dyn crate::archive::Archive>, NavigableDirectory)>
+    {
         let mut buf = vec![0; 8];
         let file = RandomAccessFile::open(file_path)?;
         file.read_exact_at(0, &mut buf)?;

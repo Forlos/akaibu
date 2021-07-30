@@ -13,5 +13,9 @@ pub async fn get_resource_type(
         .get_schemes()
         .get(0)
         .context("Unknown resource format")?
-        .convert_from_bytes(&entry.full_path, file_contents.contents.to_vec())
+        .convert_from_bytes(
+            &entry.full_path,
+            file_contents.contents.to_vec(),
+            Some(&archive),
+        )
 }

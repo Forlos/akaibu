@@ -13,13 +13,13 @@ mod pna;
 mod tlg;
 mod ycg;
 
+use crate::archive::Archive;
 use anyhow::Context;
 use dyn_clone::DynClone;
 use enum_iterator::IntoEnumIterator;
 use image::RgbaImage;
 use scroll::{Pread, LE};
-use std::{fmt::Debug, fs::File};
-use std::{io::Write, path::Path};
+use std::{fmt::Debug, fs::File, io::Write, path::Path};
 use tlg::TlgScheme;
 
 #[derive(Debug, IntoEnumIterator, Clone)]
@@ -52,6 +52,7 @@ pub trait ResourceScheme: Debug + Send + Sync + DynClone {
         &self,
         file_path: &Path,
         buf: Vec<u8>,
+        archive: Option<&Box<dyn Archive>>,
     ) -> anyhow::Result<ResourceType>;
     fn get_name(&self) -> String;
     fn get_schemes() -> Vec<Box<dyn ResourceScheme>>

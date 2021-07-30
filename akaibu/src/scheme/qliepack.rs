@@ -49,7 +49,7 @@ impl Scheme for PackScheme {
     fn extract(
         &self,
         file_path: &std::path::Path,
-    ) -> anyhow::Result<(Box<dyn Archive + Sync>, NavigableDirectory)> {
+    ) -> anyhow::Result<(Box<dyn Archive>, NavigableDirectory)> {
         let mut buf = vec![0; 0x440];
         let metadata = std::fs::metadata(&file_path)?;
         let file = RandomAccessFile::open(file_path)?;

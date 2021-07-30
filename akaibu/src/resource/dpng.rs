@@ -1,3 +1,5 @@
+use crate::archive;
+
 use super::{ResourceScheme, ResourceType};
 use image::{ImageBuffer, RgbaImage};
 use scroll::{Pread, LE};
@@ -43,6 +45,7 @@ impl ResourceScheme for DpngScheme {
         &self,
         file_path: &std::path::Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<super::ResourceType> {
         self.from_bytes(buf, file_path)
     }

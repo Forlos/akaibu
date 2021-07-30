@@ -1,5 +1,5 @@
 use super::{ResourceScheme, ResourceType};
-use crate::{error::AkaibuError, util::image::resolve_color_table};
+use crate::{archive, error::AkaibuError, util::image::resolve_color_table};
 use anyhow::Context;
 use image::{buffer::ConvertBuffer, ImageBuffer};
 use scroll::{Pread, LE};
@@ -29,6 +29,7 @@ impl ResourceScheme for G00Scheme {
         &self,
         _file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)
     }

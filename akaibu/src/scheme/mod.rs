@@ -22,7 +22,7 @@ pub trait Scheme: Debug + Send + DynClone {
     fn extract(
         &self,
         file_path: &Path,
-    ) -> anyhow::Result<(Box<dyn archive::Archive + Sync>, NavigableDirectory)>;
+    ) -> anyhow::Result<(Box<dyn archive::Archive>, NavigableDirectory)>;
     fn get_name(&self) -> String;
     fn get_schemes() -> Vec<Box<dyn Scheme>>
     where

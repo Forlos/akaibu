@@ -30,10 +30,8 @@ impl Scheme for Acv1Scheme {
     fn extract(
         &self,
         file_path: &Path,
-    ) -> anyhow::Result<(
-        Box<dyn archive::Archive + Sync>,
-        archive::NavigableDirectory,
-    )> {
+    ) -> anyhow::Result<(Box<dyn archive::Archive>, archive::NavigableDirectory)>
+    {
         let file_names = crate::Resources::get("acv1/all_file_names.txt")
             .context("Could not get resouce")?;
         let (sjis_file_names, _encoding_used, _any_errors) =

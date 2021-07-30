@@ -1,4 +1,4 @@
-use crate::{error::AkaibuError, util::image::remove_bitmap_padding};
+use crate::{archive, error::AkaibuError, util::image::remove_bitmap_padding};
 
 use super::{ResourceScheme, ResourceType};
 use anyhow::Context;
@@ -38,6 +38,7 @@ impl ResourceScheme for IarScheme {
         &self,
         _file_path: &Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
         self.from_bytes(buf)
     }

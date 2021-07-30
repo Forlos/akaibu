@@ -41,13 +41,18 @@ impl FileContents {
     pub fn write_contents(
         &self,
         output_file_name: &Path,
+        archive: Option<&Box<dyn Archive>>,
     ) -> anyhow::Result<()> {
         if let Some(resource_type) = &self.type_hint {
             let resource = resource_type
                 .get_schemes()
                 .get(0)
                 .expect("Expected universal scheme")
-                .convert_from_bytes(&PathBuf::new(), self.contents.to_vec())?;
+                .convert_from_bytes(
+                    &PathBuf::new(),
+                    self.contents.to_vec(),
+                    archive,
+                )?;
             resource.write_resource(&output_file_name)?;
         } else {
             File::create(output_file_name)?.write_all(&self.contents)?;

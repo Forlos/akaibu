@@ -20,7 +20,7 @@ impl Scheme for IarScheme {
         &self,
         file_path: &Path,
     ) -> anyhow::Result<(
-        Box<dyn crate::archive::Archive + Sync>,
+        Box<dyn crate::archive::Archive>,
         crate::archive::NavigableDirectory,
     )> {
         let mut buf = vec![0; 28];
@@ -104,7 +104,7 @@ impl archive::Archive for IarArchive {
                 output_file_name,
                 entry
             );
-            file_contents.write_contents(&output_file_name)?;
+            file_contents.write_contents(&output_file_name, None)?;
             Ok(())
         })
     }

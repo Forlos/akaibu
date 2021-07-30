@@ -1,5 +1,6 @@
 use super::{ResourceScheme, ResourceType};
 use crate::{
+    archive,
     error::AkaibuError,
     util::{
         image::{resolve_color_table, resolve_color_table_without_alpha},
@@ -41,6 +42,7 @@ impl ResourceScheme for CrxgScheme {
         &self,
         file_path: &std::path::Path,
         buf: Vec<u8>,
+        _archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<super::ResourceType> {
         self.from_bytes(buf, file_path)
     }
