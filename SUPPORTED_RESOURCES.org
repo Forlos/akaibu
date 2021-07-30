@@ -16,3 +16,4 @@
 | PNA          | Image | *.pna        | N/A           | PNG                |
 | CompressedBg | Image | N/A          | N/A           | PNG                |
 | DPNG         | Image | *.png        | N/A           | PNG                |
+| PGD          | Image | *.pgd        | 3             | PNG                |
