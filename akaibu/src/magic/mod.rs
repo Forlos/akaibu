@@ -17,6 +17,7 @@ pub enum Archive {
     QliePack,
     Nekopack,
     AmusePac,
+    TacticsArc,
     NotRecognized,
 }
 
@@ -53,6 +54,10 @@ impl Archive {
                 Self::Nekopack
             }
             [0x50, 0x41, 0x43, 0x20, ..] => Self::AmusePac,
+            // TACTICS_ARC_FILE
+            [0x54, 0x41, 0x43, 0x54, 0x49, 0x43, 0x53, 0x5F, 0x41, 0x52, 0x43, 0x5F, 0x46, 0x49, 0x4C, 0x45, ..] => {
+                Self::TacticsArc
+            }
             _ => Self::NotRecognized,
         }
     }
@@ -81,6 +86,7 @@ impl Archive {
             Self::QliePack => false,
             Self::Nekopack => true,
             Self::AmusePac => true,
+            Self::TacticsArc => false,
             Self::NotRecognized => false,
         }
     }
@@ -101,6 +107,7 @@ impl Archive {
             Self::QliePack => scheme::qliepack::PackScheme::get_schemes(),
             Self::Nekopack => scheme::nekopack::PackScheme::get_schemes(),
             Self::AmusePac => scheme::amusepac::PacScheme::get_schemes(),
+            Self::TacticsArc => scheme::tactics_arc::ArcScheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }

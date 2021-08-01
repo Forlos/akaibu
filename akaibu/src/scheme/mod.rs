@@ -15,6 +15,7 @@ pub mod nekopack;
 pub mod pf8;
 pub mod qliepack;
 pub mod silky;
+pub mod tactics_arc;
 pub mod willplus_arc;
 pub mod ypf;
 
