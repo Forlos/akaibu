@@ -18,6 +18,7 @@ pub enum Archive {
     Nekopack,
     AmusePac,
     TacticsArc,
+    Link6,
     NotRecognized,
 }
 
@@ -58,6 +59,8 @@ impl Archive {
             [0x54, 0x41, 0x43, 0x54, 0x49, 0x43, 0x53, 0x5F, 0x41, 0x52, 0x43, 0x5F, 0x46, 0x49, 0x4C, 0x45, ..] => {
                 Self::TacticsArc
             }
+            // LINK6\x00\x00
+            [0x4C, 0x49, 0x4E, 0x4B, 0x36, 0x00, 0x00, ..] => Self::Link6,
             _ => Self::NotRecognized,
         }
     }
@@ -87,6 +90,7 @@ impl Archive {
             Self::Nekopack => true,
             Self::AmusePac => true,
             Self::TacticsArc => false,
+            Self::Link6 => true,
             Self::NotRecognized => false,
         }
     }
@@ -108,6 +112,7 @@ impl Archive {
             Self::Nekopack => scheme::nekopack::PackScheme::get_schemes(),
             Self::AmusePac => scheme::amusepac::PacScheme::get_schemes(),
             Self::TacticsArc => scheme::tactics_arc::ArcScheme::get_schemes(),
+            Self::Link6 => scheme::link6::Link6Scheme::get_schemes(),
             Self::NotRecognized => vec![],
         }
     }

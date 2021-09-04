@@ -10,6 +10,7 @@ pub mod cpz7;
 pub mod esc_arc2;
 pub mod gxp;
 pub mod iar;
+pub mod link6;
 pub mod malie;
 pub mod nekopack;
 pub mod pf8;
