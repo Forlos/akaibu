@@ -83,7 +83,6 @@ impl PgdScheme {
         file_path: &Path,
         archive: Option<&Box<dyn archive::Archive>>,
     ) -> anyhow::Result<ResourceType> {
-        println!("{:?}", file_path);
         match &buf[..4] {
             [0x47, 0x45, ..] => {
                 let (pixels, width, height) = ge_image(buf)?;
@@ -128,7 +127,6 @@ fn ge_image(buf: Vec<u8>) -> anyhow::Result<(Vec<u8>, u32, u32)> {
         ))
         .into());
     }
-    println!("{:?}", header);
 
     let pixel_data = &decompress(&buf[header.pixel_data_offset as usize..])?;
     let bytes_per_pixel = pixel_data.pread_with::<u16>(2, LE)? as usize >> 3;

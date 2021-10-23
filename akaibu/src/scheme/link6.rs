@@ -1,5 +1,8 @@
 use super::Scheme;
-use crate::archive::{self, FileContents};
+use crate::{
+    archive::{self, FileContents},
+    error::AkaibuError,
+};
 use anyhow::Context;
 use bytes::BytesMut;
 use encoding_rs::SHIFT_JIS;
@@ -13,6 +16,12 @@ use std::{
     io::Write,
     path::{self, Path, PathBuf},
 };
+
+const PARAMS_KEY_MARKER: &[u8] = &[
+    0xa6, 0x30, 0xa3, 0x30, 0xf3, 0x30, 0xc9, 0x30, 0xa6, 0x30, 0xcc, 0x80,
+    0x6f, 0x66, 0x72, 0x82, 0x06, 0x00, 0x0f, 0x90, 0x4e, 0x90, 0x87, 0x73,
+    0x04, 0x00, 0x36, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00,
+];
 
 #[derive(Debug, Clone)]
 pub enum Link6Scheme {
@@ -55,7 +64,36 @@ impl Scheme for Link6Scheme {
 
         let root_dir = Link6Archive::new_root_dir(&file_entries);
         let navigable_dir = archive::NavigableDirectory::new(root_dir);
-        Ok((Box::new(Link6Archive { file, file_entries }), navigable_dir))
+
+        let is_cg = file_path
+            .file_name()
+            .context("Could not get file name")?
+            .to_str()
+            .context("Invalid string encoding")?
+            .contains("cg");
+
+        let key = if is_cg {
+            let mut params_file_path = PathBuf::from(file_path);
+            params_file_path.set_file_name("params.dat");
+            let metadata = std::fs::metadata(&params_file_path)?;
+
+            let mut params_buf = vec![0; metadata.len() as usize];
+            let params_file = RandomAccessFile::open(params_file_path)?;
+            params_file.read_exact_at(0, &mut params_buf)?;
+
+            Some(extract_key_from_params(&params_buf)?)
+        } else {
+            None
+        };
+
+        Ok((
+            Box::new(Link6Archive {
+                file,
+                file_entries,
+                key,
+            }),
+            navigable_dir,
+        ))
     }
 
     fn get_name(&self) -> String {
@@ -79,6 +117,7 @@ impl Scheme for Link6Scheme {
 struct Link6Archive {
     file: RandomAccessFile,
     file_entries: Vec<Link6FileEntry>,
+    key: Option<Vec<u8>>,
 }
 
 impl archive::Archive for Link6Archive {
@@ -142,9 +181,17 @@ impl Link6Archive {
         buf.resize(entry.file_size as usize, 0);
 
         self.file.read_exact_at(entry.file_offset, &mut buf)?;
+        if &buf[..2] == b"BM" {
+            if let Some(key) = &self.key {
+                let pixels_index = buf[10..].pread_with::<u32>(0, LE)? as usize;
+                buf[pixels_index..]
+                    .iter_mut()
+                    .zip(key.iter())
+                    .for_each(|(b, k)| *b ^= k);
+            }
+        }
 
         Ok(FileContents {
-            // contents: bytes::Bytes::copy_from_slice(&buf[4..]),
             contents: buf.freeze(),
             type_hint: None,
         })
@@ -216,4 +263,46 @@ impl<'a> ctx::TryFromCtx<'a, u64> for Link6FileEntry {
             entry_size,
         ))
     }
+}
+
+fn extract_key_from_params(buf: &[u8]) -> anyhow::Result<Vec<u8>> {
+    let (params_key_index, _) = buf
+        .windows(PARAMS_KEY_MARKER.len())
+        .enumerate()
+        .find(|(_, w)| w == &PARAMS_KEY_MARKER)
+        .context("Could not find key in params.dat")?;
+
+    let version = buf[params_key_index + PARAMS_KEY_MARKER.len()];
+
+    // let version = &buf[..0x11];
+    Ok(match version {
+        // b"[SCR-PARAMS]v05.4" | b"[SCR-PARAMS]v05.5" | b"[SCR-PARAMS]v05.6" => {
+        0 => {
+            let key_size = buf[params_key_index + PARAMS_KEY_MARKER.len() + 4..]
+                .pread_with::<u32>(0, LE)? as usize;
+            buf[params_key_index + PARAMS_KEY_MARKER.len() + 8
+                ..params_key_index
+                    + PARAMS_KEY_MARKER.len()
+                    + 8
+                    + key_size as usize]
+                .to_vec()
+        }
+        // b"[SCR-PARAMS]v05.7" => {
+        6 => {
+            let key_size = buf
+                [params_key_index + PARAMS_KEY_MARKER.len() + 0x84..]
+                .pread_with::<u32>(0, LE)? as usize;
+            buf[params_key_index + PARAMS_KEY_MARKER.len() + 0x88
+                ..params_key_index + PARAMS_KEY_MARKER.len() + 0x88 + key_size]
+                .to_vec()
+        }
+        _ => {
+            let version = &buf[..0x11];
+            return Err(AkaibuError::Custom(format!(
+                "Unsupported version of params.dat file {:?}",
+                String::from_utf8_lossy(version)
+            ))
+            .into());
+        }
+    })
 }
